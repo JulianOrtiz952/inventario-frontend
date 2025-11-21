@@ -100,6 +100,35 @@ export default function InventoryPage() {
     loadData();
   }, []);
 
+  // Calcula el estado a partir del stock actual y mínimo
+function getEstadoInfo(insumo) {
+  const actual = Number(insumo.stock_actual);
+  const minimo = Number(insumo.stock_minimo);
+
+  if (Number.isNaN(actual) || Number.isNaN(minimo)) {
+    return {
+      label: "—",
+      colorClass: "text-slate-500",
+      dotClass: "bg-slate-300",
+    };
+  }
+
+  if (actual < minimo) {
+    return {
+      label: "Bajo mínimo",
+      colorClass: "text-red-600",
+      dotClass: "bg-red-500",
+    };
+  }
+
+  return {
+    label: "OK",
+    colorClass: "text-emerald-600",
+    dotClass: "bg-emerald-500",
+  };
+}
+
+
   const proveedoresOptions = useMemo(
     () => proveedores.map((p) => ({ id: p.id, nombre: p.nombre })),
     [proveedores]
@@ -543,13 +572,20 @@ export default function InventoryPage() {
                       <td className="px-4 py-3 text-sm text-slate-700">
                         {i.proveedor?.nombre ?? "—"}
                       </td>
-                      <td className="px-4 py-3">
-                        <EstadoBadge
-                          estado={i.estado}
-                          stockActual={parseFloat(i.stock_actual)}
-                          stockMinimo={parseFloat(i.stock_minimo)}
-                        />
+                      <td className="px-4 py-3 text-xs">
+                        {(() => {
+                          const estado = getEstadoInfo(i);
+                          return (
+                            <span
+                             className={`inline-flex items-center gap-1 ${estado.colorClass}`}
+                            >
+                            <span className={`w-2 h-2 rounded-full ${estado.dotClass}`} />
+                              {estado.label}
+                            </span>
+                          );
+                        })()}
                       </td>
+
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           <ActionIconButton
