@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Optional: if using TypeScript
+*.tsbuildinfo
+
+# Optional: If using local SSL certificates
+*.pem
+*.key
+
+# Optional: local debug folder created by Vite plugin inspectors
+__vite_inspect__/
+
