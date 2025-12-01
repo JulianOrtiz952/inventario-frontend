@@ -6,6 +6,7 @@ import SideNav from "./components/SideNav";
 
 // Tus páginas
 import InventoryPage from "./pages/InventoryPage";
+import ProvidersPage from "./pages/ProvidersPage";
 import ProductsPage from "./pages/ProductsPage";
 import RecipesPage from "./pages/RecipesPage";
 import WarehousesPage from "./pages/WarehousesPage";
@@ -26,6 +27,7 @@ export default function App() {
           <main className="flex-1 p-6">
             <Routes>
               <Route path="/" element={<InventoryPage />} />
+              <Route path="/proveedores" element={<ProvidersPage />} />
               <Route path="/bodegas" element={<WarehousesPage />} /> 
               <Route path="/productos" element={<ProductsPage />} />
               <Route path="/recetas" element={<RecipesPage />} />

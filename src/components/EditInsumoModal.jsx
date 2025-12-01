@@ -1,3 +1,5 @@
+// EditInsumoModal.jsx
+
 export default function EditInsumoModal({
   isOpen,
   onClose,
@@ -7,6 +9,7 @@ export default function EditInsumoModal({
   form,
   onChange,
   proveedoresOptions,
+  bodegasOptions,      // 👈 NUEVO
 }) {
   if (!isOpen) return null;
 
@@ -110,6 +113,27 @@ export default function EditInsumoModal({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Bodega 👇 NUEVO BLOQUE */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-700">
+              Bodega
+            </label>
+            <select
+              name="bodega_id"
+              value={form.bodega_id}
+              onChange={onChange}
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="">Selecciona...</option>
+              {bodegasOptions.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Stock + costo */}

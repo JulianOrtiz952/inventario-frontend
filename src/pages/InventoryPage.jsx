@@ -15,6 +15,7 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [bodegas, setBodegas] = useState([]);   // 👈 NUEVO
+  
 
   const [search, setSearch] = useState("");
   const [proveedorFiltro, setProveedorFiltro] = useState("todos");
@@ -73,38 +74,38 @@ export default function InventoryPage() {
 
   // Cargar datos
   useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        setError("");
+  async function loadData() {
+    try {
+      setLoading(true);
+      setError("");
 
-        const [insumosRes, proveedoresRes, bodegaRes] = await Promise.all([
-          fetch(`${API_BASE}/insumos/`),
-          fetch(`${API_BASE}/proveedores/`),
-          fetch(`${API_BASE}/bodegas/`), 
-        ]);
+      const [insumosRes, proveedoresRes, bodegasRes] = await Promise.all([
+        fetch(`${API_BASE}/insumos/`),
+        fetch(`${API_BASE}/proveedores/`),
+        fetch(`${API_BASE}/bodegas/`),
+      ]);
 
-        if (!insumosRes.ok || !proveedoresRes.ok) {
-          throw new Error("Error al obtener datos del servidor");
-        }
-
-        const insumosData = await insumosRes.json();
-        const proveedoresData = await proveedoresRes.json();
-        const bodegasData = await bodegaRes.json();
-
-        setInsumos(insumosData);
-        setProveedores(proveedoresData);
-        setBodegas(bodegasData);  
-      } catch (err) {
-        console.error(err);
-        setError(err.message || "Error cargando inventario.");
-      } finally {
-        setLoading(false);
+      if (!insumosRes.ok || !proveedoresRes.ok || !bodegasRes.ok) {
+        throw new Error("Error al obtener datos del servidor");
       }
-    }
 
-    loadData();
-  }, []);
+      const insumosData = await insumosRes.json();
+      const proveedoresData = await proveedoresRes.json();
+      const bodegasData = await bodegasRes.json();
+
+      setInsumos(insumosData);
+      setProveedores(proveedoresData);
+      setBodegas(bodegasData);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Error cargando inventario.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadData();
+}, []);
 
   // Calcula el estado a partir del stock actual y mínimo
 function getEstadoInfo(insumo) {
@@ -217,6 +218,11 @@ function getEstadoInfo(insumo) {
       return;
     }
 
+    if (!createForm.bodega_id) {
+      setCreateError("Selecciona una bodega.");
+      return;
+    }
+
     try {
       setCreateLoading(true);
 
@@ -310,7 +316,7 @@ function getEstadoInfo(insumo) {
       stock_minimo: insumo.stock_minimo ?? "",
       costo_unitario: insumo.costo_unitario ?? "",
       proveedor_id: insumo.proveedor?.id ?? "",
-    bodega_id: insumo.bodega?.id ?? "",
+      bodega_id: insumo.bodega?.id ?? "",
     });
     setEditError("");
     setIsEditOpen(true);
@@ -339,6 +345,10 @@ function getEstadoInfo(insumo) {
     }
     if (!editForm.proveedor_id) {
       setEditError("Selecciona un proveedor.");
+      return;
+    }
+    if (!editForm.bodega_id) {
+      setEditError("Selecciona una bodega.");
       return;
     }
 

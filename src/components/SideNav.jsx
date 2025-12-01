@@ -9,6 +9,12 @@ const navItems = [
     path: "/",
   },
   {
+    id: "proveedores",             // 👈 NUEVO
+    label: "Proveedores",
+    icon: "🤝",
+    path: "/proveedores",
+  },
+  {
     id: "bodegas",            // 👈 NUEVO
     label: "Bodegas",
     icon: "🏬",
