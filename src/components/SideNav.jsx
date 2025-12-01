@@ -9,6 +9,12 @@ const navItems = [
     path: "/",
   },
   {
+    id: "bodegas",            // 👈 NUEVO
+    label: "Bodegas",
+    icon: "🏬",
+    path: "/bodegas",
+  },
+  {
     id: "productos",
     label: "Productos / Recetas",
     icon: "🧵",
@@ -22,7 +28,7 @@ const navItems = [
   },
   {
     id: "simulacion",
-    label: "Crear producto",
+    label: "Simulación de creación",
     icon: "🧪",
     path: "/simulacion",
   },

@@ -14,6 +14,7 @@ export default function InventoryPage() {
   const [proveedores, setProveedores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bodegas, setBodegas] = useState([]);   // 👈 NUEVO
 
   const [search, setSearch] = useState("");
   const [proveedorFiltro, setProveedorFiltro] = useState("todos");
@@ -29,6 +30,7 @@ export default function InventoryPage() {
     stock_minimo: "",
     costo_unitario: "",
     proveedor_id: "",
+    bodega_id: "",    
   });
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -54,6 +56,7 @@ export default function InventoryPage() {
     stock_minimo: "",
     costo_unitario: "",
     proveedor_id: "",
+    bodega_id: "",
   });
   const [editInsumoId, setEditInsumoId] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -75,9 +78,10 @@ export default function InventoryPage() {
         setLoading(true);
         setError("");
 
-        const [insumosRes, proveedoresRes] = await Promise.all([
+        const [insumosRes, proveedoresRes, bodegaRes] = await Promise.all([
           fetch(`${API_BASE}/insumos/`),
           fetch(`${API_BASE}/proveedores/`),
+          fetch(`${API_BASE}/bodegas/`), 
         ]);
 
         if (!insumosRes.ok || !proveedoresRes.ok) {
@@ -86,9 +90,11 @@ export default function InventoryPage() {
 
         const insumosData = await insumosRes.json();
         const proveedoresData = await proveedoresRes.json();
+        const bodegasData = await bodegaRes.json();
 
         setInsumos(insumosData);
         setProveedores(proveedoresData);
+        setBodegas(bodegasData);  
       } catch (err) {
         console.error(err);
         setError(err.message || "Error cargando inventario.");
@@ -134,6 +140,14 @@ function getEstadoInfo(insumo) {
     [proveedores]
   );
 
+  const bodegasOptions = useMemo(
+  () => bodegas.map((b) => ({
+    id: b.id,
+    nombre: `${b.codigo} - ${b.nombre}`,
+  })),
+  [bodegas]
+  );
+
   // Filtrado tabla principal
   const insumosFiltrados = useMemo(
     () =>
@@ -175,6 +189,7 @@ function getEstadoInfo(insumo) {
       stock_minimo: "",
       costo_unitario: "",
       proveedor_id: proveedores[0]?.id ?? "",
+      bodega_id: bodegas[0]?.id ?? "",
     });
     setCreateError("");
     setIsCreateOpen(true);
@@ -208,6 +223,7 @@ function getEstadoInfo(insumo) {
       const payload = {
         ...createForm,
         proveedor_id: Number(createForm.proveedor_id),
+        bodega_id: Number(createForm.bodega_id),
       };
 
       const res = await fetch(`${API_BASE}/insumos/`, {
@@ -294,6 +310,7 @@ function getEstadoInfo(insumo) {
       stock_minimo: insumo.stock_minimo ?? "",
       costo_unitario: insumo.costo_unitario ?? "",
       proveedor_id: insumo.proveedor?.id ?? "",
+    bodega_id: insumo.bodega?.id ?? "",
     });
     setEditError("");
     setIsEditOpen(true);
@@ -331,6 +348,7 @@ function getEstadoInfo(insumo) {
       const payload = {
         ...editForm,
         proveedor_id: Number(editForm.proveedor_id),
+        bodega_id: Number(editForm.bodega_id),  
       };
 
       const res = await fetch(`${API_BASE}/insumos/${editInsumoId}/`, {
@@ -527,6 +545,7 @@ function getEstadoInfo(insumo) {
                     <th className="px-6 py-3 text-left">Nombre</th>
                     <th className="px-4 py-3 text-left">Unidad</th>
                     <th className="px-4 py-3 text-left">Color</th>
+                    <th className="px-4 py-3 text-left">Bodega</th>
                     <th className="px-4 py-3 text-right">Stock actual</th>
                     <th className="px-4 py-3 text-right">Stock mínimo</th>
                     <th className="px-4 py-3 text-right">Costo unitario</th>
@@ -560,6 +579,9 @@ function getEstadoInfo(insumo) {
                         {i.unidad}
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600">{i.color || "—"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600">
+                       {i.bodega?.nombre || "—"}
+                      </td>
                       <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">
                         {i.stock_actual}
                       </td>
@@ -627,6 +649,7 @@ function getEstadoInfo(insumo) {
         form={createForm}
         onChange={handleCreateChange}
         proveedoresOptions={proveedoresOptions}
+        bodegasOptions={bodegasOptions} 
       />
 
       <ViewInsumoModal
@@ -644,6 +667,7 @@ function getEstadoInfo(insumo) {
         form={editForm}
         onChange={handleEditChange}
         proveedoresOptions={proveedoresOptions}
+        bodegasOptions={bodegasOptions} 
       />
 
       <DeleteInsumoModal

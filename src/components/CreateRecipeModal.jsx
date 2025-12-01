@@ -15,6 +15,8 @@ export default function CreateRecipeModal({ isOpen, onClose, onCreated }) {
   const [productos, setProductos] = useState([]);
   const [productSearch, setProductSearch] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
+  const [bodegas, setBodegas] = useState([]);
+  const [selectedBodegaId, setSelectedBodegaId] = useState("");
 
   // Insumos disponibles
   const [insumos, setInsumos] = useState([]);
@@ -31,6 +33,7 @@ export default function CreateRecipeModal({ isOpen, onClose, onCreated }) {
   // Cuando se abre el modal, reseteamos y cargamos data
   useEffect(() => {
     if (!isOpen) return;
+    setSelectedBodegaId("");
 
     setForm({
       tela: "",
@@ -51,21 +54,24 @@ export default function CreateRecipeModal({ isOpen, onClose, onCreated }) {
         setLoadingInsumos(true);
         setLoadingProductos(true);
 
-        const [resInsumos, resProductos] = await Promise.all([
+        const [resInsumos, resProductos, resBodegas] = await Promise.all([
           fetch(`${API_BASE}/insumos/`),
           fetch(`${API_BASE}/productos/`),
+          fetch(`${API_BASE}/bodegas/`), 
         ]);
 
         if (!resInsumos.ok) throw new Error("Error al cargar insumos.");
         if (!resProductos.ok) throw new Error("Error al cargar productos.");
 
-        const [dataInsumos, dataProductos] = await Promise.all([
+        const [dataInsumos, dataProductos, dataBodegas] = await Promise.all([
           resInsumos.json(),
           resProductos.json(),
+          resBodegas.json(),
         ]);
 
         setInsumos(dataInsumos);
         setProductos(dataProductos);
+        setBodegas(dataBodegas);  
       } catch (err) {
         console.error(err);
         setError(err.message || "Error cargando datos.");
@@ -181,6 +187,11 @@ export default function CreateRecipeModal({ isOpen, onClose, onCreated }) {
       return;
     }
 
+    if (!selectedBodegaId) {
+      setError("Debes seleccionar una bodega.");
+      return;
+    }
+
     const itemsValidos = items.filter((i) => i.insumo_id && i.cantidad > 0);
     if (itemsValidos.length === 0) {
       setError("Debes agregar al menos un insumo con cantidad mayor a 0.");
@@ -198,6 +209,8 @@ export default function CreateRecipeModal({ isOpen, onClose, onCreated }) {
       color: form.color || selectedProduct.color || "",
       talla: form.talla || selectedProduct.talla || "",
       marca: form.marca || selectedProduct.marca || "",
+      producto_id: selectedProduct.id,
+      bodega_id: Number(selectedBodegaId),
       // Si en el backend ya agregaste producto_id en RecetaSerializer:
       // producto_id: selectedProduct.id,
       items: itemsValidos.map((i) => ({
@@ -366,70 +379,24 @@ export default function CreateRecipeModal({ isOpen, onClose, onCreated }) {
                   className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm bg-slate-50 text-slate-700"
                 />
               </div>
-            </div>
-          </section>
-
-          {/* ATRIBUTOS ASOCIADOS (pueden venir del producto pero son editables) */}
-          <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-              <span className="text-indigo-500 text-lg">◇</span>
-              <h2 className="text-sm font-semibold text-slate-900">
-                Atributos Asociados
-              </h2>
-            </div>
-
-            <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* 👇 NUEVO: Bodega */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Tela
-                </label>
-                <input
-                  type="text"
-                  name="tela"
-                  value={form.tela}
-                  onChange={handleAttrChange}
-                  placeholder="Seleccionar tela"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Color
-                </label>
-                <input
-                  type="text"
-                  name="color"
-                  value={form.color}
-                  onChange={handleAttrChange}
-                  placeholder="Seleccionar color"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Talla
-                </label>
-                <input
-                  type="text"
-                  name="talla"
-                  value={form.talla}
-                  onChange={handleAttrChange}
-                  placeholder="Seleccionar talla"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Marca
-                </label>
-                <input
-                  type="text"
-                  name="marca"
-                  value={form.marca}
-                  onChange={handleAttrChange}
-                  placeholder="Seleccionar marca"
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                  <label className="text-xs font-medium text-slate-700">
+                    Bodega
+                  </label>
+                <select
+                  value={selectedBodegaId}
+                  onChange={(e) => setSelectedBodegaId(e.target.value)}
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="">Selecciona...</option>
+                    {bodegasOptions.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.nombre}
+                  </option>
+                  ))}
+                </select>
               </div>
             </div>
           </section>

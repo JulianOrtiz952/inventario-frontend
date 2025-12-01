@@ -1,5 +1,5 @@
 // src/components/CreateProductModal.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const API_BASE = "http://127.0.0.1:8000/api";
 
@@ -8,17 +8,16 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
     codigo: "",
     nombre: "",
     descripcion: "",
-    receta_id: "",
+    tela: "",
+    color: "",
+    talla: "",
+    marca: "",
   });
 
-  const [recetas, setRecetas] = useState([]);
-  const [search, setSearch] = useState("");
-
-  const [loadingRecetas, setLoadingRecetas] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Cuando se abre el modal, limpiamos y cargamos recetas
+  // Cuando se abre el modal, limpiamos el formulario
   useEffect(() => {
     if (!isOpen) return;
 
@@ -26,43 +25,18 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
       codigo: "",
       nombre: "",
       descripcion: "",
-      receta_id: "",
+      tela: "",
+      color: "",
+      talla: "",
+      marca: "",
     });
-    setSearch("");
     setError("");
-
-    async function loadRecetas() {
-      try {
-        setLoadingRecetas(true);
-        const res = await fetch(`${API_BASE}/recetas/`);
-        if (!res.ok) throw new Error("Error al cargar las recetas.");
-        const data = await res.json();
-        setRecetas(data);
-      } catch (err) {
-        console.error(err);
-        setError(err.message || "Error cargando recetas.");
-      } finally {
-        setLoadingRecetas(false);
-      }
-    }
-
-    loadRecetas();
   }, [isOpen]);
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
-
-  const recetasFiltradas = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return recetas;
-    return recetas.filter((r) => {
-      const codigo = (r.codigo || "").toLowerCase();
-      const nombre = (r.nombre || "").toLowerCase();
-      return codigo.includes(term) || nombre.includes(term);
-    });
-  }, [recetas, search]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -72,16 +46,15 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
       setError("El código y el nombre del producto son obligatorios.");
       return;
     }
-    if (!form.receta_id) {
-      setError("Debes seleccionar una receta base.");
-      return;
-    }
 
     const payload = {
       codigo: form.codigo,
       nombre: form.nombre,
       descripcion: form.descripcion,
-      receta_id: form.receta_id,
+      tela: form.tela,
+      color: form.color,
+      talla: form.talla,
+      marca: form.marca,
     };
 
     try {
@@ -111,16 +84,13 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
 
   if (!isOpen) return null;
 
-  const recetaSeleccionada =
-    recetas.find((r) => String(r.id) === String(form.receta_id)) || null;
-
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-5xl max-h-[95vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[95vh] overflow-y-auto">
         {/* Header modal */}
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <h1 className="text-sm font-semibold text-slate-900">
-            Nuevo Producto (basado en receta)
+            Nuevo producto
           </h1>
           <div className="flex gap-3">
             <button
@@ -153,12 +123,12 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
             </div>
           )}
 
-          {/* Info básica */}
+          {/* Información básica */}
           <section className="bg-white rounded-xl shadow-sm border border-slate-200">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
               <span className="text-blue-500 text-lg">ℹ</span>
               <h2 className="text-sm font-semibold text-slate-900">
-                Información Básica
+                Información básica
               </h2>
             </div>
 
@@ -187,7 +157,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                   name="codigo"
                   value={form.codigo}
                   onChange={handleChange}
-                  placeholder="Ej: PROD-CAM-001"
+                  placeholder="Ej: CAM-001"
                   className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
@@ -209,95 +179,70 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
             </div>
           </section>
 
-          {/* Selección de receta base */}
+          {/* Atributos del producto */}
           <section className="bg-white rounded-xl shadow-sm border border-slate-200">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-              <span className="text-indigo-500 text-lg">📋</span>
+              <span className="text-indigo-500 text-lg">🎨</span>
               <h2 className="text-sm font-semibold text-slate-900">
-                Receta base
+                Atributos del producto
               </h2>
             </div>
 
-            <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Buscador */}
-              <div className="space-y-1 md:col-span-1">
+            <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
-                  Buscar receta (ID o nombre)
+                  Tela
                 </label>
-                <div className="flex items-center bg-white rounded-md border border-slate-200 px-3 py-2 text-sm">
-                  <span className="mr-2 text-slate-400 text-sm">🔍</span>
-                  <input
-                    type="text"
-                    className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
-                    placeholder="Ej: REC-CAM-001 o Camisa básica"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="tela"
+                  value={form.tela}
+                  onChange={handleChange}
+                  placeholder="Ej: Algodón"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
 
-              {/* Lista scrollable de recetas */}
-              <div className="space-y-1 md:col-span-2">
+              <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700">
-                  Seleccionar receta
+                  Color
                 </label>
-                <div className="border border-slate-200 rounded-md bg-slate-50 max-h-52 overflow-y-auto">
-                  {loadingRecetas && (
-                    <div className="px-3 py-2 text-xs text-slate-500">
-                      Cargando recetas...
-                    </div>
-                  )}
+                <input
+                  type="text"
+                  name="color"
+                  value={form.color}
+                  onChange={handleChange}
+                  placeholder="Ej: Blanco"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
-                  {!loadingRecetas && recetasFiltradas.length === 0 && (
-                    <div className="px-3 py-2 text-xs text-slate-500">
-                      No se encontraron recetas con ese filtro.
-                    </div>
-                  )}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-700">
+                  Talla
+                </label>
+                <input
+                  type="text"
+                  name="talla"
+                  value={form.talla}
+                  onChange={handleChange}
+                  placeholder="Ej: S, M, L"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
 
-                  {!loadingRecetas &&
-                    recetasFiltradas.map((r) => {
-                      const selected =
-                        String(r.id) === String(form.receta_id);
-                      return (
-                        <button
-                          key={r.id}
-                          type="button"
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              receta_id: r.id,
-                            }))
-                          }
-                          className={`w-full text-left px-3 py-2 text-xs border-b border-slate-100 last:border-b-0 transition-colors ${
-                            selected
-                              ? "bg-blue-50 text-blue-700 font-semibold"
-                              : "hover:bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          <div className="flex justify-between gap-2">
-                            <span className="truncate">
-                              {r.codigo} — {r.nombre}
-                            </span>
-                            {selected && <span>✓</span>}
-                          </div>
-                          <p className="text-[10px] text-slate-400 mt-0.5">
-                            Tela: {r.tela || "—"} · Color: {r.color || "—"} ·
-                            Talla: {r.talla || "—"} · Marca: {r.marca || "—"}
-                          </p>
-                        </button>
-                      );
-                    })}
-                </div>
-
-                {recetaSeleccionada && (
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Receta seleccionada:{" "}
-                    <span className="font-semibold">
-                      {recetaSeleccionada.codigo} —{" "}
-                      {recetaSeleccionada.nombre}
-                    </span>
-                  </p>
-                )}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-700">
+                  Marca
+                </label>
+                <input
+                  type="text"
+                  name="marca"
+                  value={form.marca}
+                  onChange={handleChange}
+                  placeholder="Ej: García"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
             </div>
           </section>

@@ -14,175 +14,165 @@ export default function ProductsPage() {
 
   // Cargar productos
   useEffect(() => {
-    async function loadProductos() {
+    const load = async () => {
       try {
         setLoading(true);
         setError("");
+
         const res = await fetch(`${API_BASE}/productos/`);
-        if (!res.ok) throw new Error("Error al obtener los productos.");
+        if (!res.ok) {
+          throw new Error("No se pudieron cargar los productos.");
+        }
         const data = await res.json();
         setProductos(data);
       } catch (err) {
         console.error(err);
-        setError(err.message || "Error cargando productos.");
+        setError(err.message || "Error al cargar productos.");
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    loadProductos();
+    load();
   }, []);
 
-  function openCreateModal() {
-    setIsCreateOpen(true);
-  }
+  // Filtrado por búsqueda
+  const productosFiltrados = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return productos;
+    return productos.filter((p) => {
+      const codigo = (p.codigo || "").toLowerCase();
+      const nombre = (p.nombre || "").toLowerCase();
+      return codigo.includes(term) || nombre.includes(term);
+    });
+  }, [search, productos]);
 
-  function closeCreateModal() {
-    setIsCreateOpen(false);
-  }
+  const openCreateModal = () => setIsCreateOpen(true);
+  const closeCreateModal = () => setIsCreateOpen(false);
 
-  function handleProductCreated(producto) {
-    setProductos((prev) => [producto, ...prev]);
-  }
-
-  const productosFiltrados = useMemo(
-    () =>
-      productos.filter((p) => {
-        if (!search.trim()) return true;
-        const term = search.trim().toLowerCase();
-        return (
-          (p.nombre || "").toLowerCase().includes(term) ||
-          (p.codigo || "").toLowerCase().includes(term)
-        );
-      }),
-    [productos, search]
-  );
+  // Cuando se crea un producto desde el modal
+  const handleProductCreated = (nuevo) => {
+    setProductos((prev) => [nuevo, ...prev]);
+  };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header sección */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Productos
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Crea productos basados en recetas predefinidas de materiales.
-          </p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-3 md:items-center">
-          {/* Buscador */}
-          <div className="flex items-center w-full md:w-64 bg-white rounded-md border border-slate-200 px-3 py-2 text-sm shadow-sm">
-            <span className="mr-2 text-slate-400 text-sm">🔍</span>
-            <input
-              type="text"
-              className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
-              placeholder="Buscar por nombre o código..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+    <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
+      <section className="max-w-6xl mx-auto space-y-6">
+        {/* Encabezado */}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Productos
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Crea productos basados en recetas predefinidas de materiales.
+            </p>
           </div>
 
-          {/* Botón agregar producto */}
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700"
-          >
-            <span className="text-lg leading-none">＋</span>
-            Agregar producto
-          </button>
-        </div>
-      </div>
+          <div className="flex flex-col md:flex-row gap-3 md:items-center">
+            {/* Buscador */}
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
+              <span className="text-slate-400 text-sm">🔍</span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por nombre o código..."
+                className="bg-transparent outline-none text-xs text-slate-700 placeholder:text-slate-400 w-48 md:w-64"
+              />
+            </div>
 
-      {/* Tabla de productos */}
-      <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        {loading && (
-          <div className="p-6 text-sm text-slate-600">
-            Cargando productos...
+            {/* Botón agregar */}
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700"
+            >
+              <span className="mr-1">＋</span>
+              Agregar producto
+            </button>
           </div>
-        )}
+        </div>
 
-        {error && !loading && (
-          <div className="p-6 text-sm text-red-600">{error}</div>
-        )}
+        {/* Contenido */}
+        <section className="bg-white rounded-xl shadow-sm border border-slate-200">
+          {loading && (
+            <div className="p-6 text-sm text-slate-500">
+              Cargando productos...
+            </div>
+          )}
 
-        {!loading && !error && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left">Código</th>
-                  <th className="px-4 py-3 text-left">Nombre</th>
-                  <th className="px-4 py-3 text-left">Receta</th>
-                  <th className="px-4 py-3 text-left">Tela</th>
-                  <th className="px-4 py-3 text-left">Color</th>
-                  <th className="px-4 py-3 text-left">Talla</th>
-                  <th className="px-4 py-3 text-left">Marca</th>
-                  <th className="px-4 py-3 text-center hidden md:table-cell">
-                    Creado
-                  </th>
-                  <th className="px-4 py-3 text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {productosFiltrados.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className="px-6 py-6 text-center text-sm text-slate-500"
+          {error && !loading && (
+            <div className="p-6 text-sm text-red-600">{error}</div>
+          )}
+
+          {!loading && !error && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    <th className="px-4 py-3 text-left">Código</th>
+                    <th className="px-4 py-3 text-left">Nombre</th>
+                    <th className="px-4 py-3 text-left">Tela</th>
+                    <th className="px-4 py-3 text-left">Color</th>
+                    <th className="px-4 py-3 text-left">Talla</th>
+                    <th className="px-4 py-3 text-left">Marca</th>
+                    <th className="px-4 py-3 text-center hidden md:table-cell">
+                      Creado
+                    </th>
+                    <th className="px-4 py-3 text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productosFiltrados.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="px-6 py-6 text-center text-sm text-slate-500"
+                      >
+                        No se encontraron productos.
+                      </td>
+                    </tr>
+                  )}
+
+                  {productosFiltrados.map((p) => (
+                    <tr
+                      key={p.id}
+                      className="border-b border-slate-100 hover:bg-slate-50/70 transition-colors"
                     >
-                      No hay productos que coincidan con el filtro.
-                    </td>
-                  </tr>
-                )}
-
-                {productosFiltrados.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-t border-slate-100 hover:bg-slate-50/80"
-                  >
-                    <td className="px-4 py-3 text-sm text-slate-700 font-medium">
-                      {p.codigo}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-800">
-                      {p.nombre}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-600">
-                      {p.receta
-                        ? `${p.receta.codigo} — ${p.receta.nombre}`
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {p.tela || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {p.color || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {p.talla || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {p.marca || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 text-center hidden md:table-cell">
-                      {p.creado_en
-                        ? new Date(p.creado_en).toLocaleDateString()
-                        : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {/* Más adelante: 👁️ / ✏️ / 🗑️ */}
-                      <span className="text-xs text-slate-400">
+                      <td className="px-4 py-3 text-sm font-medium text-slate-800">
+                        {p.codigo}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-800">
+                        {p.nombre}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">
+                        {p.tela || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">
+                        {p.color || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">
+                        {p.talla || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">
+                        {p.marca || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500 text-center hidden md:table-cell">
+                        {p.creado_en
+                          ? new Date(p.creado_en).toLocaleDateString("es-CO")
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-center text-slate-400">
                         Próximamente
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </section>
 
       {/* Modal crear producto */}

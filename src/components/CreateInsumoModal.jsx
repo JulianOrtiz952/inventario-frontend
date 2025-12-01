@@ -7,6 +7,7 @@ export default function CreateInsumoModal({
   form,
   onChange,
   proveedoresOptions,
+  bodegasOptions,
 }) {
   if (!isOpen) return null;
 
@@ -112,6 +113,26 @@ export default function CreateInsumoModal({
                   <option key={p.id} value={p.id}>
                     {p.nombre}
                   </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">
+                Bodega
+              </label>
+                <select
+                  name="bodega_id"
+                  value={form.bodega_id}
+                  onChange={onChange}
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                <option value="">Selecciona...</option>
+                  {bodegasOptions.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nombre}
+                </option>
                 ))}
               </select>
             </div>
