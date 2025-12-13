@@ -11,6 +11,8 @@ import ProductsPage from "./pages/ProductsPage";
 import RecipesPage from "./pages/RecipesPage";
 import WarehousesPage from "./pages/WarehousesPage";
 import ProductionSimulationPage from "./pages/ProductionSimulationPage"; // si la usas
+import TercerosPage from "./pages/TercerosPage";
+import TallasPage from "./pages/TallasPage";
 
 export default function App() {
   return (
@@ -27,10 +29,12 @@ export default function App() {
           <main className="flex-1 p-6">
             <Routes>
               <Route path="/" element={<InventoryPage />} />
-              <Route path="/proveedores" element={<ProvidersPage />} />
               <Route path="/bodegas" element={<WarehousesPage />} /> 
               <Route path="/productos" element={<ProductsPage />} />
               <Route path="/recetas" element={<RecipesPage />} />
+              <Route path="/terceros" element={<TercerosPage />} />
+              <Route path="/tallas" element={<TallasPage />} />
+              <Route path="/proveedores" element={<ProvidersPage />} />
               <Route
                 path="/simulacion"
                 element={<ProductionSimulationPage />}

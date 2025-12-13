@@ -10,6 +10,13 @@ export default function NewRecipePage() {
   const [historial, setHistorial] = useState([]);
   const [bodegas, setBodegas] = useState([]);
   const [selectedBodegaId, setSelectedBodegaId] = useState("");
+  const insumosDeBodega = useMemo(() => {
+  const bId = Number(selectedBodegaId);
+  if (!bId) return [];
+  return insumos.filter(
+    (ins) => ins.bodega && ins.bodega.id === bId
+  );
+}, [insumos, selectedBodegaId]);
 
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -91,6 +98,11 @@ export default function NewRecipePage() {
     (r) => r.id === Number(selectedRecipeId)
   );
   if (!receta) return;
+
+  // Si la receta base tiene bodega, la fijamos
+  if (receta.bodega?.id) {
+    setSelectedBodegaId(String(receta.bodega.id));
+  }
 
   // 1. Producto asociado directo desde la receta
   if (receta.producto?.id) {
@@ -600,24 +612,24 @@ export default function NewRecipePage() {
                     className="grid grid-cols-[2fr,1fr,auto] gap-3 items-center"
                   >
                     <select
-                      value={item.insumoId}
-                      onChange={(e) =>
-                        handleLineItemChange(
-                          item.id,
-                          "insumoId",
-                          e.target.value
-                        )
-                      }
-                      className="rounded-md border border-slate-300 px-3 py-2 text-xs focus:ring-blue-500 focus:border-blue-500"
-                      disabled={disabledButtons}
-                    >
-                      <option value="">Seleccionar insumo</option>
-                      {insumos.map((ins) => (
-                        <option key={ins.id} value={ins.id}>
-                          {ins.nombre} (ID: {ins.id})
-                        </option>
-                      ))}
-                    </select>
+  value={item.insumoId}
+  disabled={!selectedBodegaId || disabledButtons}
+  onChange={(e) =>
+    handleLineItemChange(item.id, "insumoId", e.target.value)
+  }
+  className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100"
+>
+  <option value="">
+    {selectedBodegaId
+      ? "Selecciona un insumo..."
+      : "Selecciona primero una bodega"}
+  </option>
+  {insumosDeBodega.map((ins) => (
+    <option key={ins.id} value={ins.id}>
+      {ins.nombre} ({ins.codigo})
+    </option>
+  ))}
+</select>
 
                     <input
                       type="number"

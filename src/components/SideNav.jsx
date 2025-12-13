@@ -38,6 +38,18 @@ const navItems = [
     icon: "🧪",
     path: "/simulacion",
   },
+  {
+    id: "terceros",             // 👈 NUEVO
+    label: "terceros",
+    icon: "👨‍🦰",
+    path: "/terceros",
+  },
+  {
+    id: "tallas",             // 👈 NUEVO
+    label: "tallas",
+    icon: "👕",
+    path: "/tallas",
+  },
 ];
 
 export default function SideNav() {
