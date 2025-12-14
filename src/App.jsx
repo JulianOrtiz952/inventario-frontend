@@ -13,6 +13,7 @@ import WarehousesPage from "./pages/WarehousesPage";
 import ProductionSimulationPage from "./pages/ProductionSimulationPage"; // si la usas
 import TercerosPage from "./pages/TercerosPage";
 import TallasPage from "./pages/TallasPage";
+import NotasEnsamblePage from "./pages/NotasEnsamblePage";
 
 export default function App() {
   return (
@@ -31,7 +32,7 @@ export default function App() {
               <Route path="/" element={<InventoryPage />} />
               <Route path="/bodegas" element={<WarehousesPage />} /> 
               <Route path="/productos" element={<ProductsPage />} />
-              <Route path="/recetas" element={<RecipesPage />} />
+              <Route path="/nota_ensamble" element={<NotasEnsamblePage />} />
               <Route path="/terceros" element={<TercerosPage />} />
               <Route path="/tallas" element={<TallasPage />} />
               <Route path="/proveedores" element={<ProvidersPage />} />

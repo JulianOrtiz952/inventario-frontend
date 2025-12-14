@@ -27,10 +27,10 @@ const navItems = [
     path: "/productos",
   },
   {
-    id: "recetas",
-    label: "Nueva receta",
+    id: "nota_ensamble",
+    label: "Nota de ensamble",
     icon: "📋",
-    path: "/recetas",
+    path: "/nota_ensamble",
   },
   {
     id: "simulacion",
