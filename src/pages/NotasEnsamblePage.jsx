@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import CreateNotaEnsambleModal from "../components/CreateNotaEnsambleModal"; // ajusta ruta si aplica
+import { API_BASE } from "../config/api";
 
-const API_BASE = "http://127.0.0.1:8000/api";
 const PAGE_SIZE = 30;
 
 const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });

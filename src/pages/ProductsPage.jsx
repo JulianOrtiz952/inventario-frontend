@@ -4,8 +4,8 @@ import CreateProductModal from "../components/CreateProductModal";
 import ProductDetailsModal from "../components/ProductDetailsModal";
 import ActionIconButton from "../components/ActionIconButton";
 import EditProductModal from "../components/EditProductModal";
+import { API_BASE } from "../config/api";
 
-const API_BASE = "http://127.0.0.1:8000/api";
 const PAGE_SIZE = 30;
 
 function asRows(data) {

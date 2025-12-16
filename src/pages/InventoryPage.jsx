@@ -5,8 +5,8 @@ import EditInsumoModal from "../components/EditInsumoModal";
 import ViewInsumoModal from "../components/ViewInsumoModal";
 import DeleteInsumoModal from "../components/DeleteInsumoModal";
 import MovementModal from "../components/MovementModal";
+import { API_BASE } from "../config/api";
 
-const API_BASE = "http://127.0.0.1:8000/api";
 const PAGE_SIZE = 30;
 
 function asRows(data) {

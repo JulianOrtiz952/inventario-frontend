@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ProductDetailsModal from "./ProductDetailsModal";
+import { API_BASE } from "../config/api";
 
-const API_BASE = "http://127.0.0.1:8000/api";
 
 const DIAN_UOM = [
   "UN","H87","KGM","GRM","MTR","CMT","MMT","MTK","MTQ","LTR","MLT","BX","PK","ROL",

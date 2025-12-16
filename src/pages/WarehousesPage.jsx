@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
-const API_BASE = "http://127.0.0.1:8000/api";
+import { API_BASE } from "../config/api";
 
 const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
 const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });

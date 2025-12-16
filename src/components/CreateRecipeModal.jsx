@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { API_BASE } from "../config/api";
 
-const API_BASE = "http://127.0.0.1:8000/api";
 
 export default function CreateRecipeModal({ isOpen, onClose, onCreated }) {
   // Atributos de la receta (se pueden ajustar, pero se cargan desde el producto)

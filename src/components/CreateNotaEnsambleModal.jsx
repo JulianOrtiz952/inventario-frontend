@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { API_BASE } from "../config/api";
 
-const API_BASE = "http://127.0.0.1:8000/api";
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 // Formato Colombia
