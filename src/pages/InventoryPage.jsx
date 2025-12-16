@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import EstadoBadge from "../components/EstadoBadge";
 import ActionIconButton from "../components/ActionIconButton";
 import CreateInsumoModal from "../components/CreateInsumoModal";
 import EditInsumoModal from "../components/EditInsumoModal";
@@ -8,6 +7,11 @@ import DeleteInsumoModal from "../components/DeleteInsumoModal";
 import MovementModal from "../components/MovementModal";
 
 const API_BASE = "http://127.0.0.1:8000/api";
+const PAGE_SIZE = 30;
+
+function asRows(data) {
+  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+}
 
 function getStockActual(insumo) {
   const v = insumo?.cantidad ?? insumo?.stock_actual;
@@ -21,12 +25,46 @@ function getStockMinimo(insumo) {
 }
 
 function getInsumoPk(insumo) {
-  // ✅ Fallback si el backend no retorna id
   return insumo?.id ?? insumo?.codigo ?? null;
 }
 
+async function fetchAllPages(url, { maxPages = 20 } = {}) {
+  // Para catálogos pequeños: recorre paginación y concatena results
+  // Si la API devuelve lista, también sirve.
+  const all = [];
+  let next = url;
+  let pages = 0;
+
+  while (next && pages < maxPages) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await fetch(next);
+    if (!res.ok) break;
+
+    // eslint-disable-next-line no-await-in-loop
+    const data = await res.json();
+    const rows = asRows(data);
+    all.push(...rows);
+
+    // paginado
+    next = data?.next || null;
+    pages += 1;
+
+    // si era lista, ya terminó
+    if (Array.isArray(data)) break;
+  }
+
+  return all;
+}
+
 export default function InventoryPage() {
+  // ✅ INSUMOS PAGINADOS
   const [insumos, setInsumos] = useState([]);
+  const [insumosCount, setInsumosCount] = useState(0);
+  const [insumosPage, setInsumosPage] = useState(1);
+  const [insumosNext, setInsumosNext] = useState(null);
+  const [insumosPrev, setInsumosPrev] = useState(null);
+
+  // Catálogos (se cargan completos “hasta X páginas”)
   const [proveedores, setProveedores] = useState([]);
   const [terceros, setTerceros] = useState([]);
   const [bodegas, setBodegas] = useState([]);
@@ -47,7 +85,7 @@ export default function InventoryPage() {
     referencia: "",
     unidad: "",
     color: "",
-    stock_actual: "", // UI
+    stock_actual: "",
     stock_minimo: "",
     costo_unitario: "",
     proveedor_id: "",
@@ -76,7 +114,7 @@ export default function InventoryPage() {
     referencia: "",
     unidad: "",
     color: "",
-    stock_actual: "", // UI
+    stock_actual: "",
     stock_minimo: "",
     costo_unitario: "",
     proveedor_id: "",
@@ -87,7 +125,7 @@ export default function InventoryPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
 
-  // Modal movimiento (entrada/salida)
+  // Modal movimiento
   const [isMovementOpen, setIsMovementOpen] = useState(false);
   const [movementType, setMovementType] = useState("entrada");
   const [movementSearch, setMovementSearch] = useState("");
@@ -95,44 +133,6 @@ export default function InventoryPage() {
   const [movementQty, setMovementQty] = useState("");
   const [movementError, setMovementError] = useState("");
   const [movementLoading, setMovementLoading] = useState(false);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const [insumosRes, proveedoresRes, bodegasRes, tercerosRes] =
-          await Promise.all([
-            fetch(`${API_BASE}/insumos/`),
-            fetch(`${API_BASE}/proveedores/`),
-            fetch(`${API_BASE}/bodegas/`),
-            fetch(`${API_BASE}/terceros/`),
-          ]);
-
-        if (!insumosRes.ok || !proveedoresRes.ok || !bodegasRes.ok || !tercerosRes.ok) {
-          throw new Error("Error al obtener datos del servidor");
-        }
-
-        const insumosData = await insumosRes.json();
-        const proveedoresData = await proveedoresRes.json();
-        const bodegasData = await bodegasRes.json();
-        const tercerosData = await tercerosRes.json();
-
-        setInsumos(insumosData);
-        setProveedores(proveedoresData);
-        setBodegas(bodegasData);
-        setTerceros(tercerosData);
-      } catch (err) {
-        console.error(err);
-        setError(err.message || "Error cargando inventario.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, []);
 
   function getEstadoInfo(insumo) {
     const actual = getStockActual(insumo);
@@ -161,6 +161,51 @@ export default function InventoryPage() {
     () => bodegas.map((b) => ({ id: b.id, nombre: `${b.codigo} - ${b.nombre}` })),
     [bodegas]
   );
+
+  // ✅ carga paginada de insumos (30 en 30)
+  async function loadInsumos(page = 1) {
+    const res = await fetch(`${API_BASE}/insumos/?page=${page}&page_size=${PAGE_SIZE}`);
+    if (!res.ok) throw new Error("No se pudieron cargar los insumos.");
+
+    const data = await res.json();
+
+    setInsumos(asRows(data));
+    setInsumosCount(Number(data?.count || 0));
+    setInsumosNext(data?.next || null);
+    setInsumosPrev(data?.previous || null);
+    setInsumosPage(page);
+  }
+
+  // ✅ carga catálogos (trae “todo” recorriendo paginación)
+  async function loadCatalogs() {
+    const [provAll, bodAll, terAll] = await Promise.all([
+      fetchAllPages(`${API_BASE}/proveedores/?page_size=200`),
+      fetchAllPages(`${API_BASE}/bodegas/?page_size=200`),
+      fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
+    ]);
+
+    setProveedores(provAll);
+    setBodegas(bodAll);
+    setTerceros(terAll);
+  }
+
+  // Carga inicial
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        await Promise.all([loadCatalogs(), loadInsumos(1)]);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Error cargando inventario.");
+      } finally {
+        setLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const insumosFiltrados = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -228,25 +273,12 @@ export default function InventoryPage() {
     e.preventDefault();
     setCreateError("");
 
-    if (!createForm.codigo || !createForm.nombre) {
-      setCreateError("Código y nombre son obligatorios.");
-      return;
-    }
-    if (!createForm.bodega_id) {
-      setCreateError("Selecciona una bodega.");
-      return;
-    }
-    if (!createForm.tercero_id) {
-      setCreateError("Selecciona un tercero.");
-      return;
-    }
-    if (!createForm.costo_unitario) {
-      setCreateError("El costo unitario es obligatorio.");
-      return;
-    }
+    if (!createForm.codigo || !createForm.nombre) return setCreateError("Código y nombre son obligatorios.");
+    if (!createForm.bodega_id) return setCreateError("Selecciona una bodega.");
+    if (!createForm.tercero_id) return setCreateError("Selecciona un tercero.");
+    if (!createForm.costo_unitario) return setCreateError("El costo unitario es obligatorio.");
     if (createForm.stock_actual === "" || createForm.stock_actual === null) {
-      setCreateError("La cantidad (stock actual) es obligatoria.");
-      return;
+      return setCreateError("La cantidad (stock actual) es obligatoria.");
     }
 
     try {
@@ -261,16 +293,11 @@ export default function InventoryPage() {
         tercero_id: Number(createForm.tercero_id),
         cantidad: String(createForm.stock_actual),
         costo_unitario: String(createForm.costo_unitario),
-
         unidad: createForm.unidad || undefined,
         color: createForm.color || undefined,
-        stock_minimo:
-          createForm.stock_minimo === "" ? undefined : String(createForm.stock_minimo),
-
+        stock_minimo: createForm.stock_minimo === "" ? undefined : String(createForm.stock_minimo),
         proveedor_id: createForm.proveedor_id ? Number(createForm.proveedor_id) : undefined,
-
-        // compat
-        stock_actual: createForm.stock_actual,
+        stock_actual: createForm.stock_actual, // compat
       };
 
       const res = await fetch(`${API_BASE}/insumos/`, {
@@ -285,9 +312,9 @@ export default function InventoryPage() {
         throw new Error("No se pudo crear el insumo.");
       }
 
-      const newInsumo = await res.json();
-      setInsumos((prev) => [...prev, newInsumo]);
+      // ✅ recarga página actual (así queda coherente con paginación)
       setIsCreateOpen(false);
+      await loadInsumos(insumosPage);
     } catch (err) {
       console.error(err);
       setCreateError(err.message || "Error al crear el insumo.");
@@ -313,25 +340,23 @@ export default function InventoryPage() {
     if (!insumoToDelete) return;
 
     const pk = getInsumoPk(insumoToDelete);
-    if (!pk) {
-      setDeleteError("No se encontró identificador (id/código) del insumo.");
-      return;
-    }
+    if (!pk) return setDeleteError("No se encontró identificador (id/código) del insumo.");
 
     try {
       setDeleteLoading(true);
       setDeleteError("");
 
-      const res = await fetch(`${API_BASE}/insumos/${pk}/`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_BASE}/insumos/${pk}/`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) throw new Error("No se pudo eliminar el insumo.");
 
-      if (!res.ok && res.status !== 204) {
-        throw new Error("No se pudo eliminar el insumo.");
-      }
-
-      setInsumos((prev) => prev.filter((i) => getInsumoPk(i) !== pk));
       closeDeleteModal();
+
+      // ✅ si borraste el último de la página, intenta ir a la anterior
+      const maybeNewCount = Math.max(0, insumosCount - 1);
+      const maxPage = Math.max(1, Math.ceil(maybeNewCount / PAGE_SIZE));
+      const target = Math.min(insumosPage, maxPage);
+      await loadInsumos(target);
+      setInsumosCount(maybeNewCount);
     } catch (err) {
       console.error(err);
       setDeleteError(err.message || "Error al eliminar el insumo.");
@@ -389,33 +414,14 @@ export default function InventoryPage() {
   async function handleEditSubmit(e) {
     e.preventDefault();
 
-    if (!editInsumoPk) {
-      setEditError("No se encontró identificador (id/código) del insumo.");
-      return;
-    }
-
+    if (!editInsumoPk) return setEditError("No se encontró identificador (id/código) del insumo.");
     setEditError("");
 
-    if (!editForm.codigo || !editForm.nombre) {
-      setEditError("Código y nombre son obligatorios.");
-      return;
-    }
-    if (!editForm.bodega_id) {
-      setEditError("Selecciona una bodega.");
-      return;
-    }
-    if (!editForm.tercero_id) {
-      setEditError("Selecciona un tercero.");
-      return;
-    }
-    if (!editForm.costo_unitario) {
-      setEditError("El costo unitario es obligatorio.");
-      return;
-    }
-    if (editForm.stock_actual === "" || editForm.stock_actual === null) {
-      setEditError("La cantidad es obligatoria.");
-      return;
-    }
+    if (!editForm.codigo || !editForm.nombre) return setEditError("Código y nombre son obligatorios.");
+    if (!editForm.bodega_id) return setEditError("Selecciona una bodega.");
+    if (!editForm.tercero_id) return setEditError("Selecciona un tercero.");
+    if (!editForm.costo_unitario) return setEditError("El costo unitario es obligatorio.");
+    if (editForm.stock_actual === "" || editForm.stock_actual === null) return setEditError("La cantidad es obligatoria.");
 
     try {
       setEditLoading(true);
@@ -425,15 +431,11 @@ export default function InventoryPage() {
         nombre: String(editForm.nombre).trim(),
         descripcion: editForm.descripcion ? String(editForm.descripcion).trim() : "",
         referencia: editForm.referencia?.trim() || editForm.codigo,
-
         bodega_id: Number(editForm.bodega_id),
         tercero_id: Number(editForm.tercero_id),
-
         cantidad: String(editForm.stock_actual),
         costo_unitario: String(editForm.costo_unitario),
-
         proveedor_id: editForm.proveedor_id ? Number(editForm.proveedor_id) : null,
-
         unidad: editForm.unidad || null,
         color: editForm.color || null,
         stock_minimo: editForm.stock_minimo === "" ? null : String(editForm.stock_minimo),
@@ -447,28 +449,14 @@ export default function InventoryPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        console.error("Error PUT insumo:", data);
-        throw new Error(
-          (data && (data.detail || JSON.stringify(data))) || "No se pudo actualizar el insumo."
-        );
-      }
-
-      // Puede venir JSON o 204 / vacío
-      let updated = null;
-      const text = await res.text().catch(() => "");
-      if (text) updated = JSON.parse(text);
-
-      if (updated) {
-        const updatedPk = getInsumoPk(updated) ?? editInsumoPk;
-        setInsumos((prev) => prev.map((i) => (getInsumoPk(i) === updatedPk ? updated : i)));
-      } else {
-        const fresh = await fetch(`${API_BASE}/insumos/`);
-        const freshData = await fresh.json();
-        setInsumos(freshData);
+        throw new Error((data && (data.detail || JSON.stringify(data))) || "No se pudo actualizar el insumo.");
       }
 
       setIsEditOpen(false);
       setEditInsumoPk(null);
+
+      // ✅ recarga página actual
+      await loadInsumos(insumosPage);
     } catch (err) {
       console.error(err);
       setEditError(err.message || "Error al actualizar el insumo.");
@@ -497,31 +485,18 @@ export default function InventoryPage() {
     e.preventDefault();
     setMovementError("");
 
-    if (!movementSelected) {
-      setMovementError("Selecciona un insumo.");
-      return;
-    }
+    if (!movementSelected) return setMovementError("Selecciona un insumo.");
 
     const pk = getInsumoPk(movementSelected);
-    if (!pk) {
-      setMovementError("No se encontró identificador (id/código) del insumo.");
-      return;
-    }
+    if (!pk) return setMovementError("No se encontró identificador (id/código) del insumo.");
 
     const qty = parseFloat(movementQty);
-    if (Number.isNaN(qty) || qty <= 0) {
-      setMovementError("Ingresa una cantidad válida mayor a 0.");
-      return;
-    }
+    if (Number.isNaN(qty) || qty <= 0) return setMovementError("Ingresa una cantidad válida mayor a 0.");
 
     const stockActual = getStockActual(movementSelected);
     let nuevoStock = movementType === "entrada" ? stockActual + qty : stockActual - qty;
 
-    if (movementType === "salida" && nuevoStock < 0) {
-      setMovementError("La salida no puede dejar el stock en negativo.");
-      return;
-    }
-
+    if (movementType === "salida" && nuevoStock < 0) return setMovementError("La salida no puede dejar el stock en negativo.");
     nuevoStock = Number(nuevoStock.toFixed(2));
 
     try {
@@ -530,10 +505,7 @@ export default function InventoryPage() {
       const res = await fetch(`${API_BASE}/insumos/${pk}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cantidad: String(nuevoStock),
-          stock_actual: nuevoStock, // compat
-        }),
+        body: JSON.stringify({ cantidad: String(nuevoStock), stock_actual: nuevoStock }),
       });
 
       if (!res.ok) {
@@ -542,17 +514,27 @@ export default function InventoryPage() {
         throw new Error("No se pudo registrar el movimiento.");
       }
 
-      const updated = await res.json();
-      const updatedPk = getInsumoPk(updated) ?? pk;
-
-      setInsumos((prev) => prev.map((i) => (getInsumoPk(i) === updatedPk ? updated : i)));
       setIsMovementOpen(false);
+
+      // ✅ recarga página actual
+      await loadInsumos(insumosPage);
     } catch (err) {
       console.error(err);
       setMovementError(err.message || "Error al registrar el movimiento.");
     } finally {
       setMovementLoading(false);
     }
+  }
+
+  // ✅ paginación UI insumos
+  async function goPrevPage() {
+    if (!insumosPrev || loading) return;
+    await loadInsumos(Math.max(1, insumosPage - 1));
+  }
+
+  async function goNextPage() {
+    if (!insumosNext || loading) return;
+    await loadInsumos(insumosPage + 1);
   }
 
   return (
@@ -583,7 +565,7 @@ export default function InventoryPage() {
             <input
               type="text"
               className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
-              placeholder="Buscar insumos..."
+              placeholder="Buscar insumos (en esta página)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -599,7 +581,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:justify-end mb-4">
+      <div className="flex flex-col gap-3 md:flex-row md:justify-end mb-3">
         <select
           className="px-3 py-2 rounded-md bg-white border border-slate-200 text-xs text-slate-700 shadow-sm w-full md:w-44"
           value={proveedorFiltro}
@@ -625,6 +607,33 @@ export default function InventoryPage() {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* ✅ Barra paginación */}
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="text-xs text-slate-500">
+          Total: <b>{insumosCount}</b> • Página <b>{insumosPage}</b>
+          <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!insumosPrev || loading}
+            onClick={goPrevPage}
+            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+          >
+            ← Anterior
+          </button>
+          <button
+            type="button"
+            disabled={!insumosNext || loading}
+            onClick={goNextPage}
+            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+          >
+            Siguiente →
+          </button>
+        </div>
       </div>
 
       <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -653,8 +662,8 @@ export default function InventoryPage() {
               <tbody>
                 {insumosFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="px-6 py-6 text-center text-sm text-slate-500">
-                      No hay insumos que coincidan con el filtro.
+                    <td colSpan={11} className="px-6 py-6 text-center text-sm text-slate-500">
+                      No hay insumos que coincidan con el filtro (en esta página).
                     </td>
                   </tr>
                 )}
@@ -663,51 +672,33 @@ export default function InventoryPage() {
                   const pk = getInsumoPk(i);
                   const actual = getStockActual(i);
                   const minimo = getStockMinimo(i);
+                  const estado = getEstadoInfo(i);
 
                   return (
-                    <tr
-                      key={String(pk ?? Math.random())}
-                      className="border-t border-slate-100 hover:bg-slate-50/80"
-                    >
+                    <tr key={String(pk ?? `${i.codigo}-${Math.random()}`)} className="border-t border-slate-100 hover:bg-slate-50/80">
                       <td className="px-4 py-3 text-sm text-slate-600">{i.codigo || `#${i.id}`}</td>
                       <td className="px-6 py-3 text-sm text-slate-800">{i.nombre}</td>
                       <td className="px-6 py-3 text-sm text-slate-800">{i.referencia}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{i.bodega?.nombre || "—"}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{i.tercero?.nombre || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">
-                        {actual}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">
-                        {minimo || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">
-                        ${i.costo_unitario}
-                      </td>
+
+                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">{actual}</td>
+                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">{minimo || "—"}</td>
+                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">${i.costo_unitario}</td>
                       <td className="px-4 py-3 text-sm text-slate-700">{i.proveedor?.nombre ?? "—"}</td>
 
                       <td className="px-4 py-3 text-xs">
-                        {(() => {
-                          const estado = getEstadoInfo(i);
-                          return (
-                            <span className={`inline-flex items-center gap-1 ${estado.colorClass}`}>
-                              <span className={`w-2 h-2 rounded-full ${estado.dotClass}`} />
-                              {estado.label}
-                            </span>
-                          );
-                        })()}
+                        <span className={`inline-flex items-center gap-1 ${estado.colorClass}`}>
+                          <span className={`w-2 h-2 rounded-full ${estado.dotClass}`} />
+                          {estado.label}
+                        </span>
                       </td>
 
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
-                          <ActionIconButton label="Ver" onClick={() => handleView(i)}>
-                            👁️
-                          </ActionIconButton>
-                          <ActionIconButton label="Editar" onClick={() => handleEdit(i)}>
-                            ✏️
-                          </ActionIconButton>
-                          <ActionIconButton label="Eliminar" onClick={() => openDeleteModal(i)}>
-                            🗑️
-                          </ActionIconButton>
+                          <ActionIconButton label="Ver" onClick={() => handleView(i)}>👁️</ActionIconButton>
+                          <ActionIconButton label="Editar" onClick={() => handleEdit(i)}>✏️</ActionIconButton>
+                          <ActionIconButton label="Eliminar" onClick={() => openDeleteModal(i)}>🗑️</ActionIconButton>
                         </div>
                       </td>
                     </tr>

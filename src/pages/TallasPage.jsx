@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 
 const API_BASE = "http://127.0.0.1:8000/api";
+const PAGE_SIZE = 30;
+
+function asRows(data) {
+  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+}
 
 export default function TallasPage() {
   const [tallas, setTallas] = useState([]);
+  const [count, setCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [nextUrl, setNextUrl] = useState(null);
+  const [prevUrl, setPrevUrl] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -15,23 +25,36 @@ export default function TallasPage() {
 
   const [form, setForm] = useState({ nombre: "" });
 
-  async function loadTallas() {
+  async function loadTallas(targetPage = 1) {
     setError("");
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/tallas/`);
+      const res = await fetch(
+        `${API_BASE}/tallas/?page=${targetPage}&page_size=${PAGE_SIZE}`
+      );
       if (!res.ok) throw new Error("Error cargando tallas.");
+
       const data = await res.json();
-      setTallas(data);
+
+      setTallas(asRows(data));
+      setCount(Number(data?.count || 0));
+      setNextUrl(data?.next || null);
+      setPrevUrl(data?.previous || null);
+      setPage(targetPage);
     } catch (e) {
+      console.error(e);
       setError(e.message || "Error cargando tallas.");
+      setTallas([]);
+      setCount(0);
+      setNextUrl(null);
+      setPrevUrl(null);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadTallas();
+    loadTallas(1);
   }, []);
 
   const filtered = useMemo(() => {
@@ -55,6 +78,7 @@ export default function TallasPage() {
   }
 
   function closeModal() {
+    if (saving) return;
     setIsModalOpen(false);
     setEditing(null);
   }
@@ -76,9 +100,7 @@ export default function TallasPage() {
       setSaving(true);
 
       const isEdit = !!editing?.id;
-      const url = isEdit
-        ? `${API_BASE}/tallas/${editing.id}/`
-        : `${API_BASE}/tallas/`;
+      const url = isEdit ? `${API_BASE}/tallas/${editing.id}/` : `${API_BASE}/tallas/`;
       const method = isEdit ? "PATCH" : "POST";
 
       const res = await fetch(url, {
@@ -90,12 +112,14 @@ export default function TallasPage() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         console.error("Error guardando talla:", data);
-        throw new Error("No se pudo guardar la talla.");
+        throw new Error(data?.detail || "No se pudo guardar la talla.");
       }
 
-      await loadTallas();
+      // ✅ para ver el cambio seguro, recargamos (página 1)
+      await loadTallas(1);
       closeModal();
     } catch (e2) {
+      console.error(e2);
       setError(e2.message || "Error guardando talla.");
     } finally {
       setSaving(false);
@@ -108,15 +132,31 @@ export default function TallasPage() {
 
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/tallas/${t.id}/`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("No se pudo eliminar la talla.");
-      await loadTallas();
+      const res = await fetch(`${API_BASE}/tallas/${t.id}/`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) throw new Error("No se pudo eliminar la talla.");
+
+      // ✅ si borraste el último de la página, intenta ir a la anterior
+      const newCount = Math.max(0, count - 1);
+      const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
+      const target = Math.min(page, maxPage);
+
+      await loadTallas(target);
+      setCount(newCount);
     } catch (e) {
+      console.error(e);
       setError(e.message || "Error eliminando talla.");
     }
   }
+
+  const goPrev = async () => {
+    if (!prevUrl || loading) return;
+    await loadTallas(Math.max(1, page - 1));
+  };
+
+  const goNext = async () => {
+    if (!nextUrl || loading) return;
+    await loadTallas(page + 1);
+  };
 
   return (
     <div className="space-y-4">
@@ -135,24 +175,55 @@ export default function TallasPage() {
         </button>
       </div>
 
-      {/* Search + error */}
+      {/* Search + recargar */}
       <div className="flex items-center gap-3">
         <div className="flex-1 flex items-center bg-white rounded-md border border-slate-200 px-3 py-2 text-sm">
           <span className="mr-2 text-slate-400 text-sm">🔍</span>
           <input
             className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
-            placeholder="Buscar talla..."
+            placeholder="Buscar talla (en esta página)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
         <button
-          onClick={loadTallas}
+          onClick={() => loadTallas(page)}
           className="px-3 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+          disabled={loading}
         >
-          Recargar
+          {loading ? "..." : "Recargar"}
         </button>
+      </div>
+
+      {/* Paginación */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs text-slate-500">
+          Total: <b>{count}</b> • Página <b>{page}</b>
+          <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+          <span className="ml-2 text-[11px] text-slate-400">
+            *La búsqueda filtra solo la página actual.
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!prevUrl || loading}
+            onClick={goPrev}
+            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+          >
+            ← Anterior
+          </button>
+          <button
+            type="button"
+            disabled={!nextUrl || loading}
+            onClick={goNext}
+            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+          >
+            Siguiente →
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -188,7 +259,7 @@ export default function TallasPage() {
               {!loading && filtered.length === 0 && (
                 <tr>
                   <td className="px-4 py-3 text-slate-500" colSpan={3}>
-                    No hay tallas.
+                    No hay tallas en esta página.
                   </td>
                 </tr>
               )}
@@ -200,9 +271,7 @@ export default function TallasPage() {
                     className="border-b border-slate-100 hover:bg-slate-50/70"
                   >
                     <td className="px-4 py-3 text-slate-700">{t.id}</td>
-                    <td className="px-4 py-3 font-medium text-slate-800">
-                      {t.nombre}
-                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-800">{t.nombre}</td>
                     <td className="px-4 py-3 text-center">
                       <div className="inline-flex gap-2">
                         <button
@@ -247,9 +316,7 @@ export default function TallasPage() {
               {error && <div className="text-xs text-red-600">{error}</div>}
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Nombre
-                </label>
+                <label className="text-xs font-medium text-slate-700">Nombre</label>
                 <input
                   type="text"
                   name="nombre"

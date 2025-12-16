@@ -7,6 +7,14 @@ const DIAN_UOM = [
   "UN","H87","KGM","GRM","MTR","CMT","MMT","MTK","MTQ","LTR","MLT","BX","PK","ROL",
 ];
 
+function asRows(data) {
+  return Array.isArray(data)
+    ? data
+    : Array.isArray(data?.results)
+    ? data.results
+    : [];
+}
+
 async function safeJson(res) {
   const text = await res.text().catch(() => "");
   if (!text) return null;
@@ -163,15 +171,13 @@ function CreateImpuestoModal({ isOpen, onClose, onCreated }) {
 // Datos adicionales UPSERT (FIX)
 // ===============================
 async function getDAIdBySku(sku) {
-  // Si tu backend NO tiene filtro por producto, esto igual funciona (trae todo y busca).
   const res = await fetch(`${API_BASE}/producto-datos-adicionales/`);
   if (!res.ok) return null;
 
-  const list = await res.json();
-  if (!Array.isArray(list)) return null;
+  const data = await res.json();
+  const rows = asRows(data); // ✅ soporta {results: []} o []
 
-  // Algunos backends devuelven producto: "SKU"; otros devuelven producto_id: "SKU"
-  const found = list.find((x) => x?.producto === sku || x?.producto_id === sku);
+  const found = rows.find((x) => x?.producto === sku || x?.producto_id === sku);
   return found?.id ?? null;
 }
 
@@ -275,12 +281,12 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
 
         if (resT.ok) {
           const tData = await resT.json();
-          if (!cancelled) setTercerosOptions(Array.isArray(tData) ? tData : []);
+          if (!cancelled) setTercerosOptions(asRows(tData));
         }
 
         if (resImp.ok) {
           const impData = await resImp.json();
-          if (!cancelled) setImpuestos(Array.isArray(impData) ? impData : []);
+setImpuestos(asRows(impData));
         }
 
         setOriginal(data);
@@ -336,9 +342,9 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
   };
 
   const refreshImpuestos = async (selectId = null) => {
-    const impRes = await fetch(`${API_BASE}/impuestos/`);
-    if (!impRes.ok) return;
-    const impData = await impRes.json();
+    const resImp = await fetch(`${API_BASE}/impuestos/`);
+    if (!resImp.ok) return;
+    const impData = await resImp.json();
     setImpuestos(Array.isArray(impData) ? impData : []);
 
     if (selectId) {

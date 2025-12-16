@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const API_BASE = "http://127.0.0.1:8000/api";
-
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 // Formato Colombia
@@ -10,8 +11,13 @@ const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
 const num = (n) => nfNum.format(Number(n || 0));
 const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
 
-// Logo temporal (cámbialo por tu logo real luego)
-const TEMP_LOGO_URL = "https://placehold.co/260x90/png?text=CALA";
+// ✅ Logo temporal (cámbialo luego por el tuyo)
+const TEMP_LOGO_URL =
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/640px-Placeholder_view_vector.svg.png";
+
+function asRows(data) {
+  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+}
 
 async function safeJson(res) {
   const text = await res.text().catch(() => "");
@@ -34,7 +40,10 @@ function FieldRow({ label, value }) {
   );
 }
 
-function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
+function NotaDocumento({ nota, mode, onClose, onCreateAnother }) {
+  const printAreaRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
+
   const notaCode = `NE-${nota?.id ?? "—"}`;
 
   const getBodegaLabel = () => {
@@ -59,33 +68,130 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
 
   const imprimir = () => window.print();
 
+  // ✅ Descarga PDF (captura el documento y lo convierte a PDF)
+  const descargarPDF = async () => {
+    const el = printAreaRef.current;
+    if (!el) return;
+
+    try {
+      setDownloading(true);
+
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        scrollX: 0,
+        scrollY: -window.scrollY,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "pt",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+
+      const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+      const renderW = imgWidth * ratio;
+      const renderH = imgHeight * ratio;
+
+      const marginX = (pageWidth - renderW) / 2;
+      const marginY = (pageHeight - renderH) / 2;
+
+      if (renderH <= pageHeight) {
+        pdf.addImage(imgData, "PNG", marginX, marginY, renderW, renderH);
+      } else {
+        let yOffset = 0;
+        const pageCanvas = document.createElement("canvas");
+        const ctx = pageCanvas.getContext("2d");
+
+        const pxPerPt = imgWidth / renderW;
+        const pageImgHeightPx = Math.floor(pageHeight * pxPerPt);
+
+        pageCanvas.width = imgWidth;
+        pageCanvas.height = pageImgHeightPx;
+
+        while (yOffset < imgHeight) {
+          ctx.clearRect(0, 0, pageCanvas.width, pageCanvas.height);
+
+          ctx.drawImage(
+            canvas,
+            0,
+            yOffset,
+            imgWidth,
+            pageImgHeightPx,
+            0,
+            0,
+            imgWidth,
+            pageImgHeightPx
+          );
+
+          const pageData = pageCanvas.toDataURL("image/png");
+          if (yOffset > 0) pdf.addPage();
+
+          const r = Math.min(pageWidth / imgWidth, pageHeight / (pageImgHeightPx / pxPerPt));
+          const w = imgWidth * r;
+          const h = (pageImgHeightPx / pxPerPt) * r;
+
+          const x = (pageWidth - w) / 2;
+          const y = (pageHeight - h) / 2;
+
+          pdf.addImage(pageData, "PNG", x, y, w, h);
+
+          yOffset += pageImgHeightPx;
+        }
+      }
+
+      pdf.save(`Nota_Ensamble_${notaCode}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo generar el PDF. Revisa la consola.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Print styles */}
       <style>
         {`
           @media print {
             body { background: white !important; }
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
             .print-area { box-shadow: none !important; border: none !important; }
             .modal-backdrop { background: transparent !important; }
           }
         `}
       </style>
 
-      {/* Acciones */}
       <div className="no-print flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-slate-900">
-            {mode === "edit" ? "Nota actualizada" : "Nota creada"}: <span className="text-blue-700">{notaCode}</span>
+            {mode === "edit" ? "Nota actualizada" : "Nota creada"}:{" "}
+            <span className="text-blue-700">{notaCode}</span>
           </h2>
           <p className="text-xs text-slate-500">
-            Vista tipo documento (lista para revisar e imprimir).
+            Vista tipo documento (lista para imprimir o descargar en PDF).
           </p>
         </div>
 
         <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={descargarPDF}
+            disabled={downloading}
+            className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70"
+          >
+            {downloading ? "Generando PDF…" : "Descargar PDF"}
+          </button>
+
           <button
             type="button"
             onClick={imprimir}
@@ -105,19 +211,19 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
           <button
             type="button"
             onClick={onCreateAnother}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+            className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
           >
-            {mode === "edit" ? "Seguir editando" : "Crear otra"}
+            {mode === "edit" ? "Volver" : "Crear otra"}
           </button>
         </div>
       </div>
 
-      {/* Documento */}
-      <div className="print-area rounded-xl border border-slate-200 shadow-sm bg-white overflow-hidden">
-        {/* Header documento */}
+      <div
+        ref={printAreaRef}
+        className="print-area rounded-xl border border-slate-200 shadow-sm bg-white overflow-hidden"
+      >
         <div className="px-6 py-5 border-b border-slate-200 bg-slate-50">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            {/* Logo */}
             <div className="flex items-center gap-3">
               <img
                 src={TEMP_LOGO_URL}
@@ -132,7 +238,6 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
               </div>
             </div>
 
-            {/* Datos empresa (placeholder) */}
             <div className="text-[11px] text-slate-600 md:text-center">
               <div className="font-semibold text-slate-900">GRUPO CALA SAS</div>
               <div>NIT: 901.367.797-5</div>
@@ -140,23 +245,20 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
               <div>Tel: 000 000 0000</div>
             </div>
 
-            {/* Caja tipo “Materia Prima - Producto Terminado” */}
             <div className="md:flex md:justify-end">
               <div className="w-full md:w-auto rounded-lg border border-slate-200 bg-white px-4 py-3">
                 <div className="text-[11px] uppercase font-semibold text-slate-500 text-center">
                   Materia prima - Producto terminado
                 </div>
                 <div className="mt-1 text-sm font-bold text-slate-900 text-center">
-                  No. {notaCode}
+                  No. {`NE-${nota?.id ?? "—"}`}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Cuerpo */}
         <div className="p-6 space-y-5">
-          {/* Cabecera */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-lg border border-slate-200 p-4">
               <div className="text-xs font-semibold text-slate-900 mb-3">Tercero</div>
@@ -176,12 +278,11 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
               <div className="text-xs font-semibold text-slate-900 mb-3">Fecha</div>
               <div className="space-y-2">
                 <FieldRow label="Fecha de elaboración" value={nota?.fecha_elaboracion || "—"} />
-                <FieldRow label="Total a ensamblar" value={num(totalProductos)} />
+                <FieldRow label="Cantidad a ensamblar" value={num(totalProductos)} />
               </div>
             </div>
           </div>
 
-          {/* Entrada de producto (productos terminados) */}
           <div className="rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="text-xs font-semibold text-slate-900">Entrada de producto</div>
@@ -195,7 +296,7 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
                     <th className="px-3 py-2 text-left">Código producto</th>
                     <th className="px-3 py-2 text-left">Nombre producto</th>
                     <th className="px-3 py-2 text-left">Talla</th>
-                    <th className="px-3 py-2 text-right">Cantidad a ensamblar</th>
+                    <th className="px-3 py-2 text-right">Cantidad</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -204,12 +305,8 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
                       <td className="px-3 py-2 font-medium text-slate-900">
                         {d?.producto?.codigo_sku || "—"}
                       </td>
-                      <td className="px-3 py-2 text-slate-700">
-                        {d?.producto?.nombre || "—"}
-                      </td>
-                      <td className="px-3 py-2 text-slate-700">
-                        {d?.talla?.nombre || "—"}
-                      </td>
+                      <td className="px-3 py-2 text-slate-700">{d?.producto?.nombre || "—"}</td>
+                      <td className="px-3 py-2 text-slate-700">{d?.talla?.nombre || "—"}</td>
                       <td className="px-3 py-2 text-right font-semibold text-slate-900">
                         {num(d?.cantidad || 0)}
                       </td>
@@ -228,7 +325,6 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
             </div>
           </div>
 
-          {/* Salida de producto (insumos manuales) */}
           <div className="rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="text-xs font-semibold text-slate-900">Salida de producto</div>
@@ -252,9 +348,7 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
                       <td className="px-3 py-2 font-medium text-slate-900">
                         {i?.insumo?.codigo || "—"}
                       </td>
-                      <td className="px-3 py-2 text-slate-700">
-                        {i?.insumo?.nombre || "—"}
-                      </td>
+                      <td className="px-3 py-2 text-slate-700">{i?.insumo?.nombre || "—"}</td>
                       <td className="px-3 py-2 text-slate-700">
                         {i?.insumo?.bodega?.nombre || "—"}
                       </td>
@@ -276,7 +370,6 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
             </div>
           </div>
 
-          {/* Observaciones */}
           <div className="rounded-lg border border-slate-200 p-4">
             <div className="text-xs font-semibold text-slate-900 mb-2">Observaciones</div>
             <div className="text-xs text-slate-700 whitespace-pre-line">
@@ -284,7 +377,6 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="text-[11px] text-slate-500 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>Generado desde el módulo de Inventario.</div>
             <div className="md:text-right">Documento: {notaCode}</div>
@@ -298,62 +390,61 @@ function NotaDocumento({ nota, onClose, onCreateAnother, mode }) {
 export default function CreateNotaEnsambleModal({
   isOpen,
   onClose,
-  onSaved,          // callback(notaGuardada, mode)
-  mode = "create",  // "create" | "edit"
-  notaId = null,    // requerido si mode === "edit"
+  onSaved,
+  mode = "create",
+  notaId = null,
 }) {
-  // ------------------ catálogos ------------------
+  // catálogos
   const [productos, setProductos] = useState([]);
   const [bodegas, setBodegas] = useState([]);
   const [tallas, setTallas] = useState([]);
   const [terceros, setTerceros] = useState([]);
   const [insumos, setInsumos] = useState([]);
 
-  // ------------------ producto cabecera (único) ------------------
+  // producto cabecera
   const [productoId, setProductoId] = useState("");
 
-  // ------------------ form cabecera ------------------
+  // form cabecera
   const [bodegaDestinoId, setBodegaDestinoId] = useState("");
   const [terceroId, setTerceroId] = useState("");
   const [fechaElaboracion, setFechaElaboracion] = useState(todayISO());
   const [observaciones, setObservaciones] = useState("");
 
-  // ------------------ detalles (SOLO tallas/cantidades) ------------------
-  const [detalleLines, setDetalleLines] = useState([
-    { id: Date.now(), talla_id: "", cantidad: "1" },
-  ]);
+  // detalles
+  const [detalleLines, setDetalleLines] = useState([{ id: Date.now(), talla_id: "", cantidad: "1" }]);
 
-  // ------------------ insumos manuales (por unidad) ------------------
+  // insumos manuales
   const [insumoLines, setInsumoLines] = useState([
     { id: Date.now() + 1, insumo_codigo: "", cantidad_req: "0" },
   ]);
 
-  // ------------------ ui ------------------
+  // ui
   const [loading, setLoading] = useState(false);
   const [loadingNota, setLoadingNota] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // ✅ preview post-guardado (documento)
+  // ✅ documento post-guardado
   const [savedNota, setSavedNota] = useState(null);
 
   const getProductoBySku = (sku) =>
     productos.find((p) => String(p.codigo_sku) === String(sku)) || null;
 
-  const getTallaById = (id) =>
-    tallas.find((t) => String(t.id) === String(id)) || null;
+  const getTallaById = (id) => tallas.find((t) => String(t.id) === String(id)) || null;
 
   const getInsumoByCodigo = (codigo) =>
     insumos.find((i) => String(i.codigo) === String(codigo)) || null;
 
-  const productoSeleccionado = useMemo(() => getProductoBySku(productoId), [productoId, productos]);
+  const productoSeleccionado = useMemo(
+    () => getProductoBySku(productoId),
+    [productoId, productos]
+  );
 
   const totalCantidadProductos = useMemo(() => {
     return detalleLines.reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
   }, [detalleLines]);
 
-  // total costo insumos por unidad (manuales)
   const costoInsumosUnitario = useMemo(() => {
     return insumoLines.reduce((acc, l) => {
       if (!l.insumo_codigo) return acc;
@@ -364,19 +455,17 @@ export default function CreateNotaEnsambleModal({
     }, 0);
   }, [insumoLines, insumos]);
 
-  // total costo para toda la nota (manuales)
   const costoInsumosTotal = useMemo(() => {
     return costoInsumosUnitario * Number(totalCantidadProductos || 0);
   }, [costoInsumosUnitario, totalCantidadProductos]);
 
-  // costo por producto terminado (promedio)
   const costoPromedioPorProducto = useMemo(() => {
     const totalQty = Number(totalCantidadProductos || 0);
     if (!totalQty) return 0;
     return costoInsumosTotal / totalQty;
   }, [costoInsumosTotal, totalCantidadProductos]);
 
-  // ------------------ cargar catálogos ------------------
+  // cargar catálogos
   useEffect(() => {
     if (!isOpen) return;
 
@@ -388,12 +477,15 @@ export default function CreateNotaEnsambleModal({
       try {
         setLoading(true);
 
+        // ✅ pedimos grande para que no te limite la paginación
+        const qs = `?page_size=1000`;
+
         const [rProd, rBod, rTal, rTer, rIns] = await Promise.all([
-          fetch(`${API_BASE}/productos/`),
-          fetch(`${API_BASE}/bodegas/`),
-          fetch(`${API_BASE}/tallas/`),
-          fetch(`${API_BASE}/terceros/`),
-          fetch(`${API_BASE}/insumos/`),
+          fetch(`${API_BASE}/productos/${qs}`),
+          fetch(`${API_BASE}/bodegas/${qs}`),
+          fetch(`${API_BASE}/tallas/${qs}`),
+          fetch(`${API_BASE}/terceros/${qs}`),
+          fetch(`${API_BASE}/insumos/${qs}`),
         ]);
 
         if (!rProd.ok) throw new Error("Error cargando productos.");
@@ -410,11 +502,12 @@ export default function CreateNotaEnsambleModal({
           rIns.json(),
         ]);
 
-        setProductos(Array.isArray(dProd) ? dProd : []);
-        setBodegas(Array.isArray(dBod) ? dBod : []);
-        setTallas(Array.isArray(dTal) ? dTal : []);
-        setTerceros(Array.isArray(dTer) ? dTer : []);
-        setInsumos(Array.isArray(dIns) ? dIns : []);
+        // ✅ soporta paginado o lista
+        setProductos(asRows(dProd));
+        setBodegas(asRows(dBod));
+        setTallas(asRows(dTal));
+        setTerceros(asRows(dTer));
+        setInsumos(asRows(dIns));
       } catch (e) {
         console.error(e);
         setError(e.message || "Error cargando catálogos.");
@@ -426,7 +519,7 @@ export default function CreateNotaEnsambleModal({
     loadCatalogs();
   }, [isOpen]);
 
-  // ------------------ cargar nota si es edit ------------------
+  // cargar nota si edit
   useEffect(() => {
     if (!isOpen) return;
 
@@ -453,7 +546,6 @@ export default function CreateNotaEnsambleModal({
           if (!r.ok) throw new Error("No se pudo cargar la nota para editar.");
           const n = await r.json();
 
-          // cabecera
           const bId = n?.bodega?.id ?? n?.bodega_id ?? "";
           const tId = n?.tercero?.id ?? n?.tercero_id ?? "";
           setBodegaDestinoId(bId ? String(bId) : "");
@@ -461,12 +553,10 @@ export default function CreateNotaEnsambleModal({
           setFechaElaboracion(n?.fecha_elaboracion || todayISO());
           setObservaciones(n?.observaciones || "");
 
-          // detalles: sacar producto cabecera del primer detalle
           const det = Array.isArray(n?.detalles) ? n.detalles : [];
           const sku = det?.[0]?.producto?.codigo_sku || det?.[0]?.producto_id || "";
           setProductoId(sku ? String(sku) : "");
 
-          // líneas: SOLO talla + cantidad
           if (det.length > 0) {
             setDetalleLines(
               det.map((d) => ({
@@ -479,7 +569,6 @@ export default function CreateNotaEnsambleModal({
             setDetalleLines([{ id: Date.now(), talla_id: "", cantidad: "1" }]);
           }
 
-          // insumos manuales
           const ins = Array.isArray(n?.insumos) ? n.insumos : [];
           if (ins.length > 0) {
             setInsumoLines(
@@ -504,39 +593,29 @@ export default function CreateNotaEnsambleModal({
     }
   }, [isOpen, mode, notaId]);
 
-  // ------------------ CRUD detalles ------------------
+  // CRUD detalles
   const addDetalleLine = () => {
     setDetalleLines((prev) => [
       ...prev,
       { id: Date.now() + Math.random(), talla_id: "", cantidad: "1" },
     ]);
   };
-
-  const removeDetalleLine = (id) => {
-    setDetalleLines((prev) => prev.filter((x) => x.id !== id));
-  };
-
-  const updateDetalleLine = (id, field, value) => {
+  const removeDetalleLine = (id) => setDetalleLines((prev) => prev.filter((x) => x.id !== id));
+  const updateDetalleLine = (id, field, value) =>
     setDetalleLines((prev) => prev.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
-  };
 
-  // ------------------ CRUD insumos ------------------
+  // CRUD insumos
   const addInsumoLine = () => {
     setInsumoLines((prev) => [
       ...prev,
       { id: Date.now() + Math.random(), insumo_codigo: "", cantidad_req: "0" },
     ]);
   };
-
-  const removeInsumoLine = (id) => {
-    setInsumoLines((prev) => prev.filter((x) => x.id !== id));
-  };
-
-  const updateInsumoLine = (id, field, value) => {
+  const removeInsumoLine = (id) => setInsumoLines((prev) => prev.filter((x) => x.id !== id));
+  const updateInsumoLine = (id, field, value) =>
     setInsumoLines((prev) => prev.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
-  };
 
-  // ------------------ submit create/edit ------------------
+  // submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -554,9 +633,8 @@ export default function CreateNotaEnsambleModal({
       }))
       .filter((d) => Number(d.cantidad || 0) > 0);
 
-    if (detallesValidos.length === 0) {
+    if (detallesValidos.length === 0)
       return setError("Debes agregar al menos una talla con cantidad > 0.");
-    }
 
     const insumosValidos = insumoLines
       .map((l) => ({
@@ -593,7 +671,6 @@ export default function CreateNotaEnsambleModal({
         mode === "edit" && notaId
           ? `${API_BASE}/notas-ensamble/${notaId}/`
           : `${API_BASE}/notas-ensamble/`;
-
       const method = mode === "edit" ? "PUT" : "POST";
 
       const r = await fetch(url, {
@@ -616,17 +693,17 @@ export default function CreateNotaEnsambleModal({
           throw new Error(`Stock insuficiente:\n${msg}`);
         }
 
-        if (data && typeof data === "object") {
-          const msg = data.detail || JSON.stringify(data);
-          throw new Error(msg);
-        }
-
+        if (data?.code === "NOTA_CON_TRASLADOS") {
+  throw new Error(data.detail);
+}
+if (data && typeof data === "object") {
+  throw new Error(data.detail || JSON.stringify(data));
+}
         throw new Error("No se pudo guardar la nota.");
       }
 
       const nota = await r.json();
 
-      // ✅ clave: al guardar, mostramos el documento COMPLETO
       setSavedNota(nota);
       setSuccess(mode === "edit" ? "Nota actualizada correctamente." : "Nota creada correctamente.");
       if (onSaved) onSaved(nota, mode);
@@ -643,7 +720,6 @@ export default function CreateNotaEnsambleModal({
   return (
     <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto">
-        {/* Header */}
         <div className="no-print px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <div>
             <h1 className="text-sm font-semibold text-slate-900">
@@ -664,7 +740,6 @@ export default function CreateNotaEnsambleModal({
               Cancelar
             </button>
 
-            {/* Si ya está guardada, no mostramos Guardar (evita confusión) */}
             {!savedNota && (
               <button
                 type="submit"
@@ -678,7 +753,6 @@ export default function CreateNotaEnsambleModal({
           </div>
         </div>
 
-        {/* ✅ Si existe savedNota, mostramos el documento completo */}
         {savedNota ? (
           <div className="px-6 py-5">
             <NotaDocumento
@@ -686,7 +760,6 @@ export default function CreateNotaEnsambleModal({
               mode={mode}
               onClose={onClose}
               onCreateAnother={() => {
-                // En edit: solo vuelve al formulario con la misma nota
                 if (mode === "edit") {
                   setSavedNota(null);
                   setSuccess("");
@@ -694,7 +767,6 @@ export default function CreateNotaEnsambleModal({
                   return;
                 }
 
-                // En create: limpia y queda listo para crear otra nota
                 setSavedNota(null);
                 setSuccess("");
                 setError("");
@@ -709,7 +781,6 @@ export default function CreateNotaEnsambleModal({
             />
           </div>
         ) : (
-          // ✅ Formulario normal
           <form id="nota-ensamble-form" onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
             {(error || success) && (
               <div className="space-y-2">
@@ -732,7 +803,7 @@ export default function CreateNotaEnsambleModal({
               </div>
             )}
 
-            {/* Producto (cabecera) */}
+            {/* Producto */}
             <section className="bg-white rounded-xl shadow-sm border border-slate-200">
               <div className="px-6 py-4 border-b border-slate-100">
                 <h2 className="text-sm font-semibold text-slate-900">Producto</h2>
@@ -850,7 +921,7 @@ export default function CreateNotaEnsambleModal({
               </div>
             </section>
 
-            {/* Detalles (tallas) */}
+            {/* Detalles */}
             <section className="bg-white rounded-xl shadow-sm border border-slate-200">
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-slate-900">Productos terminados (tallas)</h2>

@@ -2,12 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import CreateNotaEnsambleModal from "../components/CreateNotaEnsambleModal"; // ajusta ruta si aplica
 
 const API_BASE = "http://127.0.0.1:8000/api";
+const PAGE_SIZE = 30;
 
 const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
 const num = (n) => nf.format(Number(n || 0));
 
+function asRows(data) {
+  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+}
+
 export default function NotasEnsamblePage() {
   const [notas, setNotas] = useState([]);
+  const [count, setCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [nextUrl, setNextUrl] = useState(null);
+  const [prevUrl, setPrevUrl] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
 
@@ -19,7 +29,7 @@ export default function NotasEnsamblePage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editNotaId, setEditNotaId] = useState(null);
 
-  // filtros
+  // filtros (por ahora: sobre la página actual)
   const [q, setQ] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -27,87 +37,6 @@ export default function NotasEnsamblePage() {
   // detalle seleccionado
   const [selectedNotaId, setSelectedNotaId] = useState(null);
   const [selectedNota, setSelectedNota] = useState(null);
-
-  const loadNotas = async () => {
-    setError("");
-    setSuccess("");
-
-    try {
-      setLoading(true);
-      const r = await fetch(`${API_BASE}/notas-ensamble/`);
-      if (!r.ok) throw new Error("Error cargando notas de ensamble.");
-      const d = await r.json();
-      setNotas(Array.isArray(d) ? d : []);
-    } catch (e) {
-      console.error(e);
-      setError(e.message || "Error cargando notas.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadNotas();
-  }, []);
-
-  const loadDetalle = async (id) => {
-    setError("");
-    setSuccess("");
-    setSelectedNotaId(id);
-    setSelectedNota(null);
-
-    try {
-      setLoadingDetalle(true);
-      const r = await fetch(`${API_BASE}/notas-ensamble/${id}/`);
-      if (!r.ok) throw new Error("No se pudo cargar el detalle de la nota.");
-      const d = await r.json();
-      setSelectedNota(d);
-    } catch (e) {
-      console.error(e);
-      setError(e.message || "Error cargando detalle.");
-    } finally {
-      setLoadingDetalle(false);
-    }
-  };
-
-  const handleOpenEdit = async (id) => {
-    // abrimos modal edit
-    setEditNotaId(id);
-    setIsEditOpen(true);
-
-    // (opcional) refrescar el detalle a la derecha si ya está seleccionada
-    if (selectedNotaId === id) await loadDetalle(id);
-  };
-
-  const handleDelete = async (id) => {
-    setError("");
-    setSuccess("");
-
-    const ok = window.confirm(
-      "¿Eliminar esta nota de ensamble?\nEsto debería revertir stock e insumos automáticamente."
-    );
-    if (!ok) return;
-
-    try {
-      const r = await fetch(`${API_BASE}/notas-ensamble/${id}/`, { method: "DELETE" });
-
-      if (!r.ok) {
-        const data = await r.json().catch(() => null);
-        throw new Error(data?.detail || "No se pudo eliminar la nota.");
-      }
-
-      setSuccess("Nota eliminada. Stock revertido (según lógica del backend).");
-      await loadNotas();
-
-      if (selectedNotaId === id) {
-        setSelectedNotaId(null);
-        setSelectedNota(null);
-      }
-    } catch (e) {
-      console.error(e);
-      setError(e.message || "Error eliminando nota.");
-    }
-  };
 
   // ------------------ helpers ------------------
   const getBodegaLabel = (nota) => {
@@ -152,7 +81,103 @@ export default function NotasEnsamblePage() {
     return det.reduce((acc, d) => acc + Number(d?.cantidad || 0), 0);
   };
 
-  // ------------------ filtros ------------------
+  // ------------------ loaders ------------------
+  const loadNotas = async (targetPage = 1) => {
+    setError("");
+    setSuccess("");
+
+    try {
+      setLoading(true);
+      const r = await fetch(`${API_BASE}/notas-ensamble/?page=${targetPage}&page_size=${PAGE_SIZE}`);
+      if (!r.ok) throw new Error("Error cargando notas de ensamble.");
+      const d = await r.json();
+
+      setNotas(asRows(d));
+      setCount(Number(d?.count || 0));
+      setNextUrl(d?.next || null);
+      setPrevUrl(d?.previous || null);
+      setPage(targetPage);
+    } catch (e) {
+      console.error(e);
+      setError(e.message || "Error cargando notas.");
+      setNotas([]);
+      setCount(0);
+      setNextUrl(null);
+      setPrevUrl(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadNotas(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadDetalle = async (id) => {
+    setError("");
+    setSuccess("");
+    setSelectedNotaId(id);
+    setSelectedNota(null);
+
+    try {
+      setLoadingDetalle(true);
+      const r = await fetch(`${API_BASE}/notas-ensamble/${id}/`);
+      if (!r.ok) throw new Error("No se pudo cargar el detalle de la nota.");
+      const d = await r.json();
+      setSelectedNota(d);
+    } catch (e) {
+      console.error(e);
+      setError(e.message || "Error cargando detalle.");
+    } finally {
+      setLoadingDetalle(false);
+    }
+  };
+
+  const handleOpenEdit = async (id) => {
+    setEditNotaId(id);
+    setIsEditOpen(true);
+    if (selectedNotaId === id) await loadDetalle(id);
+  };
+
+  const handleDelete = async (id) => {
+    setError("");
+    setSuccess("");
+
+    const ok = window.confirm(
+      "¿Eliminar esta nota de ensamble?\nEsto debería revertir stock e insumos automáticamente."
+    );
+    if (!ok) return;
+
+    try {
+      const r = await fetch(`${API_BASE}/notas-ensamble/${id}/`, { method: "DELETE" });
+
+      if (!r.ok) {
+        const data = await r.json().catch(() => null);
+        throw new Error(data?.detail || "No se pudo eliminar la nota.");
+      }
+
+      setSuccess("Nota eliminada. Stock revertido (según lógica del backend).");
+
+      if (selectedNotaId === id) {
+        setSelectedNotaId(null);
+        setSelectedNota(null);
+      }
+
+      // ✅ si borraste el último de la página, intenta ir a la anterior
+      const newCount = Math.max(0, count - 1);
+      const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
+      const target = Math.min(page, maxPage);
+
+      await loadNotas(target);
+      setCount(newCount);
+    } catch (e) {
+      console.error(e);
+      setError(e.message || "Error eliminando nota.");
+    }
+  };
+
+  // ------------------ filtros (página actual) ------------------
   const notasFiltradas = useMemo(() => {
     const text = q.trim().toLowerCase();
 
@@ -177,6 +202,17 @@ export default function NotasEnsamblePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notas, q, fromDate, toDate]);
 
+  // ------------------ paginación UI ------------------
+  const goPrev = async () => {
+    if (!prevUrl || loading) return;
+    await loadNotas(Math.max(1, page - 1));
+  };
+
+  const goNext = async () => {
+    if (!nextUrl || loading) return;
+    await loadNotas(page + 1);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
@@ -192,7 +228,7 @@ export default function NotasEnsamblePage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={loadNotas}
+                onClick={() => loadNotas(page)}
                 className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
                 disabled={loading}
               >
@@ -239,6 +275,9 @@ export default function NotasEnsamblePage() {
                   placeholder="Ej: CAM-002, Taller, 8…"
                   className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
                 />
+                <p className="mt-1 text-[11px] text-slate-400">
+                  *Por ahora filtra solo lo cargado en la página actual.
+                </p>
               </div>
 
               <div>
@@ -263,6 +302,33 @@ export default function NotasEnsamblePage() {
             </div>
           </section>
 
+          {/* ✅ Barra de paginación */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-xs text-slate-500">
+              Total: <b>{count}</b> • Página <b>{page}</b>
+              <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={!prevUrl || loading}
+                onClick={goPrev}
+                className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+              >
+                ← Anterior
+              </button>
+              <button
+                type="button"
+                disabled={!nextUrl || loading}
+                onClick={goNext}
+                className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+              >
+                Siguiente →
+              </button>
+            </div>
+          </div>
+
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* LISTADO */}
             <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm">
@@ -275,7 +341,9 @@ export default function NotasEnsamblePage() {
 
               <div className="overflow-auto">
                 {notasFiltradas.length === 0 ? (
-                  <div className="p-5 text-sm text-slate-500">No hay notas.</div>
+                  <div className="p-5 text-sm text-slate-500">
+                    {loading ? "Cargando…" : "No hay notas en esta página."}
+                  </div>
                 ) : (
                   <table className="min-w-full text-sm">
                     <thead className="bg-slate-50 border-b border-slate-100">
@@ -401,40 +469,38 @@ export default function NotasEnsamblePage() {
                     </div>
 
                     <div>
-  <p className="text-[11px] font-semibold text-slate-600 mb-1">
-    Productos terminados
-  </p>
+                      <p className="text-[11px] font-semibold text-slate-600 mb-1">Productos terminados</p>
 
-  <div className="rounded-md border border-slate-200 overflow-hidden">
-    <div className="bg-slate-50 border-b border-slate-100 px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase grid grid-cols-12 gap-2">
-      <div className="col-span-7">Producto</div>
-      <div className="col-span-3">Talla</div>
-      <div className="col-span-2 text-right">Cantidad</div>
-    </div>
+                      <div className="rounded-md border border-slate-200 overflow-hidden">
+                        <div className="bg-slate-50 border-b border-slate-100 px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase grid grid-cols-12 gap-2">
+                          <div className="col-span-7">Producto</div>
+                          <div className="col-span-3">Talla</div>
+                          <div className="col-span-2 text-right">Cantidad</div>
+                        </div>
 
-    <div className="divide-y divide-slate-100">
-      {(Array.isArray(selectedNota.detalles) ? selectedNota.detalles : []).map((d) => (
-        <div key={d.id} className="px-3 py-2 grid grid-cols-12 gap-2 text-xs">
-          <div className="col-span-7 font-medium text-slate-900">
-            {d?.producto?.codigo_sku
-              ? `${d.producto.codigo_sku} — ${d.producto.nombre || ""}`
-              : String(d?.producto_id || "—")}
-          </div>
-          <div className="col-span-3 text-slate-700">
-            {d?.talla?.nombre || (d?.talla_id ? String(d.talla_id) : "—")}
-          </div>
-          <div className="col-span-2 text-right font-semibold">
-            {num(d?.cantidad || 0)}
-          </div>
-        </div>
-      ))}
+                        <div className="divide-y divide-slate-100">
+                          {(Array.isArray(selectedNota.detalles) ? selectedNota.detalles : []).map((d) => (
+                            <div key={d.id} className="px-3 py-2 grid grid-cols-12 gap-2 text-xs">
+                              <div className="col-span-7 font-medium text-slate-900">
+                                {d?.producto?.codigo_sku
+                                  ? `${d.producto.codigo_sku} — ${d.producto.nombre || ""}`
+                                  : String(d?.producto_id || "—")}
+                              </div>
+                              <div className="col-span-3 text-slate-700">
+                                {d?.talla?.nombre || (d?.talla_id ? String(d.talla_id) : "—")}
+                              </div>
+                              <div className="col-span-2 text-right font-semibold">
+                                {num(d?.cantidad || 0)}
+                              </div>
+                            </div>
+                          ))}
 
-      {(!selectedNota.detalles || selectedNota.detalles.length === 0) && (
-        <div className="px-3 py-3 text-xs text-slate-500">—</div>
-      )}
-    </div>
-  </div>
-</div>
+                          {(!selectedNota.detalles || selectedNota.detalles.length === 0) && (
+                            <div className="px-3 py-3 text-xs text-slate-500">—</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
                     <div className="flex gap-2">
                       <button
@@ -453,9 +519,6 @@ export default function NotasEnsamblePage() {
                         Eliminar
                       </button>
                     </div>
-                    
-
-                    
                   </div>
                 )}
               </div>
@@ -469,8 +532,8 @@ export default function NotasEnsamblePage() {
         isOpen={isCreateOpen}
         mode="create"
         onClose={() => setIsCreateOpen(false)}
-        onSaved={() => {
-          loadNotas();
+        onSaved={async () => {
+          await loadNotas(page);
         }}
       />
 
@@ -484,8 +547,7 @@ export default function NotasEnsamblePage() {
           setEditNotaId(null);
         }}
         onSaved={async (nota) => {
-          // refresca lista y el detalle si estaba seleccionado
-          await loadNotas();
+          await loadNotas(page);
           if (selectedNotaId === nota?.id) await loadDetalle(nota.id);
         }}
       />

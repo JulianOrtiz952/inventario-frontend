@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 
 const API_BASE = "http://127.0.0.1:8000/api";
+const PAGE_SIZE = 30;
+
+function asRows(data) {
+  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+}
 
 export default function TercerosPage() {
   const [terceros, setTerceros] = useState([]);
+  const [count, setCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [nextUrl, setNextUrl] = useState(null);
+  const [prevUrl, setPrevUrl] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -13,26 +23,39 @@ export default function TercerosPage() {
   // Modal estado
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState(null); // tercero o null
-
   const [form, setForm] = useState({ codigo: "", nombre: "" });
 
-  async function loadTerceros() {
+  async function loadTerceros(targetPage = 1) {
     setError("");
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/terceros/`);
+
+      const res = await fetch(
+        `${API_BASE}/terceros/?page=${targetPage}&page_size=${PAGE_SIZE}`
+      );
       if (!res.ok) throw new Error("Error cargando terceros.");
+
       const data = await res.json();
-      setTerceros(data);
+
+      setTerceros(asRows(data));
+      setCount(Number(data?.count || 0));
+      setNextUrl(data?.next || null);
+      setPrevUrl(data?.previous || null);
+      setPage(targetPage);
     } catch (e) {
+      console.error(e);
       setError(e.message || "Error cargando terceros.");
+      setTerceros([]);
+      setCount(0);
+      setNextUrl(null);
+      setPrevUrl(null);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadTerceros();
+    loadTerceros(1);
   }, []);
 
   const filtered = useMemo(() => {
@@ -85,9 +108,7 @@ export default function TercerosPage() {
       const url = isEdit
         ? `${API_BASE}/terceros/${editing.id}/`
         : `${API_BASE}/terceros/`;
-
       const method = isEdit ? "PATCH" : "POST";
-
       const payload = { codigo: form.codigo, nombre: form.nombre };
 
       const res = await fetch(url, {
@@ -99,12 +120,14 @@ export default function TercerosPage() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         console.error("Error guardando tercero:", data);
-        throw new Error("No se pudo guardar el tercero.");
+        throw new Error(data?.detail || "No se pudo guardar el tercero.");
       }
 
-      await loadTerceros();
+      // ✅ Para que el nuevo se vea sí o sí, volvemos a la página 1
+      await loadTerceros(1);
       closeModal();
     } catch (e2) {
+      console.error(e2);
       setError(e2.message || "Error guardando tercero.");
     } finally {
       setSaving(false);
@@ -117,16 +140,31 @@ export default function TercerosPage() {
 
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/terceros/${t.id}/`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`${API_BASE}/terceros/${t.id}/`, { method: "DELETE" });
       if (!res.ok) throw new Error("No se pudo eliminar el tercero.");
-      await loadTerceros();
+
+      // ✅ Ajuste de página si borraste el último de la página actual
+      const newCount = Math.max(0, count - 1);
+      const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
+      const target = Math.min(page, maxPage);
+
+      await loadTerceros(target);
+      setCount(newCount);
     } catch (e) {
+      console.error(e);
       setError(e.message || "Error eliminando tercero.");
     }
   }
+
+  const goPrev = async () => {
+    if (!prevUrl || loading) return;
+    await loadTerceros(Math.max(1, page - 1));
+  };
+
+  const goNext = async () => {
+    if (!nextUrl || loading) return;
+    await loadTerceros(page + 1);
+  };
 
   return (
     <div className="space-y-4">
@@ -147,7 +185,7 @@ export default function TercerosPage() {
         </button>
       </div>
 
-      {/* Search + error */}
+      {/* Search + reload */}
       <div className="flex items-center gap-3">
         <div className="flex-1 flex items-center bg-white rounded-md border border-slate-200 px-3 py-2 text-sm">
           <span className="mr-2 text-slate-400 text-sm">🔍</span>
@@ -160,11 +198,44 @@ export default function TercerosPage() {
         </div>
 
         <button
-          onClick={loadTerceros}
+          onClick={() => loadTerceros(page)}
           className="px-3 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+          disabled={loading}
         >
-          Recargar
+          {loading ? "..." : "Recargar"}
         </button>
+      </div>
+
+      {/* Paginación */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs text-slate-500">
+          Total: <b>{count}</b> • Página <b>{page}</b>{" "}
+          <span className="ml-2 text-[11px] text-slate-400">
+            (mostrando {PAGE_SIZE} por página)
+          </span>
+          <span className="ml-2 text-[11px] text-slate-400">
+            *La búsqueda filtra solo la página actual.
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!prevUrl || loading}
+            onClick={goPrev}
+            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+          >
+            ← Anterior
+          </button>
+          <button
+            type="button"
+            disabled={!nextUrl || loading}
+            onClick={goNext}
+            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+          >
+            Siguiente →
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -176,7 +247,9 @@ export default function TercerosPage() {
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-900">Listado</h2>
+          <h2 className="text-sm font-semibold text-slate-900">
+            Listado ({filtered.length})
+          </h2>
         </div>
 
         <div className="overflow-x-auto">
@@ -201,7 +274,7 @@ export default function TercerosPage() {
               {!loading && filtered.length === 0 && (
                 <tr>
                   <td className="px-4 py-3 text-slate-500" colSpan={4}>
-                    No hay terceros.
+                    No hay terceros en esta página.
                   </td>
                 </tr>
               )}
@@ -261,9 +334,7 @@ export default function TercerosPage() {
               {error && <div className="text-xs text-red-600">{error}</div>}
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Código
-                </label>
+                <label className="text-xs font-medium text-slate-700">Código</label>
                 <input
                   type="text"
                   name="codigo"
@@ -275,9 +346,7 @@ export default function TercerosPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Nombre
-                </label>
+                <label className="text-xs font-medium text-slate-700">Nombre</label>
                 <input
                   type="text"
                   name="nombre"

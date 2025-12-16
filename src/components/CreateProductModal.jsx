@@ -20,6 +20,10 @@ const DIAN_UOM = [
   { code: "ROL", name: "Rollo" },
 ];
 
+function asRows(data) {
+  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+}
+
 async function safeJson(res) {
   const text = await res.text().catch(() => "");
   if (!text) return null;
@@ -158,9 +162,13 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
     const loadDeps = async () => {
       try {
         setLoadingDeps(true);
+
+        // ✅ pedir grande (porque ahora tienes paginación)
+        const qs = `?page_size=1000`;
+
         const [terRes, impRes] = await Promise.all([
-          fetch(`${API_BASE}/terceros/`),
-          fetch(`${API_BASE}/impuestos/`),
+          fetch(`${API_BASE}/terceros/${qs}`),
+          fetch(`${API_BASE}/impuestos/${qs}`),
         ]);
 
         if (!terRes.ok) throw new Error("No se pudieron cargar terceros.");
@@ -169,8 +177,9 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
         const terData = await terRes.json();
         const impData = await impRes.json();
 
-        setTerceros(Array.isArray(terData) ? terData : []);
-        setImpuestos(Array.isArray(impData) ? impData : []);
+        // ✅ soporta lista o paginado
+        setTerceros(asRows(terData));
+        setImpuestos(asRows(impData));
       } catch (e) {
         console.error(e);
         setError(e.message || "Error cargando datos para crear producto.");
@@ -243,10 +252,11 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
   }
 
   async function refreshImpuestos(selectId = null) {
-    const impRes = await fetch(`${API_BASE}/impuestos/`);
+    const impRes = await fetch(`${API_BASE}/impuestos/?page_size=1000`);
     if (!impRes.ok) return;
     const impData = await impRes.json();
-    setImpuestos(Array.isArray(impData) ? impData : []);
+
+    setImpuestos(asRows(impData));
 
     if (selectId) {
       setForm((prev) => ({
@@ -336,7 +346,6 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
       // 3) Crear datos adicionales (si aplica)
       const da = form.datos_adicionales || {};
 
-      // ✅ ahora sí incluye stock/stock_minimo (tu bug venía de aquí)
       const hayDatos =
         (da.referencia || "").trim() ||
         (da.descripcion || "").trim() ||
@@ -358,7 +367,6 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
           codigo_arancelario: (da.codigo_arancelario || "").trim() || null,
         };
 
-        // ✅ fallback producto vs producto_id
         await postDatosAdicionalesWithFallback({ sku, payload });
       }
 
@@ -639,17 +647,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                   </select>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Stock</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={form.datos_adicionales.stock ?? "0"}
-                    onChange={(e) => updateDatos({ stock: e.target.value })}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="0"
-                  />
-                </div>
+                
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-slate-700">Stock mínimo</label>

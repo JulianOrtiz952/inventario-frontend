@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 
 const API_BASE = "http://127.0.0.1:8000/api";
+const PAGE_SIZE = 30;
+
+function asRows(data) {
+  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+}
 
 export default function ProvidersPage() {
   const [proveedores, setProveedores] = useState([]);
+  const [count, setCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [nextUrl, setNextUrl] = useState(null);
+  const [prevUrl, setPrevUrl] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -15,18 +25,26 @@ export default function ProvidersPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  // Cargar proveedores
+  async function loadProveedores(targetPage = 1) {
+    const res = await fetch(`${API_BASE}/proveedores/?page=${targetPage}&page_size=${PAGE_SIZE}`);
+    if (!res.ok) throw new Error("Error al cargar proveedores.");
+
+    const data = await res.json();
+
+    setProveedores(asRows(data));
+    setCount(Number(data?.count || 0));
+    setNextUrl(data?.next || null);
+    setPrevUrl(data?.previous || null);
+    setPage(targetPage);
+  }
+
+  // Cargar proveedores (paginado)
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setError("");
-
-        const res = await fetch(`${API_BASE}/proveedores/`);
-        if (!res.ok) throw new Error("Error al cargar proveedores.");
-
-        const data = await res.json();
-        setProveedores(data);
+        await loadProveedores(1);
       } catch (err) {
         console.error(err);
         setError(err.message || "Error al cargar proveedores.");
@@ -38,15 +56,11 @@ export default function ProvidersPage() {
     load();
   }, []);
 
-  const filtered = useMemo(
-    () =>
-      proveedores.filter((p) =>
-        !search
-          ? true
-          : p.nombre.toLowerCase().includes(search.trim().toLowerCase())
-      ),
-    [proveedores, search]
-  );
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return proveedores;
+    return proveedores.filter((p) => (p.nombre || "").toLowerCase().includes(term));
+  }, [proveedores, search]);
 
   // Abrir / cerrar modal
   const openCreate = () => {
@@ -87,9 +101,7 @@ export default function ProvidersPage() {
       setSaving(true);
 
       const payload = { nombre: form.nombre.trim() };
-      const url = editingId
-        ? `${API_BASE}/proveedores/${editingId}/`
-        : `${API_BASE}/proveedores/`;
+      const url = editingId ? `${API_BASE}/proveedores/${editingId}/` : `${API_BASE}/proveedores/`;
       const method = editingId ? "PATCH" : "POST";
 
       const res = await fetch(url, {
@@ -104,18 +116,11 @@ export default function ProvidersPage() {
         throw new Error("No se pudo guardar el proveedor.");
       }
 
-      const saved = await res.json();
-
-      if (editingId) {
-        setProveedores((prev) =>
-          prev.map((p) => (p.id === saved.id ? saved : p))
-        );
-      } else {
-        setProveedores((prev) => [...prev, saved]);
-      }
-
       setIsModalOpen(false);
       setEditingId(null);
+
+      // ✅ recarga página actual (coherente con paginación)
+      await loadProveedores(page);
     } catch (err) {
       console.error(err);
       setSaveError(err.message || "Error al guardar proveedor.");
@@ -128,33 +133,56 @@ export default function ProvidersPage() {
     if (!window.confirm(`¿Eliminar proveedor "${prov.nombre}"?`)) return;
 
     try {
-      const res = await fetch(`${API_BASE}/proveedores/${prov.id}/`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_BASE}/proveedores/${prov.id}/`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) throw new Error("No se pudo eliminar el proveedor.");
 
-      if (!res.ok) {
-        throw new Error("No se pudo eliminar el proveedor.");
-      }
+      // ✅ si borraste el último de la página, intenta ir a la anterior
+      const newCount = Math.max(0, count - 1);
+      const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
+      const target = Math.min(page, maxPage);
 
-      setProveedores((prev) => prev.filter((p) => p.id !== prov.id));
+      await loadProveedores(target);
+      setCount(newCount);
     } catch (err) {
       alert(err.message || "Error al eliminar proveedor.");
     }
   };
 
+  async function goPrev() {
+    if (!prevUrl || loading) return;
+    setLoading(true);
+    try {
+      await loadProveedores(Math.max(1, page - 1));
+    } catch (e) {
+      setError(e.message || "Error al cambiar de página.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function goNext() {
+    if (!nextUrl || loading) return;
+    setLoading(true);
+    try {
+      await loadProveedores(page + 1);
+    } catch (e) {
+      setError(e.message || "Error al cambiar de página.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // Render
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-3xl font-semibold text-slate-900 mb-6">
-        Proveedores
-      </h1>
+      <h1 className="text-3xl font-semibold text-slate-900 mb-6">Proveedores</h1>
 
       {/* Barra superior */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-3">
         <div className="flex-1">
           <input
             type="text"
-            placeholder="Buscar por nombre..."
+            placeholder="Buscar por nombre (en esta página)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full md:max-w-xs rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -168,6 +196,32 @@ export default function ProvidersPage() {
           <span className="text-base leading-none">＋</span>
           Nuevo proveedor
         </button>
+      </div>
+
+      {/* Barra paginación */}
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="text-xs text-slate-500">
+          Total: <b>{count}</b> • Página <b>{page}</b>
+          <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={!prevUrl || loading}
+            onClick={goPrev}
+            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+          >
+            ← Anterior
+          </button>
+          <button
+            type="button"
+            disabled={!nextUrl || loading}
+            onClick={goNext}
+            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+          >
+            Siguiente →
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -189,32 +243,21 @@ export default function ProvidersPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td
-                  colSpan={3}
-                  className="px-4 py-4 text-center text-xs text-slate-500"
-                >
+                <td colSpan={3} className="px-4 py-4 text-center text-xs text-slate-500">
                   Cargando proveedores...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td
-                  colSpan={3}
-                  className="px-4 py-4 text-center text-xs text-slate-400"
-                >
-                  No hay proveedores registrados.
+                <td colSpan={3} className="px-4 py-4 text-center text-xs text-slate-400">
+                  No hay proveedores registrados (en esta página).
                 </td>
               </tr>
             ) : (
               filtered.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-t border-slate-100 hover:bg-slate-50/60"
-                >
+                <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50/60">
                   <td className="px-4 py-2 text-xs text-slate-500">{p.id}</td>
-                  <td className="px-4 py-2 text-sm text-slate-900">
-                    {p.nombre}
-                  </td>
+                  <td className="px-4 py-2 text-sm text-slate-900">{p.nombre}</td>
                   <td className="px-4 py-2 text-xs text-right">
                     <button
                       type="button"
@@ -247,9 +290,7 @@ export default function ProvidersPage() {
                 <h2 className="text-sm font-semibold text-slate-900">
                   {editingId ? "Editar proveedor" : "Nuevo proveedor"}
                 </h2>
-                <p className="text-[11px] text-slate-500">
-                  Define el nombre del proveedor.
-                </p>
+                <p className="text-[11px] text-slate-500">Define el nombre del proveedor.</p>
               </div>
               <button
                 type="button"
@@ -269,9 +310,7 @@ export default function ProvidersPage() {
               )}
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">
-                  Nombre
-                </label>
+                <label className="text-xs font-medium text-slate-700">Nombre</label>
                 <input
                   type="text"
                   name="nombre"
