@@ -110,6 +110,7 @@ const navItems = [
   { id: "nota_ensamble", label: "Notas de ensamble", icon: IconClipboard, path: "/nota_ensamble" },
   { id: "terceros", label: "Terceros", icon: IconUsers, path: "/terceros" },
   { id: "tallas", label: "Tallas", icon: IconTshirt, path: "/tallas" },
+  { id: "salidas_producto", label: "Notas de salida", icon: IconClipboard, path: "/salidas-producto" },
 ];
 
 export default function SideNav() {
