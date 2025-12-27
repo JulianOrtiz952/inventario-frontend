@@ -16,6 +16,7 @@ import TallasPage from "./pages/TallasPage";
 import NotasEnsamblePage from "./pages/NotasEnsamblePage";
 import SalidasProductoPage from "./pages/SalidasProductoPage";
 import InsumosHistorialPage from "./pages/InsumosHistorialPage";
+import ExcelImportPage from "./pages/ExcelImportPage";
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/proveedores" element={<ProvidersPage />} />
               <Route path="/salidas-producto" element={<SalidasProductoPage />} />
               <Route path="/insumos-historial" element={<InsumosHistorialPage />} />
+              <Route path="/importar-excel" element={<ExcelImportPage />} />
               <Route
                 path="/simulacion"
                 element={<ProductionSimulationPage />}

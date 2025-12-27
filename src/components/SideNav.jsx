@@ -140,6 +140,7 @@ const navItems = [
   { id: "terceros", label: "Terceros", icon: IconUsers, path: "/terceros" },
   { id: "tallas", label: "Tallas", icon: IconTshirt, path: "/tallas" },
   { id: "salidas_producto", label: "Notas de salida", icon: IconClipboard, path: "/salidas-producto" },
+  { id: "importar_excel", label: "Importar Excel", icon: IconClipboard, path: "/importar-excel" },
 ];
 
 export default function SideNav() {

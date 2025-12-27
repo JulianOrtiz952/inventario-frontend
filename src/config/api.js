@@ -1,5 +1,5 @@
 // src/config/api.js
-const raw = import.meta.env.VITE_API_BASE ||  "http://127.0.0.1:8000/api";
+const raw = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
 //import.meta.env.VITE_API_BASE ||
 
 // normaliza: sin slash final
