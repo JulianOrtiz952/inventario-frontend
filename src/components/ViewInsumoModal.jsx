@@ -1,13 +1,12 @@
 import EstadoBadge from "./EstadoBadge";
 
 function getActual(insumo) {
-  const v = insumo?.cantidad ?? insumo?.stock_actual;
-  const n = Number(v);
+  const n = Number(insumo?.cantidad ?? 0);
   return Number.isFinite(n) ? n : 0;
 }
 
 function getMin(insumo) {
-  const n = Number(insumo?.stock_minimo);
+  const n = Number(insumo?.stock_minimo ?? 0);
   return Number.isFinite(n) ? n : 0;
 }
 
@@ -28,20 +27,31 @@ export default function ViewInsumoModal({ isOpen, insumo, onClose }) {
         </div>
 
         <div className="px-6 py-4 space-y-3 text-sm">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-slate-500">Código</p>
+              <p className="font-medium text-slate-800">{insumo.codigo ?? "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Referencia</p>
+              <p className="text-slate-800">{insumo.referencia ?? "—"}</p>
+            </div>
+          </div>
+
           <div>
             <p className="text-xs text-slate-500">Nombre</p>
-            <p className="font-medium text-slate-800">{insumo.nombre}</p>
+            <p className="font-medium text-slate-800">{insumo.nombre ?? "—"}</p>
           </div>
+
           <div>
-  <p className="text-xs text-slate-500">Referencia</p>
-  <p className="text-slate-800">{insumo.referencia ?? "—"}</p>
-</div>
-          {insumo.descripcion && (
-            <div>
-              <p className="text-xs text-slate-500">Descripción</p>
-              <p className="text-slate-800">{insumo.descripcion}</p>
-            </div>
-          )}
+            <p className="text-xs text-slate-500">Observación</p>
+            <p className="text-slate-800">{insumo.observacion ?? "—"}</p>
+          </div>
+
+          <div>
+            <p className="text-xs text-slate-500">Factura</p>
+            <p className="text-slate-800">{insumo.factura ?? "—"}</p>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -60,8 +70,19 @@ export default function ViewInsumoModal({ isOpen, insumo, onClose }) {
               <p className="text-slate-800">{insumo.proveedor?.nombre ?? "—"}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Unidad</p>
-              <p className="text-slate-800">{insumo.unidad ?? "—"}</p>
+              <p className="text-xs text-slate-500">Unidad de medida</p>
+              <p className="text-slate-800">{insumo.unidad_medida ?? "—"}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-slate-500">Color</p>
+              <p className="text-slate-800">{insumo.color ?? "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Costo unitario</p>
+              <p className="text-slate-800">{insumo.costo_unitario ? `$${insumo.costo_unitario}` : "—"}</p>
             </div>
           </div>
 
@@ -75,32 +96,23 @@ export default function ViewInsumoModal({ isOpen, insumo, onClose }) {
               <p className="text-slate-800">{minimo || "—"}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Costo unitario</p>
-              <p className="text-slate-800">${insumo.costo_unitario}</p>
+              <p className="text-xs text-slate-500">Estado</p>
+              <div className="pt-1">
+                <EstadoBadge estado={insumo.estado} stockActual={actual} stockMinimo={minimo} />
+              </div>
             </div>
           </div>
 
-          <div>
-            <p className="text-xs text-slate-500 mb-1">Estado</p>
-            <EstadoBadge
-              estado={insumo.estado}
-              stockActual={actual}
-              stockMinimo={minimo}
-            />
-          </div>
-
-          {(insumo.creado_en || insumo.actualizado_en) && (
-            <div className="grid grid-cols-2 gap-3 text-xs text-slate-500">
-              <div>
-                <p>Creado en</p>
-                <p>{insumo.creado_en ?? "—"}</p>
-              </div>
-              <div>
-                <p>Actualizado en</p>
-                <p>{insumo.actualizado_en ?? "—"}</p>
-              </div>
+          <div className="grid grid-cols-2 gap-3 text-xs text-slate-500">
+            <div>
+              <p>Creado en</p>
+              <p>{insumo.creado_en ?? "—"}</p>
             </div>
-          )}
+            <div>
+              <p>Actualizado en</p>
+              <p>{insumo.actualizado_en ?? "—"}</p>
+            </div>
+          </div>
 
           <div className="flex justify-end pt-2">
             <button

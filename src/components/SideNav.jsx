@@ -1,4 +1,3 @@
-// src/components/SideNav.jsx
 import { NavLink } from "react-router-dom";
 
 const IconBox = ({ className = "w-5 h-5" }) => (
@@ -102,8 +101,38 @@ const IconTshirt = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
+// ✅ Nuevo icono para historial
+const IconHistory = ({ className = "w-5 h-5" }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path
+      d="M3 12a9 9 0 101.8-5.4"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <path
+      d="M3 4v5h5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M12 7v6l4 2"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 const navItems = [
   { id: "inventario", label: "Inventario de insumos", icon: IconBox, path: "/" },
+
+  // ✅ NUEVO
+  { id: "kardex_insumos", label: "Historial insumos (Kardex)", icon: IconHistory, path: "/insumos-historial" },
+
   { id: "proveedores", label: "Proveedores", icon: IconHandshake, path: "/proveedores" },
   { id: "bodegas", label: "Bodegas", icon: IconWarehouse, path: "/bodegas" },
   { id: "productos", label: "Productos y recetas", icon: IconTag, path: "/productos" },
@@ -117,9 +146,7 @@ export default function SideNav() {
   return (
     <aside className="hidden md:flex md:flex-col w-64 bg-white border-r border-slate-200">
       <div className="px-4 py-4 border-b border-slate-100">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-          Menú
-        </p>
+        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Menú</p>
       </div>
 
       <nav className="flex-1 py-3">
@@ -155,9 +182,7 @@ export default function SideNav() {
       </nav>
 
       <div className="border-t border-slate-200 px-4 py-3">
-        <p className="text-[10px] text-slate-400">
-          © {new Date().getFullYear()} CALA
-        </p>
+        <p className="text-[10px] text-slate-400">© {new Date().getFullYear()} CALA</p>
       </div>
     </aside>
   );

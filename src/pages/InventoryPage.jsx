@@ -4,13 +4,279 @@ import CreateInsumoModal from "../components/CreateInsumoModal";
 import EditInsumoModal from "../components/EditInsumoModal";
 import ViewInsumoModal from "../components/ViewInsumoModal";
 import DeleteInsumoModal from "../components/DeleteInsumoModal";
-import MovementModal from "../components/MovementModal";
 import { API_BASE } from "../config/api";
 
 const PAGE_SIZE = 30;
 
 function asRows(data) {
   return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+}
+
+async function safeJson(res) {
+  const text = await res.text().catch(() => "");
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { raw: text };
+  }
+}
+
+function moneyStr(v) {
+  // normaliza decimales: "2,5" => "2.5"
+  if (v === null || v === undefined) return "";
+  const s = String(v).trim();
+  if (!s) return "";
+  return s.replace(",", ".");
+}
+
+function MovementModal({
+  isOpen,
+  type, // "entrada" | "salida"
+  onClose,
+  loading,
+  error,
+  search,
+  onSearchChange,
+  insumos,
+  selected,
+  onSelect,
+  form,
+  onFormChange,
+  tercerosOptions,
+  bodegasOptions,
+  onSubmit,
+}) {
+  if (!isOpen) return null;
+
+  const isEntrada = type === "entrada";
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[92vh] overflow-y-auto">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">
+              {isEntrada ? "Registrar entrada" : "Registrar salida"}
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Selecciona el insumo y registra el movimiento con el tercero responsable.
+            </p>
+          </div>
+          <button className="text-slate-400 hover:text-slate-600" onClick={onClose} disabled={loading}>
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={onSubmit} className="px-6 py-5 space-y-4">
+          {error && (
+            <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+              {error}
+            </div>
+          )}
+
+          {/* Buscar + seleccionar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <p className="text-xs font-semibold text-slate-700">Buscar insumo</p>
+                <div className="mt-2 flex items-center gap-2 rounded-md bg-white border border-slate-200 px-3 py-2 text-sm">
+                  <span className="text-slate-400">🔍</span>
+                  <input
+                    value={search}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+                    placeholder="Nombre o código..."
+                  />
+                </div>
+              </div>
+
+              <div className="max-h-72 overflow-y-auto">
+                {insumos.length === 0 ? (
+                  <div className="px-4 py-6 text-xs text-slate-500">No hay insumos para mostrar.</div>
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {insumos.map((i) => {
+                      const pk = i?.codigo;
+                      const active = selected?.codigo === pk;
+                      return (
+                        <li key={String(pk)}>
+                          <button
+                            type="button"
+                            onClick={() => onSelect(i)}
+                            className={`w-full text-left px-4 py-3 hover:bg-slate-50 ${
+                              active ? "bg-blue-50" : "bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-medium text-slate-900">{i.nombre}</p>
+                                <p className="text-[11px] text-slate-500">{i.codigo}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-slate-500">Stock</p>
+                                <p className="text-sm font-semibold text-slate-800 tabular-nums">
+                                  {Number(i?.cantidad ?? i?.stock_actual ?? 0).toLocaleString("es-CO", {
+                                    maximumFractionDigits: 3,
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <p className="text-xs font-semibold text-slate-700">Detalle del movimiento</p>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {!selected ? (
+                  <div className="text-xs text-slate-500">Selecciona un insumo para continuar.</div>
+                ) : (
+                  <>
+                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                      <p className="text-[11px] text-slate-500">Insumo</p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {selected.nombre} <span className="text-slate-400 font-normal">({selected.codigo})</span>
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Stock actual:{" "}
+                        <b>
+                          {Number(selected?.cantidad ?? selected?.stock_actual ?? 0).toLocaleString("es-CO", {
+                            maximumFractionDigits: 3,
+                          })}
+                        </b>
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-700">Tercero</label>
+                        <select
+                          name="tercero_id"
+                          value={form.tercero_id}
+                          onChange={onFormChange}
+                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        >
+                          <option value="">Selecciona...</option>
+                          {tercerosOptions.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-700">Bodega</label>
+                        <select
+                          name="bodega_id"
+                          value={form.bodega_id}
+                          onChange={onFormChange}
+                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        >
+                          <option value="">Selecciona...</option>
+                          {bodegasOptions.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-700">Cantidad</label>
+                        <input
+                          type="number"
+                          step="0.001"
+                          name="cantidad"
+                          value={form.cantidad}
+                          onChange={onFormChange}
+                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Ej: 5.000"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-700">Costo unitario</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          name="costo_unitario"
+                          value={form.costo_unitario}
+                          onChange={onFormChange}
+                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Ej: 2600.00"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {isEntrada && (
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-700">Factura (opcional)</label>
+                        <input
+                          name="factura"
+                          value={form.factura}
+                          onChange={onFormChange}
+                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Ej: FAC-999"
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-700">Observación (opcional)</label>
+                      <input
+                        name="observacion"
+                        value={form.observacion}
+                        onChange={onFormChange}
+                        className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder={isEntrada ? "Ej: Compra adicional" : "Ej: Uso manual"}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-100"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !selected}
+              className={`px-4 py-2 rounded-md text-white text-xs font-medium shadow-sm disabled:opacity-70 ${
+                isEntrada ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-500 hover:bg-orange-600"
+              }`}
+            >
+              {loading ? "Guardando..." : isEntrada ? "Registrar entrada" : "Registrar salida"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 function getStockActual(insumo) {
@@ -25,12 +291,11 @@ function getStockMinimo(insumo) {
 }
 
 function getInsumoPk(insumo) {
-  return insumo?.id ?? insumo?.codigo ?? null;
+  // ✅ PK = codigo (contrato)
+  return insumo?.codigo ?? null;
 }
 
 async function fetchAllPages(url, { maxPages = 20 } = {}) {
-  // Para catálogos pequeños: recorre paginación y concatena results
-  // Si la API devuelve lista, también sirve.
   const all = [];
   let next = url;
   let pages = 0;
@@ -45,11 +310,9 @@ async function fetchAllPages(url, { maxPages = 20 } = {}) {
     const rows = asRows(data);
     all.push(...rows);
 
-    // paginado
     next = data?.next || null;
     pages += 1;
 
-    // si era lista, ya terminó
     if (Array.isArray(data)) break;
   }
 
@@ -57,14 +320,14 @@ async function fetchAllPages(url, { maxPages = 20 } = {}) {
 }
 
 export default function InventoryPage() {
-  // ✅ INSUMOS PAGINADOS
+  // INSUMOS PAGINADOS
   const [insumos, setInsumos] = useState([]);
   const [insumosCount, setInsumosCount] = useState(0);
   const [insumosPage, setInsumosPage] = useState(1);
   const [insumosNext, setInsumosNext] = useState(null);
   const [insumosPrev, setInsumosPrev] = useState(null);
 
-  // Catálogos (se cargan completos “hasta X páginas”)
+  // Catálogos
   const [proveedores, setProveedores] = useState([]);
   const [terceros, setTerceros] = useState([]);
   const [bodegas, setBodegas] = useState([]);
@@ -81,9 +344,10 @@ export default function InventoryPage() {
   const [createForm, setCreateForm] = useState({
     codigo: "",
     nombre: "",
-    descripcion: "",
+    observacion: "",
+    factura: "",
     referencia: "",
-    unidad: "",
+    unidad_medida: "",
     color: "",
     stock_actual: "",
     stock_minimo: "",
@@ -110,9 +374,10 @@ export default function InventoryPage() {
   const [editForm, setEditForm] = useState({
     codigo: "",
     nombre: "",
-    descripcion: "",
+    observacion: "",
+    factura: "",
     referencia: "",
-    unidad: "",
+    unidad_medida: "",
     color: "",
     stock_actual: "",
     stock_minimo: "",
@@ -130,7 +395,14 @@ export default function InventoryPage() {
   const [movementType, setMovementType] = useState("entrada");
   const [movementSearch, setMovementSearch] = useState("");
   const [movementSelected, setMovementSelected] = useState(null);
-  const [movementQty, setMovementQty] = useState("");
+  const [movementForm, setMovementForm] = useState({
+    tercero_id: "",
+    bodega_id: "",
+    cantidad: "",
+    costo_unitario: "",
+    factura: "",
+    observacion: "",
+  });
   const [movementError, setMovementError] = useState("");
   const [movementLoading, setMovementLoading] = useState(false);
 
@@ -162,7 +434,6 @@ export default function InventoryPage() {
     [bodegas]
   );
 
-  // ✅ carga paginada de insumos (30 en 30)
   async function loadInsumos(page = 1) {
     const res = await fetch(`${API_BASE}/insumos/?page=${page}&page_size=${PAGE_SIZE}`);
     if (!res.ok) throw new Error("No se pudieron cargar los insumos.");
@@ -176,7 +447,6 @@ export default function InventoryPage() {
     setInsumosPage(page);
   }
 
-  // ✅ carga catálogos (trae “todo” recorriendo paginación)
   async function loadCatalogs() {
     const [provAll, bodAll, terAll] = await Promise.all([
       fetchAllPages(`${API_BASE}/proveedores/?page_size=200`),
@@ -189,13 +459,11 @@ export default function InventoryPage() {
     setTerceros(terAll);
   }
 
-  // Carga inicial
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         setError("");
-
         await Promise.all([loadCatalogs(), loadInsumos(1)]);
       } catch (err) {
         console.error(err);
@@ -212,17 +480,13 @@ export default function InventoryPage() {
 
     return insumos.filter((i) => {
       const coincideBusqueda =
-        !term ||
-        (i.nombre || "").toLowerCase().includes(term) ||
-        (i.codigo || "").toLowerCase().includes(term);
+        !term || (i.nombre || "").toLowerCase().includes(term) || (i.codigo || "").toLowerCase().includes(term);
 
       const coincideProveedor =
-        proveedorFiltro === "todos" ||
-        String(i.proveedor?.id ?? i.proveedor_id ?? "") === String(proveedorFiltro);
+        proveedorFiltro === "todos" || String(i.proveedor?.id ?? i.proveedor_id ?? "") === String(proveedorFiltro);
 
       const coincideTercero =
-        terceroFiltro === "todos" ||
-        String(i.tercero?.id ?? i.tercero_id ?? "") === String(terceroFiltro);
+        terceroFiltro === "todos" || String(i.tercero?.id ?? i.tercero_id ?? "") === String(terceroFiltro);
 
       return coincideBusqueda && coincideProveedor && coincideTercero;
     });
@@ -235,8 +499,7 @@ export default function InventoryPage() {
     return insumos.filter((i) => {
       const matchesName = (i.nombre || "").toLowerCase().includes(term);
       const matchesCodigo = String(i.codigo || "").toLowerCase().includes(term);
-      const matchesId = String(i.id || "").includes(term);
-      return matchesName || matchesCodigo || matchesId;
+      return matchesName || matchesCodigo;
     });
   }, [insumos, movementSearch]);
 
@@ -245,17 +508,26 @@ export default function InventoryPage() {
     setCreateForm({
       codigo: "",
       nombre: "",
-      descripcion: "",
+      observacion: "",
+      factura: "",
       referencia: "",
-      unidad: "Kg",
+      unidad_medida: "",
       color: "",
       stock_actual: "",
       stock_minimo: "",
       costo_unitario: "",
+      proveedor_id: "",
+      tercero_id: "",
+      bodega_id: "",
+    });
+
+    setCreateForm((prev) => ({
+      ...prev,
       proveedor_id: proveedores[0]?.id ?? "",
       tercero_id: terceros[0]?.id ?? "",
       bodega_id: bodegas[0]?.id ?? "",
-    });
+    }));
+
     setCreateError("");
     setIsCreateOpen(true);
   }
@@ -287,17 +559,17 @@ export default function InventoryPage() {
       const payload = {
         codigo: createForm.codigo,
         nombre: createForm.nombre,
-        descripcion: createForm.descripcion || undefined,
+        observacion: createForm.observacion || "",
+        factura: createForm.factura || "",
         referencia: createForm.referencia?.trim() || createForm.codigo,
         bodega_id: Number(createForm.bodega_id),
+        unidad_medida: createForm.unidad_medida || "",
+        color: createForm.color || "",
         tercero_id: Number(createForm.tercero_id),
         cantidad: String(createForm.stock_actual),
+        stock_minimo: createForm.stock_minimo === "" ? "0.000" : String(createForm.stock_minimo),
         costo_unitario: String(createForm.costo_unitario),
-        unidad: createForm.unidad || undefined,
-        color: createForm.color || undefined,
-        stock_minimo: createForm.stock_minimo === "" ? undefined : String(createForm.stock_minimo),
-        proveedor_id: createForm.proveedor_id ? Number(createForm.proveedor_id) : undefined,
-        stock_actual: createForm.stock_actual, // compat
+        proveedor_id: createForm.proveedor_id ? Number(createForm.proveedor_id) : null,
       };
 
       const res = await fetch(`${API_BASE}/insumos/`, {
@@ -307,12 +579,11 @@ export default function InventoryPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await safeJson(res);
         console.error("Error POST insumo:", data);
-        throw new Error("No se pudo crear el insumo.");
+        throw new Error(data?.detail || "No se pudo crear el insumo.");
       }
 
-      // ✅ recarga página actual (así queda coherente con paginación)
       setIsCreateOpen(false);
       await loadInsumos(insumosPage);
     } catch (err) {
@@ -340,7 +611,7 @@ export default function InventoryPage() {
     if (!insumoToDelete) return;
 
     const pk = getInsumoPk(insumoToDelete);
-    if (!pk) return setDeleteError("No se encontró identificador (id/código) del insumo.");
+    if (!pk) return setDeleteError("No se encontró el código del insumo.");
 
     try {
       setDeleteLoading(true);
@@ -351,7 +622,6 @@ export default function InventoryPage() {
 
       closeDeleteModal();
 
-      // ✅ si borraste el último de la página, intenta ir a la anterior
       const maybeNewCount = Math.max(0, insumosCount - 1);
       const maxPage = Math.max(1, Math.ceil(maybeNewCount / PAGE_SIZE));
       const target = Math.min(insumosPage, maxPage);
@@ -384,9 +654,10 @@ export default function InventoryPage() {
     setEditForm({
       codigo: insumo.codigo ?? "",
       nombre: insumo.nombre ?? "",
-      descripcion: insumo.descripcion ?? "",
+      observacion: insumo.observacion ?? "",
+      factura: insumo.factura ?? "",
       referencia: insumo.referencia ?? insumo.codigo ?? "",
-      unidad: insumo.unidad ?? "Kg",
+      unidad_medida: insumo.unidad_medida ?? "",
       color: insumo.color ?? "",
       stock_actual: String(getStockActual(insumo)),
       stock_minimo: insumo.stock_minimo ?? "",
@@ -414,7 +685,7 @@ export default function InventoryPage() {
   async function handleEditSubmit(e) {
     e.preventDefault();
 
-    if (!editInsumoPk) return setEditError("No se encontró identificador (id/código) del insumo.");
+    if (!editInsumoPk) return setEditError("No se encontró el código del insumo.");
     setEditError("");
 
     if (!editForm.codigo || !editForm.nombre) return setEditError("Código y nombre son obligatorios.");
@@ -426,36 +697,36 @@ export default function InventoryPage() {
     try {
       setEditLoading(true);
 
+      // ✅ PATCH (parcial) según tu contrato
       const payload = {
         codigo: String(editForm.codigo).trim(),
         nombre: String(editForm.nombre).trim(),
-        descripcion: editForm.descripcion ? String(editForm.descripcion).trim() : "",
+        observacion: editForm.observacion ? String(editForm.observacion).trim() : "",
+        factura: editForm.factura ? String(editForm.factura).trim() : "",
         referencia: editForm.referencia?.trim() || editForm.codigo,
         bodega_id: Number(editForm.bodega_id),
+        unidad_medida: editForm.unidad_medida || "",
+        color: editForm.color || "",
         tercero_id: Number(editForm.tercero_id),
         cantidad: String(editForm.stock_actual),
+        stock_minimo: editForm.stock_minimo === "" ? "0.000" : String(editForm.stock_minimo),
         costo_unitario: String(editForm.costo_unitario),
         proveedor_id: editForm.proveedor_id ? Number(editForm.proveedor_id) : null,
-        unidad: editForm.unidad || null,
-        color: editForm.color || null,
-        stock_minimo: editForm.stock_minimo === "" ? null : String(editForm.stock_minimo),
       };
 
       const res = await fetch(`${API_BASE}/insumos/${editInsumoPk}/`, {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
+        const data = await safeJson(res);
         throw new Error((data && (data.detail || JSON.stringify(data))) || "No se pudo actualizar el insumo.");
       }
 
       setIsEditOpen(false);
       setEditInsumoPk(null);
-
-      // ✅ recarga página actual
       await loadInsumos(insumosPage);
     } catch (err) {
       console.error(err);
@@ -470,7 +741,14 @@ export default function InventoryPage() {
     setMovementType(type);
     setMovementSearch("");
     setMovementSelected(null);
-    setMovementQty("");
+    setMovementForm({
+      tercero_id: terceros[0]?.id ?? "",
+      bodega_id: bodegas[0]?.id ?? "",
+      cantidad: "",
+      costo_unitario: "",
+      factura: "",
+      observacion: "",
+    });
     setMovementError("");
     setIsMovementOpen(true);
   }
@@ -481,6 +759,20 @@ export default function InventoryPage() {
     setMovementSelected(null);
   }
 
+  function handleMovementFormChange(e) {
+    const { name, value } = e.target;
+    setMovementForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleSelectInsumoForMovement(insumo) {
+    setMovementSelected(insumo);
+    setMovementForm((prev) => ({
+      ...prev,
+      bodega_id: String(insumo?.bodega?.id ?? insumo?.bodega_id ?? prev.bodega_id ?? ""),
+      costo_unitario: String(insumo?.costo_unitario ?? prev.costo_unitario ?? ""),
+    }));
+  }
+
   async function handleMovementSubmit(e) {
     e.preventDefault();
     setMovementError("");
@@ -488,35 +780,54 @@ export default function InventoryPage() {
     if (!movementSelected) return setMovementError("Selecciona un insumo.");
 
     const pk = getInsumoPk(movementSelected);
-    if (!pk) return setMovementError("No se encontró identificador (id/código) del insumo.");
+    if (!pk) return setMovementError("No se encontró el código del insumo.");
 
-    const qty = parseFloat(movementQty);
+    if (!movementForm.tercero_id) return setMovementError("Selecciona el tercero que realiza el movimiento.");
+    if (!movementForm.bodega_id) return setMovementError("Selecciona la bodega del movimiento.");
+
+    const qty = parseFloat(String(movementForm.cantidad).replace(",", "."));
     if (Number.isNaN(qty) || qty <= 0) return setMovementError("Ingresa una cantidad válida mayor a 0.");
 
-    const stockActual = getStockActual(movementSelected);
-    let nuevoStock = movementType === "entrada" ? stockActual + qty : stockActual - qty;
+    const costo = parseFloat(String(movementForm.costo_unitario).replace(",", "."));
+    if (Number.isNaN(costo) || costo <= 0) return setMovementError("Ingresa un costo unitario válido mayor a 0.");
 
-    if (movementType === "salida" && nuevoStock < 0) return setMovementError("La salida no puede dejar el stock en negativo.");
-    nuevoStock = Number(nuevoStock.toFixed(2));
+    // validación local (UX) para evitar negativos
+    if (movementType === "salida") {
+      const stockActual = getStockActual(movementSelected);
+      const nuevoStock = Number((stockActual - qty).toFixed(3));
+      if (nuevoStock < 0) return setMovementError("La salida no puede dejar el stock en negativo.");
+    }
 
     try {
       setMovementLoading(true);
 
-      const res = await fetch(`${API_BASE}/insumos/${pk}/`, {
-        method: "PATCH",
+      // ✅ Contrato: POST /insumos/{codigo}/movimiento/
+      const payload = {
+        tipo: movementType === "entrada" ? "ENTRADA" : "SALIDA",
+        tercero_id: Number(movementForm.tercero_id),
+        cantidad: String(qty.toFixed(3)),
+        costo_unitario: moneyStr(movementForm.costo_unitario),
+        bodega_id: Number(movementForm.bodega_id),
+        factura: movementType === "entrada" ? (movementForm.factura || "") : undefined,
+        observacion: movementForm.observacion || "",
+      };
+
+      // limpia undefined para no romper validaciones del backend
+      Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
+
+      const res = await fetch(`${API_BASE}/insumos/${encodeURIComponent(pk)}/movimiento/`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cantidad: String(nuevoStock), stock_actual: nuevoStock }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        console.error("Error PATCH movimiento:", data);
-        throw new Error("No se pudo registrar el movimiento.");
+        const data = await safeJson(res);
+        console.error("Error POST movimiento:", data);
+        throw new Error(data?.detail || "No se pudo registrar el movimiento.");
       }
 
       setIsMovementOpen(false);
-
-      // ✅ recarga página actual
       await loadInsumos(insumosPage);
     } catch (err) {
       console.error(err);
@@ -526,7 +837,6 @@ export default function InventoryPage() {
     }
   }
 
-  // ✅ paginación UI insumos
   async function goPrevPage() {
     if (!insumosPrev || loading) return;
     await loadInsumos(Math.max(1, insumosPage - 1));
@@ -609,7 +919,6 @@ export default function InventoryPage() {
         </select>
       </div>
 
-      {/* ✅ Barra paginación */}
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="text-xs text-slate-500">
           Total: <b>{insumosCount}</b> • Página <b>{insumosPage}</b>
@@ -648,6 +957,7 @@ export default function InventoryPage() {
                   <th className="px-4 py-3 text-left">Código</th>
                   <th className="px-6 py-3 text-left">Nombre</th>
                   <th className="px-6 py-3 text-left">Referencia</th>
+                  <th className="px-6 py-3 text-left">Factura</th>
                   <th className="px-4 py-3 text-left">Bodega</th>
                   <th className="px-4 py-3 text-left">Tercero</th>
                   <th className="px-4 py-3 text-right">Cantidad</th>
@@ -662,7 +972,7 @@ export default function InventoryPage() {
               <tbody>
                 {insumosFiltrados.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="px-6 py-6 text-center text-sm text-slate-500">
+                    <td colSpan={12} className="px-6 py-6 text-center text-sm text-slate-500">
                       No hay insumos que coincidan con el filtro (en esta página).
                     </td>
                   </tr>
@@ -675,10 +985,11 @@ export default function InventoryPage() {
                   const estado = getEstadoInfo(i);
 
                   return (
-                    <tr key={String(pk ?? `${i.codigo}-${Math.random()}`)} className="border-t border-slate-100 hover:bg-slate-50/80">
-                      <td className="px-4 py-3 text-sm text-slate-600">{i.codigo || `#${i.id}`}</td>
+                    <tr key={String(pk)} className="border-t border-slate-100 hover:bg-slate-50/80">
+                      <td className="px-4 py-3 text-sm text-slate-600">{i.codigo}</td>
                       <td className="px-6 py-3 text-sm text-slate-800">{i.nombre}</td>
-                      <td className="px-6 py-3 text-sm text-slate-800">{i.referencia}</td>
+                      <td className="px-6 py-3 text-sm text-slate-800">{i.referencia ?? "—"}</td>
+                      <td className="px-6 py-3 text-sm text-slate-800">{i.factura ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{i.bodega?.nombre || "—"}</td>
                       <td className="px-4 py-3 text-sm text-slate-600">{i.tercero?.nombre || "—"}</td>
 
@@ -696,9 +1007,15 @@ export default function InventoryPage() {
 
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
-                          <ActionIconButton label="Ver" onClick={() => handleView(i)}>👁️</ActionIconButton>
-                          <ActionIconButton label="Editar" onClick={() => handleEdit(i)}>✏️</ActionIconButton>
-                          <ActionIconButton label="Eliminar" onClick={() => openDeleteModal(i)}>🗑️</ActionIconButton>
+                          <ActionIconButton label="Ver" onClick={() => handleView(i)}>
+                            👁️
+                          </ActionIconButton>
+                          <ActionIconButton label="Editar" onClick={() => handleEdit(i)}>
+                            ✏️
+                          </ActionIconButton>
+                          <ActionIconButton label="Eliminar" onClick={() => openDeleteModal(i)}>
+                            🗑️
+                          </ActionIconButton>
                         </div>
                       </td>
                     </tr>
@@ -758,9 +1075,11 @@ export default function InventoryPage() {
         onSearchChange={setMovementSearch}
         insumos={insumosFiltradosMovimiento}
         selected={movementSelected}
-        onSelect={setMovementSelected}
-        qty={movementQty}
-        onQtyChange={setMovementQty}
+        onSelect={handleSelectInsumoForMovement}
+        form={movementForm}
+        onFormChange={handleMovementFormChange}
+        tercerosOptions={tercerosOptions}
+        bodegasOptions={bodegasOptions}
         onSubmit={handleMovementSubmit}
       />
     </div>

@@ -1,23 +1,15 @@
-const DIAN_UOM = [
-  // (código) - (nombre)
+const UOM = [
   { code: "UN", name: "Unidad" },
-  { code: "KGM", name: "Kilogramo" },
-  { code: "GRM", name: "Gramo" },
-  { code: "MTR", name: "Metro" },
-  { code: "CMT", name: "Centímetro" },
-  { code: "MMT", name: "Milímetro" },
-  { code: "MTK", name: "Metro cuadrado" },
-  { code: "MTQ", name: "Metro cúbico" },
-  { code: "LTR", name: "Litro" },
-  { code: "MLT", name: "Mililitro" },
-  { code: "H87", name: "Pieza" },
-  { code: "PR", name: "Par" },
-  { code: "SET", name: "Juego / Set" },
-  { code: "DZN", name: "Docena" },
-  { code: "BX", name: "Caja" },
-  { code: "PK", name: "Paquete" },
-  { code: "ROL", name: "Rollo" },
-  { code: "EA", name: "Cada uno (Each)" },
+  { code: "M", name: "Metro" },
+  { code: "CM", name: "Centímetro" },
+  { code: "MM", name: "Milímetro" },
+  { code: "KG", name: "Kilogramo" },
+  { code: "G", name: "Gramo" },
+  { code: "L", name: "Litro" },
+  { code: "ML", name: "Mililitro" },
+  { code: "CONO", name: "Cono" },
+  { code: "ROLLO", name: "Rollo" },
+  { code: "CAJA", name: "Caja" },
 ];
 
 export default function CreateInsumoModal({
@@ -31,9 +23,7 @@ export default function CreateInsumoModal({
   proveedoresOptions,
   tercerosOptions,
   bodegasOptions,
-})
-
-{
+}) {
   if (!isOpen) return null;
 
   return (
@@ -41,11 +31,7 @@ export default function CreateInsumoModal({
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900">Nuevo Insumo</h2>
-          <button
-            className="text-slate-400 hover:text-slate-600"
-            onClick={onClose}
-            disabled={loading}
-          >
+          <button className="text-slate-400 hover:text-slate-600" onClick={onClose} disabled={loading}>
             ✕
           </button>
         </div>
@@ -53,7 +39,6 @@ export default function CreateInsumoModal({
         <form onSubmit={onSubmit} className="px-6 py-4 space-y-3">
           {error && <div className="text-xs text-red-600">{error}</div>}
 
-          {/* Código + Nombre */}
           <div className="grid grid-cols-1 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-700">Código</label>
@@ -81,32 +66,42 @@ export default function CreateInsumoModal({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Descripción (opcional)</label>
+              <label className="text-xs font-medium text-slate-700">Observación (opcional)</label>
               <input
                 type="text"
-                name="descripcion"
-                value={form.descripcion || ""}
+                name="observacion"
+                value={form.observacion || ""}
                 onChange={onChange}
-                placeholder="Ej: Tela blanca"
+                placeholder="Ej: Lote para camisas"
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+
             <div className="space-y-1">
-  <label className="text-xs font-medium text-slate-700">
-    Referencia (si la dejas vacía, se usa el Código)
-  </label>
-  <input
-    type="text"
-    name="referencia"
-    value={form.referencia || ""}
-    onChange={onChange}
-    placeholder="Ej: INS-0001"
-    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-  />
-</div>
+              <label className="text-xs font-medium text-slate-700">Factura (opcional)</label>
+              <input
+                type="text"
+                name="factura"
+                value={form.factura || ""}
+                onChange={onChange}
+                placeholder="Ej: FAC-98451"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">Referencia</label>
+              <input
+                type="text"
+                name="referencia"
+                value={form.referencia || ""}
+                onChange={onChange}
+                placeholder="Ej: REF-TELA-01"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
           </div>
 
-          {/* Bodega + Tercero */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-700">Bodega</label>
@@ -145,10 +140,9 @@ export default function CreateInsumoModal({
             </div>
           </div>
 
-          {/* Proveedor (opcional) + Extras */}
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Proveedor (opcional)</label>
+              <label className="text-xs font-medium text-slate-700">Proveedor</label>
               <select
                 name="proveedor_id"
                 value={form.proveedor_id}
@@ -164,58 +158,56 @@ export default function CreateInsumoModal({
               </select>
             </div>
 
+            {/* ✅ unidad_medida */}
             <div className="space-y-1">
-  <label className="text-xs font-medium text-slate-700">Unidad (DIAN)</label>
-  <select
-    name="unidad"
-    value={form.unidad || ""}
-    onChange={onChange}
-    className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-  >
-    <option value="">—</option>
-    {DIAN_UOM.map((u) => (
-      <option key={u.code} value={u.code}>
-        {u.code} - {u.name}
-      </option>
-    ))}
-  </select>
-  
-</div>
+              <label className="text-xs font-medium text-slate-700">Unidad de medida</label>
+              <select
+                name="unidad_medida"
+                value={form.unidad_medida || ""}
+                onChange={onChange}
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">—</option>
+                {UOM.map((u) => (
+                  <option key={u.code} value={u.code}>
+                    {u.code} - {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-700">Color (opcional)</label>
+              <label className="text-xs font-medium text-slate-700">Color</label>
               <input
                 type="text"
                 name="color"
                 value={form.color || ""}
                 onChange={onChange}
-                placeholder="Ej: Negro"
+                placeholder="Ej: Blanco"
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
 
-          {/* Cantidad + stock min + costo */}
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-700">Cantidad</label>
               <input
                 type="number"
-                step="0.01"
+                step="0.001"
                 name="stock_actual"
                 value={form.stock_actual}
                 onChange={onChange}
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
-              
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-700">Stock mínimo</label>
               <input
                 type="number"
-                step="0.01"
+                step="0.001"
                 name="stock_minimo"
                 value={form.stock_minimo}
                 onChange={onChange}
