@@ -127,6 +127,14 @@ const IconHistory = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
+const IconChart = ({ className = "w-5 h-5" }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path d="M4 19V5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M4 19h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M8 15l3-3 3 2 4-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const navItems = [
   { id: "inventario", label: "Inventario de insumos", icon: IconBox, path: "/" },
 
@@ -141,6 +149,7 @@ const navItems = [
   { id: "tallas", label: "Tallas", icon: IconTshirt, path: "/tallas" },
   { id: "salidas_producto", label: "Notas de salida", icon: IconClipboard, path: "/salidas-producto" },
   { id: "importar_excel", label: "Importar Excel", icon: IconClipboard, path: "/importar-excel" },
+  { id: "reportes", label: "Reportes", icon: IconChart, path: "/reportes" },
 ];
 
 export default function SideNav() {
