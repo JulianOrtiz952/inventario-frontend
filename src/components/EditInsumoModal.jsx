@@ -56,8 +56,9 @@ export default function EditInsumoModal({
                 name="codigo"
                 value={form.codigo}
                 onChange={onChange}
-                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
+                className="w-full rounded-md border border-slate-200 bg-slate-100 text-slate-500 px-3 py-2 text-sm outline-none cursor-not-allowed"
+                readOnly
+                disabled
               />
             </div>
 

@@ -330,7 +330,6 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
   const impuestosOptions = useMemo(() => {
     return (impuestos || []).map((i) => ({
       id: i.id,
-      id: i.id,
       label: `${i.codigo} - ${i.nombre} (${formatCurrency(i.valor)}%)`,
     }));
   }, [impuestos]);

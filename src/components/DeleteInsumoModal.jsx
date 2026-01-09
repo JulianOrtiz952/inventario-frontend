@@ -13,7 +13,7 @@ export default function DeleteInsumoModal({
       <div className="bg-white rounded-xl shadow-lg w-full max-w-sm">
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900">
-            Eliminar insumo
+            {insumo.es_activo === false ? "Eliminar insumo" : "Inactivar insumo"}
           </h2>
           <button
             className="text-slate-400 hover:text-slate-600"
@@ -28,12 +28,14 @@ export default function DeleteInsumoModal({
           {error && <div className="text-xs text-red-600">{error}</div>}
 
           <p className="text-sm text-slate-700">
-            ¿Estás seguro de que deseas eliminar el insumo{" "}
+            ¿Estás seguro de que deseas {insumo.es_activo === false ? "eliminar" : "inactivar"} el insumo{" "}
             <span className="font-semibold">“{insumo.nombre}”</span>?
           </p>
 
           <p className="text-xs text-slate-500">
-            Esta acción no se puede deshacer.
+            {insumo.es_activo === false
+              ? "Esta acción no se puede deshacer."
+              : "El insumo pasará a estado inactivo y se mostrará al final de la lista."}
           </p>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -51,7 +53,9 @@ export default function DeleteInsumoModal({
               disabled={loading}
               className="px-4 py-2 rounded-md bg-red-600 text-white text-xs font-medium shadow-sm hover:bg-red-700 disabled:opacity-70"
             >
-              {loading ? "Eliminando..." : "Eliminar"}
+              {loading
+                ? (insumo.es_activo === false ? "Eliminando..." : "Inactivando...")
+                : (insumo.es_activo === false ? "Eliminar" : "Inactivar")}
             </button>
           </div>
         </div>

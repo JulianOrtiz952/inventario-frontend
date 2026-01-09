@@ -71,7 +71,7 @@ export default function CreateInsumoMovimientoModal({
     if (!form.tercero_id) return setError("Selecciona un tercero.");
     if (!form.bodega_id) return setError("Selecciona una bodega.");
     if (!form.cantidad) return setError("La cantidad es obligatoria.");
-    if (!form.costo_unitario) return setError("El costo unitario es obligatorio.");
+    if (form.tipo !== "ENTRADA" && !form.costo_unitario) return setError("El costo unitario es obligatorio.");
 
     try {
       setLoading(true);
@@ -80,7 +80,7 @@ export default function CreateInsumoMovimientoModal({
         tipo: form.tipo,
         tercero_id: Number(form.tercero_id),
         cantidad: String(form.cantidad),
-        costo_unitario: String(form.costo_unitario),
+        costo_unitario: (form.tipo !== "ENTRADA" && form.costo_unitario) ? String(form.costo_unitario) : undefined,
         bodega_id: Number(form.bodega_id),
         factura: form.factura?.trim() || "",
         observacion: form.observacion?.trim() || "",
@@ -222,7 +222,7 @@ export default function CreateInsumoMovimientoModal({
                 value={form.costo_unitario}
                 onChange={handleChange}
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
+
               />
             </div>
           </div>

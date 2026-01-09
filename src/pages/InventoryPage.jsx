@@ -32,6 +32,8 @@ function moneyStr(v) {
   return s.replace(",", ".");
 }
 
+
+
 function MovementModal({
   isOpen,
   type, // "entrada" | "salida"
@@ -40,228 +42,256 @@ function MovementModal({
   error,
   search,
   onSearchChange,
-  insumos,
+  // insumos, // YA NO USAMOS LA LISTA DEL PADRE DIRECTAMENTE
+  results,   // USAMOS LOS RESULTADOS DE BÚSQUEDA ASÍNCRONA
+  searching, // estado de carga de la búsqueda
   selected,
   onSelect,
   form,
   onFormChange,
   tercerosOptions,
   bodegasOptions,
+  stockData, // { bodega_id: stock } object passed from parent
   onSubmit,
 }) {
   if (!isOpen) return null;
 
   const isEntrada = type === "entrada";
+  const stockInSelectedBodega = (!isEntrada && form.bodega_id && stockData)
+    ? (stockData[String(form.bodega_id)] ?? 0)
+    : null;
+  // Colores más acordes: Entrada (Blue/Indigo), Salida (Rose/Red) o similar al resto.
+  // Usaremos Slate-900 para títulos y botones más sutiles o brand colors.
+  // El usuario pidió "colores más acordes".
+  // Entrada: bg-blue-600 (como crear). Salida: bg-rose-600 (advertencia suave).
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[92vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto border border-slate-100 scale-100 opacity-100 transition-all">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">
-              {isEntrada ? "Registrar entrada" : "Registrar salida"}
+            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${isEntrada ? "bg-blue-600" : "bg-rose-500"}`}></span>
+              {isEntrada ? "Registrar Entrada de Insumo" : "Registrar Salida de Insumo"}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Selecciona el insumo y registra el movimiento con el tercero responsable.
+              Busca y selecciona el insumo para registrar el movimiento.
             </p>
           </div>
-          <button className="text-slate-400 hover:text-slate-600" onClick={onClose} disabled={loading}>
+          <button className="text-slate-400 hover:text-slate-600 transition-colors" onClick={onClose} disabled={loading}>
             ✕
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="px-6 py-5 space-y-4">
+        <form onSubmit={onSubmit} className="px-6 py-5 space-y-6">
           {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+            <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700 font-medium">
               {error}
             </div>
           )}
 
-          {/* Buscar + seleccionar */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl border border-slate-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
-                <p className="text-xs font-semibold text-slate-700">Buscar insumo</p>
-                <div className="mt-2 flex items-center gap-2 rounded-md bg-white border border-slate-200 px-3 py-2 text-sm">
-                  <span className="text-slate-400">🔍</span>
-                  <input
-                    value={search}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
-                    placeholder="Nombre o código..."
-                  />
-                </div>
+          {/* Layout: Izq Buscador, Der Formulario */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Panel Izquierdo: Buscador */}
+            <div className="flex flex-col gap-3 h-[420px]">
+              <div className="relative group">
+                <span className="absolute left-3 top-2.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">🔍</span>
+                <input
+                  value={search}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                  placeholder="Buscar por nombre o código..."
+                  autoFocus
+                />
               </div>
 
-              <div className="max-h-72 overflow-y-auto">
-                {insumos.length === 0 ? (
-                  <div className="px-4 py-6 text-xs text-slate-500">No hay insumos para mostrar.</div>
-                ) : (
-                  <ul className="divide-y divide-slate-100">
-                    {insumos.map((i) => {
-                      const pk = i?.codigo;
-                      const active = selected?.codigo === pk;
+              <div className="flex-1 rounded-xl border border-slate-200 overflow-hidden bg-slate-50/30 flex flex-col">
+                {/* Header de lista */}
+                <div className="px-4 py-2 bg-slate-100/50 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase flex justify-between">
+                  <span>Insumo</span>
+                  <span>Stock Global</span>
+                </div>
+
+                <div className="overflow-y-auto flex-1 p-1 space-y-0.5 custom-scrollbar">
+                  {searching ? (
+                    <div className="p-4 text-center text-xs text-slate-500 flex flex-col items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      Buscando...
+                    </div>
+                  ) : results.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs">
+                      No se encontraron insumos.
+                    </div>
+                  ) : (
+                    results.map((i) => {
+                      const active = selected?.codigo === i.codigo;
+                      const isInactive = i.es_activo === false;
                       return (
-                        <li key={String(pk)}>
-                          <button
-                            type="button"
-                            onClick={() => onSelect(i)}
-                            className={`w-full text-left px-4 py-3 hover:bg-slate-50 ${active ? "bg-blue-50" : "bg-white"
-                              }`}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-medium text-slate-900">{i.nombre}</p>
-                                <p className="text-[11px] text-slate-500">{i.codigo}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs text-slate-500">Stock</p>
-                                <p className="text-sm font-semibold text-slate-800 tabular-nums">
-                                  {formatCurrency(i?.cantidad ?? i?.stock_actual ?? 0)}
-                                </p>
+                        <button
+                          key={i.codigo}
+                          type="button"
+                          onClick={() => onSelect(i)}
+                          className={`w-full text-left px-3 py-2.5 rounded-lg border transition-all duration-200 group
+                                   ${active
+                              ? "bg-white border-blue-500 shadow-md ring-1 ring-blue-500/20 z-10"
+                              : "bg-transparent border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm"
+                            }
+                                   ${isInactive ? "opacity-60 bg-slate-50" : ""}
+                                 `}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className={`text-sm font-medium ${active ? "text-blue-700" : isInactive ? "text-slate-500 line-through" : "text-slate-700 group-hover:text-slate-900"}`}>
+                                {i.nombre}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
+                                  {i.codigo}
+                                </span>
+                                {isInactive && <span className="text-[9px] text-slate-400">(Inactivo)</span>}
                               </div>
                             </div>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                            <div className="text-right">
+                              <span className={`text-sm font-semibold tabular-nums ${active ? "text-blue-700" : "text-slate-600"}`}>
+                                {formatCurrency(i.cantidad ?? 0)}
+                              </span>
+                              <p className="text-[10px] text-slate-400 font-normal">{i.unidad_medida}</p>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Form */}
-            <div className="rounded-xl border border-slate-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
-                <p className="text-xs font-semibold text-slate-700">Detalle del movimiento</p>
-              </div>
+            {/* Panel Derecho: Formulario */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 flex flex-col justify-between h-[420px]">
+              <div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">
+                  Detalle del Movimiento
+                </h3>
 
-              <div className="p-4 space-y-3">
                 {!selected ? (
-                  <div className="text-xs text-slate-500">Selecciona un insumo para continuar.</div>
+                  <div className="py-10 text-center text-slate-400 text-sm flex flex-col items-center gap-3">
+                    <span className="text-3xl opacity-20">👈</span>
+                    Selecciona un insumo de la lista para continuar.
+                  </div>
                 ) : (
-                  <>
-                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Insumo</p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {selected.nombre} <span className="text-slate-400 font-normal">({selected.codigo})</span>
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Stock actual:{" "}
-                        <b>
-                          {formatCurrency(selected?.cantidad ?? selected?.stock_actual ?? 0)}
-                        </b>
-                      </p>
+                  <div className="space-y-4 animate-fadeIn">
+                    {/* Insumo seleccionado preview */}
+                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${isEntrada ? "bg-blue-50 text-blue-600" : "bg-rose-50 text-rose-600"}`}>
+                        {isEntrada ? "⬇" : "⬆"}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500 font-medium">Insumo seleccionado</p>
+                        <p className="text-sm font-bold text-slate-900 line-clamp-1">{selected.nombre}</p>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-slate-700">Tercero</label>
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase">Tercero</label>
                         <select
                           name="tercero_id"
                           value={form.tercero_id}
                           onChange={onFormChange}
-                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full bg-white rounded-md border border-slate-300 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow shadow-sm"
                           required
                         >
                           <option value="">Selecciona...</option>
                           {tercerosOptions.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.nombre}
-                            </option>
+                            <option key={t.id} value={t.id}>{t.nombre}</option>
                           ))}
                         </select>
                       </div>
-
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-slate-700">Bodega</label>
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase">Bodega</label>
                         <select
                           name="bodega_id"
                           value={form.bodega_id}
                           onChange={onFormChange}
-                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full bg-white rounded-md border border-slate-300 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow shadow-sm"
                           required
                         >
                           <option value="">Selecciona...</option>
                           {bodegasOptions.map((b) => (
-                            <option key={b.id} value={b.id}>
-                              {b.nombre}
-                            </option>
+                            <option key={b.id} value={b.id}>{b.nombre}</option>
                           ))}
                         </select>
+                        {/* Dynamic Stock Display for Salida */}
+                        {!isEntrada && stockInSelectedBodega !== null && (
+                          <div className="absolute right-0 top-0 -mt-5 bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded border border-blue-100 font-semibold shadow-sm">
+                            Stock: {formatCurrency(stockInSelectedBodega)}
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-slate-700">Cantidad</label>
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase">Cantidad</label>
                         <CurrencyInput
                           name="cantidad"
                           value={form.cantidad}
                           onChange={onFormChange}
-                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Ej: 5.000"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-slate-700">Costo unitario</label>
-                        <CurrencyInput
-                          name="costo_unitario"
-                          value={form.costo_unitario}
-                          onChange={onFormChange}
-                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Ej: 2.600"
+                          className="w-full bg-white rounded-md border border-slate-300 px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                          placeholder="0.000"
                         />
                       </div>
                     </div>
 
-                    {isEntrada && (
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-slate-700">Factura (opcional)</label>
+                    {/* Campos opcionales */}
+                    <div className="grid grid-cols-1 gap-3">
+                      {isEntrada && (
                         <input
                           name="factura"
                           value={form.factura}
                           onChange={onFormChange}
-                          className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Ej: FAC-999"
+                          className="w-full bg-white rounded-md border border-slate-300 px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-400"
+                          placeholder="Factura (Opcional)"
                         />
-                      </div>
-                    )}
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-slate-700">Observación (opcional)</label>
+                      )}
                       <input
                         name="observacion"
                         value={form.observacion}
                         onChange={onFormChange}
-                        className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder={isEntrada ? "Ej: Compra adicional" : "Ej: Uso manual"}
+                        className="w-full bg-white rounded-md border border-slate-300 px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-400"
+                        placeholder="Observación (Opcional)"
                       />
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
-            </div>
-          </div>
 
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-100"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !selected}
-              className={`px-4 py-2 rounded-md text-white text-xs font-medium shadow-sm disabled:opacity-70 ${isEntrada ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-500 hover:bg-orange-600"
-                }`}
-            >
-              {loading ? "Guardando..." : isEntrada ? "Registrar entrada" : "Registrar salida"}
-            </button>
+              {/* Footer botones formulario */}
+              <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-200/60">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={loading}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-200/50 hover:text-slate-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !selected}
+                  className={`px-6 py-2 rounded-lg text-white text-xs font-bold shadow-lg shadow-blue-900/10 transform active:scale-95 transition-all
+                          ${loading || !selected
+                      ? "bg-slate-300 cursor-not-allowed shadow-none"
+                      : isEntrada
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500"
+                        : "bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500"
+                    }
+                      `}
+                >
+                  {loading ? "Guardando..." : isEntrada ? "Registrar Entrada" : "Registrar Salida"}
+                </button>
+              </div>
+            </div>
           </div>
         </form>
       </div>
@@ -399,6 +429,51 @@ export default function InventoryPage() {
   const [movementError, setMovementError] = useState("");
   const [movementLoading, setMovementLoading] = useState(false);
 
+  /* State para búsqueda asíncrona en el modal de movimientos */
+  const [movementSearchResults, setMovementSearchResults] = useState([]);
+  const [isMovementSearching, setIsMovementSearching] = useState(false);
+  const [movementStockData, setMovementStockData] = useState({}); // { bodega_id: quantity }
+
+
+  // Efecto para buscar insumos cuando cambia el término de búsqueda en el modal
+  useEffect(() => {
+    if (!isMovementOpen) {
+      setMovementSearchResults([]);
+      return;
+    }
+
+    const term = movementSearch.trim();
+    if (!term) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsMovementSearching(true);
+      fetch(`${API_BASE}/insumos/?search=${encodeURIComponent(term)}&page_size=50`)
+        .then((res) => res.json())
+        .then((data) => {
+          setMovementSearchResults(asRows(data));
+        })
+        .catch((err) => console.error("Error search modal:", err))
+        .finally(() => setIsMovementSearching(false));
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [movementSearch, isMovementOpen]);
+
+  // Cargar lista inicial al abrir el modal
+  useEffect(() => {
+    if (isMovementOpen && !movementSearch) {
+      setIsMovementSearching(true);
+      fetch(`${API_BASE}/insumos/?page_size=50`)
+        .then((res) => res.json())
+        .then((data) => {
+          setMovementSearchResults(asRows(data));
+        })
+        .finally(() => setIsMovementSearching(false));
+    }
+  }, [isMovementOpen, movementSearch]);
+
   function getEstadoInfo(insumo) {
     const actual = getStockActual(insumo);
     const minimo = getStockMinimo(insumo);
@@ -502,16 +577,7 @@ export default function InventoryPage() {
   // ELIMINADO: const insumosFiltrados = useMemo(...)
 
 
-  const insumosFiltradosMovimiento = useMemo(() => {
-    const term = movementSearch.trim().toLowerCase();
-    if (!term) return insumos;
 
-    return insumos.filter((i) => {
-      const matchesName = (i.nombre || "").toLowerCase().includes(term);
-      const matchesCodigo = String(i.codigo || "").toLowerCase().includes(term);
-      return matchesName || matchesCodigo;
-    });
-  }, [insumos, movementSearch]);
 
   // ---------- Crear ----------
   function openCreateModal() {
@@ -591,7 +657,25 @@ export default function InventoryPage() {
       if (!res.ok) {
         const data = await safeJson(res);
         console.error("Error POST insumo:", data);
-        throw new Error(data?.detail || "No se pudo crear el insumo.");
+
+        let msg = "No se pudo crear el insumo.";
+        if (data?.detail) {
+          msg = data.detail;
+        } else if (data && typeof data === 'object') {
+          // Si el backend devuelve {"codigo": ["..."], "nombre": ["..."]}
+          const parts = [];
+          for (const key in data) {
+            const val = data[key];
+            if (Array.isArray(val)) {
+              parts.push(`${val.join(" ")}`);
+            } else if (typeof val === 'string') {
+              parts.push(val);
+            }
+          }
+          if (parts.length > 0) msg = parts.join(" ");
+        }
+
+        throw new Error(msg);
       }
 
       setIsCreateOpen(false);
@@ -751,6 +835,7 @@ export default function InventoryPage() {
     setMovementType(type);
     setMovementSearch("");
     setMovementSelected(null);
+    setMovementStockData({});
     setMovementForm({
       tercero_id: terceros[0]?.id ?? "",
       bodega_id: bodegas[0]?.id ?? "",
@@ -779,8 +864,33 @@ export default function InventoryPage() {
     setMovementForm((prev) => ({
       ...prev,
       bodega_id: String(insumo?.bodega?.id ?? insumo?.bodega_id ?? prev.bodega_id ?? ""),
-      costo_unitario: String(insumo?.costo_unitario ?? prev.costo_unitario ?? ""),
+      costo_unitario: "", // Always clear cost, we don't need it for salida either now
     }));
+
+    // Fetch dynamic stock for this insumo
+    if (insumo?.codigo) {
+      fetch(`${API_BASE}/insumos/${encodeURIComponent(insumo.codigo)}/stock_por_bodega/`, {
+        headers: { "Content-Type": "application/json" }
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Error fetching stock");
+          return res.json();
+        })
+        .then((data) => {
+          // data is [{ bodega_id, bodega_nombre, stock }]
+          const map = {};
+          if (Array.isArray(data)) {
+            data.forEach((item) => {
+              // Ensure key is string to match form.bodega_id
+              if (item.bodega_id) {
+                map[String(item.bodega_id)] = Number(item.stock);
+              }
+            });
+          }
+          setMovementStockData(map);
+        })
+        .catch((err) => console.error("Error fetching stock:", err));
+    }
   }
 
   async function handleMovementSubmit(e) {
@@ -798,14 +908,30 @@ export default function InventoryPage() {
     const qty = parseFloat(String(movementForm.cantidad).replace(",", "."));
     if (Number.isNaN(qty) || qty <= 0) return setMovementError("Ingresa una cantidad válida mayor a 0.");
 
-    const costo = parseFloat(String(movementForm.costo_unitario).replace(",", "."));
-    if (Number.isNaN(costo) || costo <= 0) return setMovementError("Ingresa un costo unitario válido mayor a 0.");
+    // Validar costo solo si NO es entrada (en entrada está oculto y se usa el del insumo)
+    // UPDATE: User asked to remove cost for salida too. So we skip validation for both.
+    /*
+    if (movementType !== "entrada") {
+      const costo = parseFloat(String(movementForm.costo_unitario).replace(",", "."));
+      if (Number.isNaN(costo) || costo <= 0) return setMovementError("Ingresa un costo unitario válido mayor a 0.");
+    }
+    */
 
     // validación local (UX) para evitar negativos
     if (movementType === "salida") {
-      const stockActual = getStockActual(movementSelected);
-      const nuevoStock = Number((stockActual - qty).toFixed(3));
-      if (nuevoStock < 0) return setMovementError("La salida no puede dejar el stock en negativo.");
+      // Check against global stock handled by getStockActual, but user wants dynamic per-bodega check?
+      // Let's use the dynamic stock if available for the selected bodega
+      let available = getStockActual(movementSelected);
+
+      if (movementStockData && movementForm.bodega_id) {
+        const localStock = movementStockData[String(movementForm.bodega_id)];
+        if (localStock !== undefined) {
+          available = localStock;
+        }
+      }
+
+      // const nuevoStock = Number((stockActual - qty).toFixed(3));
+      if (qty > available) return setMovementError(`La salida excede el stock disponible en esta bodega (${available}).`);
     }
 
     try {
@@ -816,7 +942,7 @@ export default function InventoryPage() {
         tipo: movementType === "entrada" ? "ENTRADA" : "SALIDA",
         tercero_id: Number(movementForm.tercero_id),
         cantidad: String(qty.toFixed(3)),
-        costo_unitario: moneyStr(movementForm.costo_unitario),
+        costo_unitario: undefined, // Always undefined now as per request
         bodega_id: Number(movementForm.bodega_id),
         factura: movementType === "entrada" ? (movementForm.factura || "") : undefined,
         observacion: movementForm.observacion || "",
@@ -834,7 +960,12 @@ export default function InventoryPage() {
       if (!res.ok) {
         const data = await safeJson(res);
         console.error("Error POST movimiento:", data);
-        throw new Error(data?.detail || "No se pudo registrar el movimiento.");
+        // Extract specific validation error
+        let errorMsg = data?.detail || "No se pudo registrar el movimiento.";
+        if (data?.cantidad) { errorMsg = Array.isArray(data.cantidad) ? data.cantidad[0] : data.cantidad; }
+        if (typeof data === 'string') errorMsg = data;
+
+        throw new Error(errorMsg);
       }
 
       setIsMovementOpen(false);
@@ -864,14 +995,14 @@ export default function InventoryPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
         <div className="flex gap-3">
           <button
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-md bg-emerald-600 text-white text-sm font-medium shadow-sm hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white border border-slate-200 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-all"
             onClick={() => openMovementModal("entrada")}
           >
             <span className="text-lg leading-none">⬇</span>
             Registrar Entrada
           </button>
           <button
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-md bg-orange-500 text-white text-sm font-medium shadow-sm hover:bg-orange-600"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white border border-slate-200 text-rose-600 text-sm font-semibold shadow-sm hover:bg-rose-50 hover:border-rose-300 transition-all"
             onClick={() => openMovementModal("salida")}
           >
             <span className="text-lg leading-none">⬆</span>
@@ -1032,15 +1163,27 @@ export default function InventoryPage() {
                   const pk = getInsumoPk(i);
                   const estado = getEstadoInfo(i);
                   const stock = getStockActual(i);
+                  const isInactive = i.es_activo === false; // Handle explicitly if existing
 
                   return (
-                    <tr key={pk} className="border-b border-slate-100 hover:bg-slate-50/70 transition-colors">
-                      <td className="px-4 py-3 font-medium text-slate-800 text-xs">{pk}</td>
-                      <td className="px-4 py-3 text-slate-800">
-                        <p className="font-medium">{i.nombre}</p>
+                    <tr
+                      key={pk}
+                      className={`border-b border-slate-100 transition-colors ${isInactive
+                        ? "bg-slate-100/60 text-slate-400 hover:bg-slate-100"
+                        : "hover:bg-slate-50/70"
+                        }`}
+                    >
+                      <td className="px-4 py-3 font-medium text-xs">
+                        <span className={isInactive ? "text-slate-500 line-through decoration-slate-300" : "text-slate-800"}>
+                          {pk}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className={`font-medium ${isInactive ? "text-slate-600" : "text-slate-800"}`}>{i.nombre}</p>
                         {i.referencia && i.referencia !== pk && (
                           <p className="text-[10px] text-slate-400">Ref: {i.referencia}</p>
                         )}
+                        {isInactive && <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded border border-slate-300 text-slate-500 font-medium">Inactivo</span>}
                       </td>
 
                       <td className="px-4 py-3 text-xs text-slate-600">
@@ -1057,13 +1200,20 @@ export default function InventoryPage() {
                       </td>
 
                       <td className="px-4 py-3">
-                        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${estado.colorClass} border-transparent bg-white shadow-sm ring-1 ring-slate-100`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
-                          {estado.label}
-                        </div>
+                        {isInactive ? (
+                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border border-slate-200 bg-slate-100 text-slate-500">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                            Inactivo
+                          </div>
+                        ) : (
+                          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${estado.colorClass} border-transparent bg-white shadow-sm ring-1 ring-slate-100`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
+                            {estado.label}
+                          </div>
+                        )}
                       </td>
 
-                      <td className="px-4 py-3 text-right font-medium text-slate-900 tabular-nums">
+                      <td className={`px-4 py-3 text-right font-medium tabular-nums ${isInactive ? "text-slate-500" : "text-slate-900"}`}>
                         {formatCurrency(stock)}
                         <span className="ml-1 text-[10px] text-slate-400 font-normal">
                           {i.unidad_medida || "u"}
@@ -1145,18 +1295,21 @@ export default function InventoryPage() {
       <MovementModal
         isOpen={isMovementOpen}
         type={movementType}
-        onClose={closeMovementModal}
+        onClose={() => setIsMovementOpen(false)}
         loading={movementLoading}
         error={movementError}
         search={movementSearch}
         onSearchChange={setMovementSearch}
-        insumos={insumosFiltradosMovimiento}
+        results={movementSearchResults}
+        searching={isMovementSearching}
         selected={movementSelected}
-        onSelect={handleSelectInsumoForMovement}
+        onSelect={setMovementSelected}
         form={movementForm}
         onFormChange={handleMovementFormChange}
         tercerosOptions={tercerosOptions}
         bodegasOptions={bodegasOptions}
+
+        stockData={movementStockData}
         onSubmit={handleMovementSubmit}
       />
     </div>
