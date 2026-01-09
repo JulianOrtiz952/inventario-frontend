@@ -29,10 +29,12 @@ export default function TercerosPage() {
     setError("");
     try {
       setLoading(true);
+      const params = new URLSearchParams();
+      params.append("page", targetPage);
+      params.append("page_size", PAGE_SIZE);
+      if (search) params.append("search", search);
 
-      const res = await fetch(
-        `${API_BASE}/terceros/?page=${targetPage}&page_size=${PAGE_SIZE}`
-      );
+      const res = await fetch(`${API_BASE}/terceros/?${params.toString()}`);
       if (!res.ok) throw new Error("Error cargando terceros.");
 
       const data = await res.json();
@@ -55,18 +57,20 @@ export default function TercerosPage() {
   }
 
   useEffect(() => {
-    loadTerceros(1);
+    if (!search) loadTerceros(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return terceros;
-    return terceros.filter((t) => {
-      const codigo = (t.codigo || "").toLowerCase();
-      const nombre = (t.nombre || "").toLowerCase();
-      return codigo.includes(term) || nombre.includes(term);
-    });
-  }, [terceros, search]);
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      loadTerceros(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // ELIMINADO client-side filtering
+  // const filtered = ...
 
   function openCreate() {
     setEditing(null);
@@ -248,7 +252,7 @@ export default function TercerosPage() {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
           <h2 className="text-sm font-semibold text-slate-900">
-            Listado ({filtered.length})
+            Listado ({terceros.length})
           </h2>
         </div>
 
@@ -271,16 +275,16 @@ export default function TercerosPage() {
                 </tr>
               )}
 
-              {!loading && filtered.length === 0 && (
+              {!loading && terceros.length === 0 && (
                 <tr>
                   <td className="px-4 py-3 text-slate-500" colSpan={4}>
-                    No hay terceros en esta página.
+                    No hay terceros{search ? " que coincidan" : ""}.
                   </td>
                 </tr>
               )}
 
               {!loading &&
-                filtered.map((t) => (
+                terceros.map((t) => (
                   <tr
                     key={t.id}
                     className="border-b border-slate-100 hover:bg-slate-50/70"

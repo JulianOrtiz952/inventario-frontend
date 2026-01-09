@@ -12,6 +12,8 @@ const UOM = [
   { code: "CAJA", name: "Caja" },
 ];
 
+import CurrencyInput from "./CurrencyInput";
+
 export default function EditInsumoModal({
   isOpen,
   onClose,
@@ -193,22 +195,17 @@ export default function EditInsumoModal({
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-700">Cantidad</label>
-              <input
-                type="number"
-                step="0.001"
+              <CurrencyInput
                 name="stock_actual"
                 value={form.stock_actual}
                 onChange={onChange}
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
               />
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-700">Stock mínimo</label>
-              <input
-                type="number"
-                step="0.001"
+              <CurrencyInput
                 name="stock_minimo"
                 value={form.stock_minimo}
                 onChange={onChange}
@@ -218,14 +215,11 @@ export default function EditInsumoModal({
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-slate-700">Costo unitario</label>
-              <input
-                type="number"
-                step="0.01"
+              <CurrencyInput
                 name="costo_unitario"
                 value={form.costo_unitario}
                 onChange={onChange}
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
               />
             </div>
           </div>

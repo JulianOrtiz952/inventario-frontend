@@ -3,16 +3,20 @@ import ProductDetailsModal from "./ProductDetailsModal";
 import { API_BASE } from "../config/api";
 
 
+import CurrencyInput from "./CurrencyInput";
+import { formatCurrency, parseCurrency } from "../utils/format";
+
+
 const DIAN_UOM = [
-  "UN","H87","KGM","GRM","MTR","CMT","MMT","MTK","MTQ","LTR","MLT","BX","PK","ROL",
+  "UN", "H87", "KGM", "GRM", "MTR", "CMT", "MMT", "MTK", "MTQ", "LTR", "MLT", "BX", "PK", "ROL",
 ];
 
 function asRows(data) {
   return Array.isArray(data)
     ? data
     : Array.isArray(data?.results)
-    ? data.results
-    : [];
+      ? data.results
+      : [];
 }
 
 async function safeJson(res) {
@@ -24,19 +28,21 @@ async function safeJson(res) {
 function fmtMoney(v) {
   const n = Number(v);
   if (!Number.isFinite(n)) return "—";
-  return `$${n.toLocaleString("es-CO", { maximumFractionDigits: 2 })}`;
+  if (!Number.isFinite(n)) return "—";
+  return `$${formatCurrency(n)}`;
 }
 function fmtPct(v) {
   const n = Number(v);
   if (!Number.isFinite(n)) return "—";
-  return `${n.toLocaleString("es-CO", { maximumFractionDigits: 2 })}%`;
+  return `${formatCurrency(n)}%`;
 }
 
 function moneyStr(v) {
   if (v === null || v === undefined) return "";
   const s = String(v).trim();
   if (!s) return "";
-  return s.replace(",", ".");
+  if (!s) return "";
+  return parseCurrency(s); // Limpia formato visual
 }
 
 // ===============================
@@ -133,14 +139,11 @@ function CreateImpuestoModal({ isOpen, onClose, onCreated }) {
 
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700">Valor (%)</label>
-            <input
-              type="number"
-              step="0.01"
+            <CurrencyInput
               value={form.valor}
               onChange={(e) => setForm((p) => ({ ...p, valor: e.target.value }))}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Ej: 19.00"
-              required
             />
           </div>
 
@@ -286,7 +289,7 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
 
         if (resImp.ok) {
           const impData = await resImp.json();
-setImpuestos(asRows(impData));
+          setImpuestos(asRows(impData));
         }
 
         setOriginal(data);
@@ -327,7 +330,8 @@ setImpuestos(asRows(impData));
   const impuestosOptions = useMemo(() => {
     return (impuestos || []).map((i) => ({
       id: i.id,
-      label: `${i.codigo} - ${i.nombre} (${i.valor}%)`,
+      id: i.id,
+      label: `${i.codigo} - ${i.nombre} (${formatCurrency(i.valor)}%)`,
     }));
   }, [impuestos]);
 
@@ -744,13 +748,11 @@ setImpuestos(asRows(impData));
 
                           <div className="md:col-span-4 space-y-1">
                             <label className="text-[11px] text-slate-500">Valor</label>
-                            <input
-                              type="number"
-                              step="0.01"
+                            <CurrencyInput
                               value={p.valor ?? ""}
                               onChange={(e) => updatePrecio(i, { valor: e.target.value })}
                               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="Ej: 60000"
+                              placeholder="Ej: 60.000"
                             />
                           </div>
 

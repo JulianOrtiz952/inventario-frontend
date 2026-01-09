@@ -4,6 +4,8 @@ import CreateProductModal from "../components/CreateProductModal";
 import ProductDetailsModal from "../components/ProductDetailsModal";
 import ActionIconButton from "../components/ActionIconButton";
 import EditProductModal from "../components/EditProductModal";
+import CurrencyInput from "../components/CurrencyInput";
+import { formatCurrency } from "../utils/format";
 import { API_BASE } from "../config/api";
 
 const PAGE_SIZE = 30;
@@ -22,6 +24,11 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [terceroFiltro, setTerceroFiltro] = useState("todos");
+  const [precioMin, setPrecioMin] = useState("");
+  const [precioMax, setPrecioMax] = useState("");
+
+  const [terceros, setTerceros] = useState([]);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -54,17 +61,25 @@ export default function ProductsPage() {
   const money = (v) => {
     const n = toNumber(v);
     if (n === null) return "—";
-    return `$${n.toLocaleString("es-CO", { maximumFractionDigits: 2 })}`;
+    return `$${formatCurrency(n)}`;
   };
 
   const pct = (v) => {
     const n = toNumber(v);
     if (n === null) return "—";
-    return `${n.toLocaleString("es-CO", { maximumFractionDigits: 2 })}%`;
+    return `${formatCurrency(n)}%`;
   };
 
   async function loadProductos(targetPage = 1) {
-    const res = await fetch(`${API_BASE}/productos/?page=${targetPage}&page_size=${PAGE_SIZE}`);
+    const params = new URLSearchParams();
+    params.append("page", targetPage);
+    params.append("page_size", PAGE_SIZE);
+    if (search) params.append("search", search);
+    if (terceroFiltro !== "todos") params.append("tercero", terceroFiltro);
+    if (precioMin) params.append("precio_min", precioMin);
+    if (precioMax) params.append("precio_max", precioMax);
+
+    const res = await fetch(`${API_BASE}/productos/?${params.toString()}`);
     if (!res.ok) throw new Error("No se pudieron cargar los productos.");
     const data = await res.json();
 
@@ -81,6 +96,14 @@ export default function ProductsPage() {
       try {
         setLoading(true);
         setError("");
+
+        // Cargar terceros si no están cargados (para el filtro)
+        const resTerceros = await fetch(`${API_BASE}/terceros/?page_size=1000`);
+        if (resTerceros.ok) {
+          const dataT = await resTerceros.json();
+          setTerceros(asRows(dataT));
+        }
+
         await loadProductos(1);
       } catch (err) {
         console.error(err);
@@ -90,20 +113,22 @@ export default function ProductsPage() {
       }
     };
 
-    load();
+    // If search is empty, load immediately (initial load logic mostly)
+    if (!search) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const productosFiltrados = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return productos;
+  // Debounce search + filters
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Trigger load with page 1
+      loadProductos(1).catch((err) => console.error(err));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search, terceroFiltro, precioMin, precioMax]);
 
-    return productos.filter((p) => {
-      const sku = String(p.codigo_sku || "").toLowerCase();
-      const nombre = String(p.nombre || "").toLowerCase();
-      const barras = String(p.codigo_barras || "").toLowerCase();
-      return sku.includes(term) || nombre.includes(term) || barras.includes(term);
-    });
-  }, [search, productos]);
+  // ELIMINADO client-side filtering
+  // const productosFiltrados = ...
 
   const handleProductCreated = async () => {
     // ✅ En modo paginado, es mejor recargar la página actual
@@ -233,14 +258,46 @@ export default function ProductsPage() {
           </div>
 
           <div className="flex flex-col md:flex-row gap-3 md:items-center">
+            {/* Filtros extra */}
+            <div className="flex items-center gap-2">
+              <select
+                value={terceroFiltro}
+                onChange={(e) => setTerceroFiltro(e.target.value)}
+                className="bg-white border border-slate-200 rounded-lg px-2 py-2 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 max-w-[140px]"
+              >
+                <option value="todos">Todos los terceros</option>
+                {terceros.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nombre}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex items-center gap-0 bg-white border border-slate-200 rounded-lg px-2 py-1 h-[34px]">
+                <span className="text-[10px] text-slate-500 uppercase font-semibold mr-1">$$</span>
+                <CurrencyInput
+                  placeholder="Min"
+                  value={precioMin}
+                  onChange={(e) => setPrecioMin(e.target.value)}
+                  className="w-20 outline-none text-xs text-slate-700 placeholder:text-slate-400 border-r border-slate-100 pr-1 text-right"
+                />
+                <CurrencyInput
+                  placeholder="Max"
+                  value={precioMax}
+                  onChange={(e) => setPrecioMax(e.target.value)}
+                  className="w-20 outline-none text-xs text-slate-700 placeholder:text-slate-400 pl-1 text-right"
+                />
+              </div>
+            </div>
+
             <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
               <span className="text-slate-400 text-sm">🔍</span>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por SKU, nombre o código de barras (en esta página)..."
-                className="bg-transparent outline-none text-xs text-slate-700 placeholder:text-slate-400 w-56 md:w-80"
+                placeholder="Buscar SKU, nombre..."
+                className="bg-transparent outline-none text-xs text-slate-700 placeholder:text-slate-400 w-32 md:w-48"
               />
             </div>
 
@@ -250,7 +307,7 @@ export default function ProductsPage() {
               className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700"
             >
               <span className="mr-1">＋</span>
-              Agregar producto
+              Agregar
             </button>
           </div>
         </div>
@@ -306,15 +363,15 @@ export default function ProductsPage() {
                 </thead>
 
                 <tbody>
-                  {productosFiltrados.length === 0 && (
+                  {productos.length === 0 && (
                     <tr>
                       <td colSpan={11} className="px-6 py-6 text-center text-sm text-slate-500">
-                        No se encontraron productos (en esta página).
+                        No se encontraron productos{search ? " que coincidan con la búsqueda" : ""}.
                       </td>
                     </tr>
                   )}
 
-                  {productosFiltrados.map((p) => {
+                  {productos.map((p) => {
                     const sku = p.codigo_sku;
                     const bd = p.price_breakdown || null;
 

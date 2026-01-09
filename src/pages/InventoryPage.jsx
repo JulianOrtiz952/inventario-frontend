@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import ActionIconButton from "../components/ActionIconButton";
+import CurrencyInput from "../components/CurrencyInput";
+import { formatCurrency, parseCurrency } from "../utils/format";
 import CreateInsumoModal from "../components/CreateInsumoModal";
 import EditInsumoModal from "../components/EditInsumoModal";
 import ViewInsumoModal from "../components/ViewInsumoModal";
@@ -104,9 +106,8 @@ function MovementModal({
                           <button
                             type="button"
                             onClick={() => onSelect(i)}
-                            className={`w-full text-left px-4 py-3 hover:bg-slate-50 ${
-                              active ? "bg-blue-50" : "bg-white"
-                            }`}
+                            className={`w-full text-left px-4 py-3 hover:bg-slate-50 ${active ? "bg-blue-50" : "bg-white"
+                              }`}
                           >
                             <div className="flex items-center justify-between gap-3">
                               <div>
@@ -116,9 +117,7 @@ function MovementModal({
                               <div className="text-right">
                                 <p className="text-xs text-slate-500">Stock</p>
                                 <p className="text-sm font-semibold text-slate-800 tabular-nums">
-                                  {Number(i?.cantidad ?? i?.stock_actual ?? 0).toLocaleString("es-CO", {
-                                    maximumFractionDigits: 3,
-                                  })}
+                                  {formatCurrency(i?.cantidad ?? i?.stock_actual ?? 0)}
                                 </p>
                               </div>
                             </div>
@@ -150,9 +149,7 @@ function MovementModal({
                       <p className="text-[11px] text-slate-500 mt-0.5">
                         Stock actual:{" "}
                         <b>
-                          {Number(selected?.cantidad ?? selected?.stock_actual ?? 0).toLocaleString("es-CO", {
-                            maximumFractionDigits: 3,
-                          })}
+                          {formatCurrency(selected?.cantidad ?? selected?.stock_actual ?? 0)}
                         </b>
                       </p>
                     </div>
@@ -198,29 +195,23 @@ function MovementModal({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className="text-xs font-medium text-slate-700">Cantidad</label>
-                        <input
-                          type="number"
-                          step="0.001"
+                        <CurrencyInput
                           name="cantidad"
                           value={form.cantidad}
                           onChange={onFormChange}
                           className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="Ej: 5.000"
-                          required
                         />
                       </div>
 
                       <div className="space-y-1">
                         <label className="text-xs font-medium text-slate-700">Costo unitario</label>
-                        <input
-                          type="number"
-                          step="0.01"
+                        <CurrencyInput
                           name="costo_unitario"
                           value={form.costo_unitario}
                           onChange={onFormChange}
                           className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Ej: 2600.00"
-                          required
+                          placeholder="Ej: 2.600"
                         />
                       </div>
                     </div>
@@ -266,9 +257,8 @@ function MovementModal({
             <button
               type="submit"
               disabled={loading || !selected}
-              className={`px-4 py-2 rounded-md text-white text-xs font-medium shadow-sm disabled:opacity-70 ${
-                isEntrada ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-500 hover:bg-orange-600"
-              }`}
+              className={`px-4 py-2 rounded-md text-white text-xs font-medium shadow-sm disabled:opacity-70 ${isEntrada ? "bg-emerald-600 hover:bg-emerald-700" : "bg-orange-500 hover:bg-orange-600"
+                }`}
             >
               {loading ? "Guardando..." : isEntrada ? "Registrar entrada" : "Registrar salida"}
             </button>
@@ -338,6 +328,9 @@ export default function InventoryPage() {
   const [search, setSearch] = useState("");
   const [proveedorFiltro, setProveedorFiltro] = useState("todos");
   const [terceroFiltro, setTerceroFiltro] = useState("todos");
+  const [bodegaFiltro, setBodegaFiltro] = useState("todos");
+  const [precioMin, setPrecioMin] = useState("");
+  const [precioMax, setPrecioMax] = useState("");
 
   // Modal crear
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -434,18 +427,41 @@ export default function InventoryPage() {
     [bodegas]
   );
 
-  async function loadInsumos(page = 1) {
-    const res = await fetch(`${API_BASE}/insumos/?page=${page}&page_size=${PAGE_SIZE}`);
-    if (!res.ok) throw new Error("No se pudieron cargar los insumos.");
+  const loadInsumos = useCallback(
+    async (page = 1) => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        params.append("page", page);
+        params.append("page_size", PAGE_SIZE);
+        if (search) params.append("search", search);
+        if (proveedorFiltro !== "todos") params.append("proveedor", proveedorFiltro);
+        if (terceroFiltro !== "todos") params.append("tercero", terceroFiltro);
+        if (bodegaFiltro !== "todos") params.append("bodega", bodegaFiltro);
+        if (precioMin) params.append("costo_unitario_min", precioMin);
+        if (precioMax) params.append("costo_unitario_max", precioMax);
 
-    const data = await res.json();
+        const res = await fetch(`${API_BASE}/insumos/?${params.toString()}`);
+        if (!res.ok) throw new Error("No se pudieron cargar los insumos.");
 
-    setInsumos(asRows(data));
-    setInsumosCount(Number(data?.count || 0));
-    setInsumosNext(data?.next || null);
-    setInsumosPrev(data?.previous || null);
-    setInsumosPage(page);
-  }
+        const data = await res.json();
+
+        setInsumos(asRows(data));
+        setInsumosCount(Number(data?.count || 0));
+        setInsumosNext(data?.next || null);
+        setInsumosPrev(data?.previous || null);
+        setInsumosPage(page);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Error cargando inventario.");
+        setInsumos([]);
+        setInsumosCount(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [search, proveedorFiltro, terceroFiltro, bodegaFiltro, precioMin, precioMax]
+  );
 
   async function loadCatalogs() {
     const [provAll, bodAll, terAll] = await Promise.all([
@@ -459,38 +475,32 @@ export default function InventoryPage() {
     setTerceros(terAll);
   }
 
+  // Carga inicial de catálogos
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
         setError("");
-        await Promise.all([loadCatalogs(), loadInsumos(1)]);
+        await loadCatalogs();
       } catch (err) {
         console.error(err);
-        setError(err.message || "Error cargando inventario.");
+        setError(err.message || "Error cargando catálogos.");
       } finally {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const insumosFiltrados = useMemo(() => {
-    const term = search.trim().toLowerCase();
+  // Recarga insumos cuando cambian filtros (con debounce)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadInsumos(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [loadInsumos]);
 
-    return insumos.filter((i) => {
-      const coincideBusqueda =
-        !term || (i.nombre || "").toLowerCase().includes(term) || (i.codigo || "").toLowerCase().includes(term);
+  // ELIMINADO: const insumosFiltrados = useMemo(...)
 
-      const coincideProveedor =
-        proveedorFiltro === "todos" || String(i.proveedor?.id ?? i.proveedor_id ?? "") === String(proveedorFiltro);
-
-      const coincideTercero =
-        terceroFiltro === "todos" || String(i.tercero?.id ?? i.tercero_id ?? "") === String(terceroFiltro);
-
-      return coincideBusqueda && coincideProveedor && coincideTercero;
-    });
-  }, [insumos, search, proveedorFiltro, terceroFiltro]);
 
   const insumosFiltradosMovimiento = useMemo(() => {
     const term = movementSearch.trim().toLowerCase();
@@ -891,11 +901,25 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:justify-end mb-3">
+      {/* Filtros */}
+      <div className="flex flex-wrap items-center gap-3">
         <select
-          className="px-3 py-2 rounded-md bg-white border border-slate-200 text-xs text-slate-700 shadow-sm w-full md:w-44"
+          value={bodegaFiltro}
+          onChange={(e) => setBodegaFiltro(e.target.value)}
+          className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+          <option value="todos">Todas las bodegas</option>
+          {bodegasOptions.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.nombre}
+            </option>
+          ))}
+        </select>
+
+        <select
           value={proveedorFiltro}
           onChange={(e) => setProveedorFiltro(e.target.value)}
+          className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
         >
           <option value="todos">Todos los proveedores</option>
           {proveedoresOptions.map((p) => (
@@ -906,9 +930,9 @@ export default function InventoryPage() {
         </select>
 
         <select
-          className="px-3 py-2 rounded-md bg-white border border-slate-200 text-xs text-slate-700 shadow-sm w-full md:w-44"
           value={terceroFiltro}
           onChange={(e) => setTerceroFiltro(e.target.value)}
+          className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
         >
           <option value="todos">Todos los terceros</option>
           {tercerosOptions.map((t) => (
@@ -917,8 +941,38 @@ export default function InventoryPage() {
             </option>
           ))}
         </select>
-      </div>
 
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1">
+          <span className="text-[10px] text-slate-500 uppercase font-semibold">Precio</span>
+          <CurrencyInput
+            placeholder="Min"
+            value={precioMin}
+            onChange={(e) => setPrecioMin(e.target.value)}
+            className="w-20 outline-none text-xs text-slate-700 placeholder:text-slate-400 border-r border-slate-100 pr-1 text-right"
+          />
+          <CurrencyInput
+            placeholder="Max"
+            value={precioMax}
+            onChange={(e) => setPrecioMax(e.target.value)}
+            className="w-20 outline-none text-xs text-slate-700 placeholder:text-slate-400 pl-1 text-right"
+          />
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-3 md:items-center ml-auto">
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
+            <span className="text-slate-400 text-sm">🔍</span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar insumo..."
+              className="bg-transparent outline-none text-xs text-slate-700 placeholder:text-slate-400 w-44 lg:w-60"
+            />
+          </div>
+
+
+        </div>
+      </div>
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="text-xs text-slate-500">
           Total: <b>{insumosCount}</b> • Página <b>{insumosPage}</b>
@@ -955,65 +1009,88 @@ export default function InventoryPage() {
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                   <th className="px-4 py-3 text-left">Código</th>
-                  <th className="px-6 py-3 text-left">Nombre</th>
-                  <th className="px-6 py-3 text-left">Referencia</th>
-                  <th className="px-6 py-3 text-left">Factura</th>
-                  <th className="px-4 py-3 text-left">Bodega</th>
-                  <th className="px-4 py-3 text-left">Tercero</th>
-                  <th className="px-4 py-3 text-right">Cantidad</th>
-                  <th className="px-4 py-3 text-right">Stock mínimo</th>
-                  <th className="px-4 py-3 text-right">Costo unitario</th>
+                  <th className="px-4 py-3 text-left">Nombre</th>
                   <th className="px-4 py-3 text-left">Proveedor</th>
+                  <th className="px-4 py-3 text-left">Bodega / Tercero</th>
                   <th className="px-4 py-3 text-left">Estado</th>
+                  <th className="px-4 py-3 text-right">Stock</th>
+                  <th className="px-4 py-3 text-right">Costo U.</th>
                   <th className="px-4 py-3 text-center">Acciones</th>
                 </tr>
               </thead>
 
               <tbody>
-                {insumosFiltrados.length === 0 && (
+                {insumos.length === 0 && (
                   <tr>
-                    <td colSpan={12} className="px-6 py-6 text-center text-sm text-slate-500">
-                      No hay insumos que coincidan con el filtro (en esta página).
+                    <td colSpan={8} className="px-6 py-6 text-center text-sm text-slate-500">
+                      No se encontraron insumos.
                     </td>
                   </tr>
                 )}
 
-                {insumosFiltrados.map((i) => {
+                {insumos.map((i) => {
                   const pk = getInsumoPk(i);
-                  const actual = getStockActual(i);
-                  const minimo = getStockMinimo(i);
                   const estado = getEstadoInfo(i);
+                  const stock = getStockActual(i);
 
                   return (
-                    <tr key={String(pk)} className="border-t border-slate-100 hover:bg-slate-50/80">
-                      <td className="px-4 py-3 text-sm text-slate-600">{i.codigo}</td>
-                      <td className="px-6 py-3 text-sm text-slate-800">{i.nombre}</td>
-                      <td className="px-6 py-3 text-sm text-slate-800">{i.referencia ?? "—"}</td>
-                      <td className="px-6 py-3 text-sm text-slate-800">{i.factura ?? "—"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{i.bodega?.nombre || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-600">{i.tercero?.nombre || "—"}</td>
+                    <tr key={pk} className="border-b border-slate-100 hover:bg-slate-50/70 transition-colors">
+                      <td className="px-4 py-3 font-medium text-slate-800 text-xs">{pk}</td>
+                      <td className="px-4 py-3 text-slate-800">
+                        <p className="font-medium">{i.nombre}</p>
+                        {i.referencia && i.referencia !== pk && (
+                          <p className="text-[10px] text-slate-400">Ref: {i.referencia}</p>
+                        )}
+                      </td>
 
-                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">{actual}</td>
-                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">{minimo || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">${i.costo_unitario}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{i.proveedor?.nombre ?? "—"}</td>
+                      <td className="px-4 py-3 text-xs text-slate-600">
+                        {i.proveedor?.nombre || <span className="text-slate-300">—</span>}
+                      </td>
 
-                      <td className="px-4 py-3 text-xs">
-                        <span className={`inline-flex items-center gap-1 ${estado.colorClass}`}>
-                          <span className={`w-2 h-2 rounded-full ${estado.dotClass}`} />
-                          {estado.label}
-                        </span>
+                      <td className="px-4 py-3 text-xs text-slate-600">
+                        <div className="flex flex-col">
+                          <span>{i.bodega?.nombre || <span className="text-slate-300">—</span>}</span>
+                          <span className="text-[10px] text-slate-400">
+                            {i.tercero?.nombre || <span className="text-slate-300">—</span>}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1">
+                        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${estado.colorClass} border-transparent bg-white shadow-sm ring-1 ring-slate-100`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
+                          {estado.label}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-3 text-right font-medium text-slate-900 tabular-nums">
+                        {formatCurrency(stock)}
+                        <span className="ml-1 text-[10px] text-slate-400 font-normal">
+                          {i.unidad_medida || "u"}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3 text-right text-slate-600 text-xs tabular-nums">
+                        {i.costo_unitario
+                          ? `$${formatCurrency(i.costo_unitario)}`
+                          : "—"}
+                      </td>
+
+                      <td className="px-4 py-3 text-center">
+                        <div className="inline-flex items-center gap-1">
                           <ActionIconButton label="Ver" onClick={() => handleView(i)}>
                             👁️
                           </ActionIconButton>
-                          <ActionIconButton label="Editar" onClick={() => handleEdit(i)}>
+                          <ActionIconButton
+                            label="Editar"
+                            onClick={() => handleEdit(i)}
+                          >
                             ✏️
                           </ActionIconButton>
-                          <ActionIconButton label="Eliminar" onClick={() => openDeleteModal(i)}>
+                          <ActionIconButton
+                            label="Eliminar"
+                            onClick={() => openDeleteModal(i)}
+                          >
                             🗑️
                           </ActionIconButton>
                         </div>

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 
+const PAGE_SIZE = 30;
+
 const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
 const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
 const num = (v) => nf.format(Number(v || 0));
@@ -17,6 +19,12 @@ async function safeJson(res) {
 }
 
 export default function WarehousesPage() {
+  // ✅ Paginación Bodegas principal
+  const [page, setPage] = useState(1);
+  const [count, setCount] = useState(0);
+  const [nextUrl, setNextUrl] = useState(null);
+  const [prevUrl, setPrevUrl] = useState(null);
+
   // ✅ Paginación historial (30 en 30)
   const [historyPage, setHistoryPage] = useState(1);
   const [historyCount, setHistoryCount] = useState(0);
@@ -74,13 +82,17 @@ export default function WarehousesPage() {
   // =========================
   // Cargar bodegas
   // =========================
-  useEffect(() => {
-  const load = async () => {
+  async function loadBodegas(targetPage = 1) {
     try {
       setLoading(true);
       setError("");
 
-      const res = await fetch(`${API_BASE}/bodegas/`);
+      const params = new URLSearchParams();
+      params.append("page", targetPage);
+      params.append("page_size", PAGE_SIZE);
+      if (search) params.append("search", search);
+
+      const res = await fetch(`${API_BASE}/bodegas/?${params.toString()}`);
       if (!res.ok) throw new Error("No se pudieron cargar las bodegas.");
 
       const data = await res.json();
@@ -88,26 +100,34 @@ export default function WarehousesPage() {
       // ✅ soporta lista normal o respuesta paginada {results: []}
       const rows = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
       setBodegas(rows);
+      setCount(Number(data?.count || 0));
+      setNextUrl(data?.next || null);
+      setPrevUrl(data?.previous || null);
+      setPage(targetPage);
     } catch (err) {
       console.error(err);
       setError(err.message || "Error al cargar bodegas.");
+      setBodegas([]);
     } finally {
       setLoading(false);
     }
-  };
-  load();
-}, []);
+  }
 
-  const bodegasFiltradas = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return bodegas;
-    return bodegas.filter((b) => {
-      const codigo = (b.codigo || "").toLowerCase();
-      const nombre = (b.nombre || "").toLowerCase();
-      const ubic = (b.ubicacion || "").toLowerCase();
-      return codigo.includes(term) || nombre.includes(term) || ubic.includes(term);
-    });
-  }, [search, bodegas]);
+  useEffect(() => {
+    if (!search) loadBodegas(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      loadBodegas(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // ELIMINADO client-side filtering
+  // const bodegasFiltradas = ...
 
   // =========================
   // CRUD bodegas
@@ -266,24 +286,24 @@ export default function WarehousesPage() {
   // TRASLADOS
   // =========================
   async function ensureTransferListsLoaded() {
-  if (terceros.length === 0) {
-    const r = await fetch(`${API_BASE}/terceros/`);
-    if (r.ok) {
-      const data = await r.json();
-      const rows = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-      setTerceros(rows);
+    if (terceros.length === 0) {
+      const r = await fetch(`${API_BASE}/terceros/`);
+      if (r.ok) {
+        const data = await r.json();
+        const rows = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+        setTerceros(rows);
+      }
     }
-  }
 
-  if (tallas.length === 0) {
-    const r = await fetch(`${API_BASE}/tallas/`);
-    if (r.ok) {
-      const data = await r.json();
-      const rows = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-      setTallas(rows);
+    if (tallas.length === 0) {
+      const r = await fetch(`${API_BASE}/tallas/`);
+      if (r.ok) {
+        const data = await r.json();
+        const rows = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+        setTallas(rows);
+      }
     }
   }
-}
 
 
   async function openTransferModal(productoCodigo, productoNombre) {
@@ -415,17 +435,17 @@ export default function WarehousesPage() {
   }
 
   async function openHistoryModal() {
-  if (!selectedBodega) return;
+    if (!selectedBodega) return;
 
-  setIsHistoryOpen(true);
-  setHistoryRows([]);
-  setHistoryCount(0);
-  setHistoryNext(null);
-  setHistoryPrev(null);
-  setHistoryPage(1);
+    setIsHistoryOpen(true);
+    setHistoryRows([]);
+    setHistoryCount(0);
+    setHistoryNext(null);
+    setHistoryPrev(null);
+    setHistoryPage(1);
 
-  await loadHistory(1);
-}
+    await loadHistory(1);
+  }
 
 
   function closeHistoryModal() {
@@ -474,6 +494,33 @@ export default function WarehousesPage() {
           </div>
         </div>
 
+        {/* Paginación */}
+        <div className="flex items-center justify-between gap-3 px-1">
+          <div className="text-xs text-slate-500">
+            Total: <b>{count}</b> • Página <b>{page}</b>
+            <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={!prevUrl || loading}
+              onClick={() => loadBodegas(Math.max(1, page - 1))}
+              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+            >
+              ← Anterior
+            </button>
+            <button
+              type="button"
+              disabled={!nextUrl || loading}
+              onClick={() => loadBodegas(page + 1)}
+              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+            >
+              Siguiente →
+            </button>
+          </div>
+        </div>
+
         <section className="bg-white rounded-xl shadow-sm border border-slate-200">
           {loading && <div className="p-6 text-sm text-slate-500">Cargando bodegas...</div>}
           {error && !loading && <div className="p-6 text-sm text-red-600">{error}</div>}
@@ -493,7 +540,7 @@ export default function WarehousesPage() {
                 </thead>
 
                 <tbody>
-                  {bodegasFiltradas.length === 0 && (
+                  {bodegas.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-6 py-6 text-center text-sm text-slate-500">
                         No se encontraron bodegas.
@@ -501,7 +548,7 @@ export default function WarehousesPage() {
                     </tr>
                   )}
 
-                  {bodegasFiltradas.map((b) => (
+                  {bodegas.map((b) => (
                     <tr key={b.id} className="border-b border-slate-100 hover:bg-slate-50/80">
                       <td className="px-4 py-3 text-sm font-medium text-slate-800">{b.codigo}</td>
                       <td className="px-4 py-3 text-sm text-slate-800">{b.nombre}</td>

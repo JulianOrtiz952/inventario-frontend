@@ -29,9 +29,12 @@ export default function TallasPage() {
     setError("");
     try {
       setLoading(true);
-      const res = await fetch(
-        `${API_BASE}/tallas/?page=${targetPage}&page_size=${PAGE_SIZE}`
-      );
+      const params = new URLSearchParams();
+      params.append("page", targetPage);
+      params.append("page_size", PAGE_SIZE);
+      if (search) params.append("search", search);
+
+      const res = await fetch(`${API_BASE}/tallas/?${params.toString()}`);
       if (!res.ok) throw new Error("Error cargando tallas.");
 
       const data = await res.json();
@@ -54,14 +57,20 @@ export default function TallasPage() {
   }
 
   useEffect(() => {
-    loadTallas(1);
+    if (!search) loadTallas(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return tallas;
-    return tallas.filter((t) => (t.nombre || "").toLowerCase().includes(term));
-  }, [tallas, search]);
+  // Debounce
+  useEffect(() => {
+    const t = setTimeout(() => {
+      loadTallas(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // ELIMINADO filtered usage
+  // const filtered = ...
 
   function openCreate() {
     setEditing(null);
@@ -256,16 +265,16 @@ export default function TallasPage() {
                 </tr>
               )}
 
-              {!loading && filtered.length === 0 && (
+              {!loading && tallas.length === 0 && (
                 <tr>
                   <td className="px-4 py-3 text-slate-500" colSpan={3}>
-                    No hay tallas en esta página.
+                    No hay tallas{search ? " que coincidan" : ""}.
                   </td>
                 </tr>
               )}
 
               {!loading &&
-                filtered.map((t) => (
+                tallas.map((t) => (
                   <tr
                     key={t.id}
                     className="border-b border-slate-100 hover:bg-slate-50/70"

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import CurrencyInput from "./CurrencyInput";
+import { formatCurrency, parseCurrency } from "../utils/format";
 
 /* ===================== CONFIG ===================== */
 
@@ -40,7 +42,8 @@ function moneyStr(v) {
   if (v === null || v === undefined) return "";
   const s = String(v).trim();
   if (!s) return "";
-  return s.replace(",", ".");
+  if (!s) return "";
+  return parseCurrency(s); // Usamos parseCurrency para limpiar formato visual
 }
 
 async function postDA({ sku, payload }) {
@@ -205,7 +208,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
     () =>
       (impuestos || []).map((i) => ({
         id: i.id,
-        label: `${i.codigo} - ${i.nombre} (${i.valor}%)`,
+        label: `${i.codigo} - ${i.nombre} (${formatCurrency(i.valor)}%)`,
       })),
     [impuestos]
   );
@@ -574,13 +577,11 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
 
                     <div className="md:col-span-4 space-y-1">
                       <label className="text-[11px] text-slate-500">Valor</label>
-                      <input
-                        type="number"
-                        step="0.01"
+                      <CurrencyInput
                         value={p.valor}
                         onChange={(e) => updatePrecio(idx, { valor: e.target.value })}
                         className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="60000"
+                        placeholder="60.000"
                       />
                     </div>
 
@@ -648,13 +649,11 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                   </select>
                 </div>
 
-                
+
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-slate-700">Stock mínimo</label>
-                  <input
-                    type="number"
-                    step="0.01"
+                  <CurrencyInput
                     value={form.datos_adicionales.stock_minimo}
                     onChange={(e) => updateDatos({ stock_minimo: e.target.value })}
                     className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -823,14 +822,11 @@ function CreateImpuestoModal({ isOpen, onClose, onCreated }) {
 
           <div className="space-y-1">
             <label className="text-xs font-medium text-slate-700">Valor (%)</label>
-            <input
-              type="number"
-              step="0.01"
+            <CurrencyInput
               value={form.valor}
               onChange={(e) => setForm((p) => ({ ...p, valor: e.target.value }))}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Ej: 19.00"
-              required
             />
           </div>
 

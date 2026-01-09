@@ -1,4 +1,5 @@
 import React from "react";
+import { formatCurrency } from "../utils/format";
 
 export default function ProductDetailsModal({ isOpen, onClose, product, title = "Detalle del producto" }) {
   if (!isOpen) return null;
@@ -11,18 +12,18 @@ export default function ProductDetailsModal({ isOpen, onClose, product, title = 
   const fmtMoney = (v) => {
     const n = Number(v);
     if (!Number.isFinite(n)) return v ?? "—";
-    return `$${n.toLocaleString("es-CO", { maximumFractionDigits: 2 })}`;
+    return `$${formatCurrency(n)}`;
   };
   const fmtPct = (v) => {
     const n = Number(v);
     if (!Number.isFinite(n)) return "—";
-    return `${n.toLocaleString("es-CO", { maximumFractionDigits: 2 })}%`;
+    return `${formatCurrency(n)}%`;
   };
 
   const terceroLabel =
-  product?.tercero?.nombre
-    ? `${product.tercero.nombre}${product.tercero.codigo ? ` (${product.tercero.codigo})` : ""}`
-    : "—";
+    product?.tercero?.nombre
+      ? `${product.tercero.nombre}${product.tercero.codigo ? ` (${product.tercero.codigo})` : ""}`
+      : "—";
 
   const Card = ({ title, children }) => (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -64,7 +65,7 @@ export default function ProductDetailsModal({ isOpen, onClose, product, title = 
                 <Field label="Unidad de medida" value={product?.unidad_medida || "—"} />
                 <Field label="Código de barras" value={product?.codigo_barras || "—"} />
                 <Field label="Tercero" value={terceroLabel} />
-                
+
               </div>
 
               <div className="mt-4">
