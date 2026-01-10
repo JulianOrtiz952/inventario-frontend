@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import { RotateCcw, Trash2, Pencil } from "lucide-react";
+import ConfirmActionModal from "../components/ConfirmActionModal";
 
 const PAGE_SIZE = 30;
 
@@ -24,6 +26,12 @@ export default function TercerosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState(null); // tercero o null
   const [form, setForm] = useState({ codigo: "", nombre: "" });
+
+  // ✅ ACCIONES (Activar/Desactivar)
+  const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [itemToAction, setItemToAction] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   async function loadTerceros(targetPage = 1) {
     setError("");
@@ -138,27 +146,52 @@ export default function TercerosPage() {
     }
   }
 
-  async function handleDelete(t) {
-    const ok = confirm(`¿Eliminar el tercero "${t.nombre}"?`);
-    if (!ok) return;
+  // ELIMINADO handleDelete original
 
-    setError("");
+  const openActionModal = (tercero) => {
+    setItemToAction(tercero);
+    setActionError("");
+    setActionModalOpen(true);
+  };
+
+  const closeActionModal = () => {
+    if (actionLoading) return;
+    setActionModalOpen(false);
+    setItemToAction(null);
+  };
+
+  const handleToggleActiveConfirm = async () => {
+    if (!itemToAction) return;
+
+    const item = itemToAction;
+    const isActive = item.es_activo !== false;
+    const action = isActive ? "Desactivar" : "Reactivar";
+
     try {
-      const res = await fetch(`${API_BASE}/terceros/${t.id}/`, { method: "DELETE" });
-      if (!res.ok) throw new Error("No se pudo eliminar el tercero.");
+      setActionLoading(true);
+      let res;
+      if (isActive) {
+        // Desactivar (Soft Delete)
+        res = await fetch(`${API_BASE}/terceros/${item.id}/`, { method: "DELETE" });
+      } else {
+        // Reactivar (Patch)
+        res = await fetch(`${API_BASE}/terceros/${item.id}/`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ es_activo: true }),
+        });
+      }
 
-      // ✅ Ajuste de página si borraste el último de la página actual
-      const newCount = Math.max(0, count - 1);
-      const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
-      const target = Math.min(page, maxPage);
+      if (!res.ok && res.status !== 204) throw new Error(`No se pudo ${action.toLowerCase()} el tercero.`);
 
-      await loadTerceros(target);
-      setCount(newCount);
-    } catch (e) {
-      console.error(e);
-      setError(e.message || "Error eliminando tercero.");
+      closeActionModal();
+      await loadTerceros(page);
+    } catch (err) {
+      setActionError(err.message || `Error al ${action.toLowerCase()} tercero.`);
+    } finally {
+      setActionLoading(false);
     }
-  }
+  };
 
   const goPrev = async () => {
     if (!prevUrl || loading) return;
@@ -258,18 +291,19 @@ export default function TercerosPage() {
 
         <div className="overflow-x-auto">
           <table className="min-w-full text-xs">
-            <thead className="bg-slate-50 border-b border-slate-100">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                 <th className="px-4 py-3 text-left">ID</th>
                 <th className="px-4 py-3 text-left">Código</th>
                 <th className="px-4 py-3 text-left">Nombre</th>
+                <th className="px-4 py-3 text-left">Estado</th>
                 <th className="px-4 py-3 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td className="px-4 py-3 text-slate-500" colSpan={4}>
+                  <td className="px-4 py-3 text-slate-500" colSpan={5}>
                     Cargando...
                   </td>
                 </tr>
@@ -277,41 +311,66 @@ export default function TercerosPage() {
 
               {!loading && terceros.length === 0 && (
                 <tr>
-                  <td className="px-4 py-3 text-slate-500" colSpan={4}>
+                  <td className="px-4 py-3 text-slate-500" colSpan={5}>
                     No hay terceros{search ? " que coincidan" : ""}.
                   </td>
                 </tr>
               )}
 
               {!loading &&
-                terceros.map((t) => (
-                  <tr
-                    key={t.id}
-                    className="border-b border-slate-100 hover:bg-slate-50/70"
-                  >
-                    <td className="px-4 py-3 text-slate-700">{t.id}</td>
-                    <td className="px-4 py-3 font-medium text-slate-800">
-                      {t.codigo}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700">{t.nombre}</td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="inline-flex gap-2">
-                        <button
-                          onClick={() => openEdit(t)}
-                          className="px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(t)}
-                          className="px-3 py-1.5 rounded-md bg-red-600 text-white text-xs font-medium hover:bg-red-700"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                terceros.map((t) => {
+                  const isActive = t.es_activo !== false;
+                  return (
+                    <tr
+                      key={t.id}
+                      className={`border-b border-slate-100 transition-colors ${!isActive ? "bg-slate-50/70" : "hover:bg-slate-50/80"}`}
+                    >
+                      <td className="px-4 py-3 text-slate-700">{t.id}</td>
+                      <td className="px-4 py-3 font-medium text-slate-800 font-mono">
+                        {t.codigo}
+                      </td>
+                      <td className={`px-4 py-3 font-medium ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"}`}>
+                        {t.nombre}
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {isActive ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Activo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                            Inactivo
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(t)}
+                            className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors bg-white"
+                            title="Editar"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openActionModal(t)}
+                            className={`p-1.5 rounded-md border transition-colors bg-white ${isActive
+                              ? "border-red-100 text-red-600 hover:bg-red-50"
+                              : "border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+                              }`}
+                            title={isActive ? "Desactivar" : "Reactivar"}
+                          >
+                            {isActive ? <Trash2 size={14} /> : <RotateCcw size={14} />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
             </tbody>
           </table>
         </div>
@@ -382,6 +441,28 @@ export default function TercerosPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Confirmación Acción */}
+      <ConfirmActionModal
+        isOpen={actionModalOpen}
+        onClose={closeActionModal}
+        onConfirm={handleToggleActiveConfirm}
+        loading={actionLoading}
+        error={actionError}
+        title={itemToAction?.es_activo !== false ? "Desactivar Tercero" : "Reactivar Tercero"}
+        message={
+          itemToAction?.es_activo !== false
+            ? <span>¿Estás seguro de que deseas desactivar el tercero <strong>{itemToAction?.nombre}</strong>?</span>
+            : <span>¿Deseas reactivar el tercero <strong>{itemToAction?.nombre}</strong>?</span>
+        }
+        description={
+          itemToAction?.es_activo !== false
+            ? "El tercero dejará de estar disponible en registros."
+            : "El tercero volverá a estar activo."
+        }
+        confirmText={itemToAction?.es_activo !== false ? "Desactivar" : "Reactivar"}
+        isDestructive={itemToAction?.es_activo !== false}
+      />
     </div>
   );
 }

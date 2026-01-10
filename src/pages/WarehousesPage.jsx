@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import { RotateCcw, Trash2, Pencil } from "lucide-react";
+import ConfirmActionModal from "../components/ConfirmActionModal";
 
 const PAGE_SIZE = 30;
 
@@ -56,28 +58,58 @@ export default function WarehousesPage() {
   const [stockLoading, setStockLoading] = useState(false);
   const [stockError, setStockError] = useState("");
 
-  // ✅ TRASLADOS
+  // ✅ HISTORIAL
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [historyRows, setHistoryRows] = useState([]);
+
+  // ✅ TRASLADOS (MASIVO)
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
   const [transferError, setTransferError] = useState("");
   const [transferOk, setTransferOk] = useState("");
   const [terceros, setTerceros] = useState([]);
   const [tallas, setTallas] = useState([]);
-  const [transferForm, setTransferForm] = useState({
-    producto_id: "",
-    producto_nombre: "",
+
+  // Cabecera del traslado
+  const [transferHeader, setTransferHeader] = useState({
     bodega_origen_id: "",
     bodega_destino_id: "",
     tercero_id: "",
-    talla_id: "", // "" => null
+  });
+
+  // Items agregados a la lista
+  const [transferItems, setTransferItems] = useState([]);
+
+  // Formulario para "Agregar Item"
+  const [itemForm, setItemForm] = useState({
+    producto_id: "",     // SKU
+    producto_nombre: "",
+    talla_id: "",        // ID de Talla o ""
     cantidad: "",
   });
 
-  // ✅ HISTORIAL
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyError, setHistoryError] = useState("");
-  const [historyRows, setHistoryRows] = useState([]);
+  const [itemError, setItemError] = useState("");
+
+
+  // Stock disponible (para validación visual al agregar)
+  const [itemStockInfo, setItemStockInfo] = useState(null); // { disponible: 10, talla_nombre: "M" }
+  const [itemStockLoading, setItemStockLoading] = useState(false);
+
+  // Lista de productos disponibles en la bodega origen (para el select)
+  const availableProducts = useMemo(() => {
+    return details?.productos || [];
+  }, [details]);
+
+  // Lista de tallas disponibles para el producto seleccionado (fetched on demand)
+  const [availableSizes, setAvailableSizes] = useState([]);
+
+  // ✅ ACCIONES (Activar/Desactivar)
+  const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [itemToAction, setItemToAction] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   // =========================
   // Cargar bodegas
@@ -176,7 +208,25 @@ export default function WarehousesPage() {
         body: JSON.stringify(form),
       });
 
-      if (!res.ok) throw new Error("No se pudo guardar la bodega.");
+      if (!res.ok) {
+        const errorData = await safeJson(res);
+        if (errorData) {
+          // Si es un error de validación {nombre: [...], codigo: [...]}
+          const firstKey = Object.keys(errorData)[0];
+          const firstMsg = Array.isArray(errorData[firstKey]) ? errorData[firstKey][0] : errorData[firstKey];
+
+          // Mensajes amigables para duplicados
+          const strError = JSON.stringify(errorData).toLowerCase();
+          if (strError.includes("unique") || strError.includes("ya existe") || strError.includes("with this nombre already exists")) {
+            if (errorData.nombre) throw new Error("Ya existe una bodega con este Nombre.");
+            if (errorData.codigo) throw new Error("Ya existe una bodega con este Código.");
+          }
+
+          // Fallback genérico con el primer mensaje que venga
+          if (firstMsg) throw new Error(firstMsg);
+        }
+        throw new Error("No se pudo guardar la bodega.");
+      }
 
       const saved = await res.json();
 
@@ -194,16 +244,48 @@ export default function WarehousesPage() {
     }
   };
 
-  const handleDelete = async (bodega) => {
-    const ok = window.confirm(`¿Eliminar la bodega "${bodega.nombre}"? Esta acción no se puede deshacer.`);
-    if (!ok) return;
+  const openActionModal = (bodega) => {
+    setItemToAction(bodega);
+    setActionError("");
+    setActionModalOpen(true);
+  };
+
+  const closeActionModal = () => {
+    if (actionLoading) return;
+    setActionModalOpen(false);
+    setItemToAction(null);
+  };
+
+  const handleToggleActiveConfirm = async () => {
+    if (!itemToAction) return;
+
+    const item = itemToAction;
+    const isActive = item.es_activo !== false;
+    const action = isActive ? "Desactivar" : "Reactivar";
 
     try {
-      const res = await fetch(`${API_BASE}/bodegas/${bodega.id}/`, { method: "DELETE" });
-      if (!res.ok && res.status !== 204) throw new Error("No se pudo eliminar la bodega.");
-      setBodegas((prev) => prev.filter((b) => b.id !== bodega.id));
+      setActionLoading(true);
+      let res;
+      if (isActive) {
+        // Desactivar (Soft Delete)
+        res = await fetch(`${API_BASE}/bodegas/${item.id}/`, { method: "DELETE" });
+      } else {
+        // Reactivar (Patch)
+        res = await fetch(`${API_BASE}/bodegas/${item.id}/`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ es_activo: true }),
+        });
+      }
+
+      if (!res.ok && res.status !== 204) throw new Error(`No se pudo ${action.toLowerCase()} la bodega.`);
+
+      closeActionModal();
+      await loadBodegas(page);
     } catch (err) {
-      alert(err.message || "Error eliminando la bodega.");
+      setActionError(err.message || `Error al ${action.toLowerCase()} bodega.`);
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -306,28 +388,56 @@ export default function WarehousesPage() {
   }
 
 
-  async function openTransferModal(productoCodigo, productoNombre) {
+  async function openTransferModal(initialSku = null, initialName = null) {
     if (!selectedBodega) return;
 
     setTransferError("");
     setTransferOk("");
     setIsTransferOpen(true);
 
-    try {
-      await ensureTransferListsLoaded();
-    } catch (e) {
-      console.error(e);
-    }
-
-    setTransferForm({
-      producto_id: productoCodigo,
-      producto_nombre: productoNombre || "",
+    // Resetear formulario
+    setTransferHeader({
       bodega_origen_id: selectedBodega.id,
       bodega_destino_id: "",
       tercero_id: "",
-      talla_id: "",
-      cantidad: "",
     });
+    setTransferItems([]);
+
+    // Si viene un producto pre-seleccionado, lo configuramos
+    setItemForm({
+      producto_id: initialSku || "",
+      producto_nombre: initialName || "",
+      talla_id: "",
+      cantidad: ""
+    });
+
+    setAvailableSizes([]);
+    setItemStockInfo(null);
+
+    try {
+      await ensureTransferListsLoaded();
+
+      // Si hay producto inicial, cargar sus tallas de inmediato
+      if (initialSku) {
+        setItemStockLoading(true);
+        const res = await fetch(`${API_BASE}/productos/${initialSku}/stock-por-talla/?bodega_id=${selectedBodega.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          const sizes = (data.items || [])
+            .filter(i => (i.cantidad || 0) > 0)
+            .map(i => ({
+              id: i.talla_id,
+              nombre: i.talla || "Única",
+              stock: i.cantidad
+            }));
+          setAvailableSizes(sizes);
+        }
+        setItemStockLoading(false);
+      }
+    } catch (e) {
+      console.error(e);
+      setItemStockLoading(false);
+    }
   }
 
   function closeTransferModal() {
@@ -336,24 +446,124 @@ export default function WarehousesPage() {
     setTransferLoading(false);
     setTransferError("");
     setTransferOk("");
-    setTransferForm({
-      producto_id: "",
-      producto_nombre: "",
-      bodega_origen_id: "",
-      bodega_destino_id: "",
-      tercero_id: "",
+  }
+
+  // Al seleccionar producto, cargar tallas disponibles (según stock en esta bodega)
+  async function handleProductChange(e) {
+    const sku = e.target.value;
+    const prod = availableProducts.find(p => p.codigo === sku);
+
+    setItemForm({
+      producto_id: sku,
+      producto_nombre: prod ? prod.nombre : "",
       talla_id: "",
       cantidad: "",
     });
+    setAvailableSizes([]);
+    setItemStockInfo(null);
+    setItemError("");
+
+    if (!sku) return;
+
+    // Cargar stock por talla de este producto en ESTA bodega
+    try {
+      setItemStockLoading(true);
+      const res = await fetch(`${API_BASE}/productos/${sku}/stock-por-talla/?bodega_id=${selectedBodega.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        // data.items = [{ talla__id, talla__nombre, cantidad }]
+        // Mapeamos a formato select
+        // OJO: data.items trae las tallas que TIENEN stock.
+        // Si quieres permitir mover algo que no tiene stock (imposible), no deberías.
+        // Así que usar esto como fuente de tallas es correcto.
+        const sizes = (data.items || [])
+          .filter(i => (i.cantidad || 0) > 0)
+          .map(i => ({
+            id: i.talla_id,
+            nombre: i.talla || "Única",
+            stock: i.cantidad
+          }));
+        setAvailableSizes(sizes);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setItemStockLoading(false);
+    }
   }
 
-  function onTransferChange(e) {
-    const { name, value } = e.target;
-    setTransferForm((p) => ({ ...p, [name]: value }));
+  function handleSizeChange(e) {
+    const tid = e.target.value; // ID o ""
+    // Buscar stock real en availableSizes
+    const s = tid
+      ? availableSizes.find(x => String(x.id) === String(tid))
+      : availableSizes.find(x => x.id === null);
+
+    let stockReal = s ? Number(s.stock) : 0;
+    let tname = s ? s.nombre : (tid ? "-" : "Única");
+
+    // Calcular cuánto ya tenemos "reservado" en la lista de items
+    const reserved = transferItems.reduce((acc, item) => {
+      // Coincide producto Y talla (considerando nulos)
+      const sameProd = item.producto_id === itemForm.producto_id;
+      // La comparación de tallas debe ser segura con strings/numbers/nulls
+      // itemForm.talla_id es string del select. item.talla_id es lo que guardamos (puede ser number o string).
+      // Uniformamos a string para comparar.
+      const itemTid = item.talla_id ? String(item.talla_id) : "";
+      const currentTid = tid ? String(tid) : "";
+      const sameSize = itemTid === currentTid;
+
+      if (sameProd && sameSize) {
+        return acc + Number(item.cantidad || 0);
+      }
+      return acc;
+    }, 0);
+
+    const stockDisponible = Math.max(0, stockReal - reserved);
+    setItemStockInfo({ disponible: stockDisponible, talla_nombre: tname });
+
+    setItemForm(prev => ({ ...prev, talla_id: tid }));
+    setItemError("");
   }
 
-  async function submitTransfer(e) {
+  function addItem(e) {
     e.preventDefault();
+    setItemError("");
+
+    if (!itemForm.producto_id) return;
+    if (!itemForm.cantidad || Number(itemForm.cantidad) <= 0) {
+      setItemError("Cantidad inválida");
+      return;
+    }
+
+    // Validar stock visual
+    if (itemStockInfo) {
+      if (Number(itemForm.cantidad) > Number(itemStockInfo.disponible)) {
+        setItemError(`No tienes suficiente stock de ${itemStockInfo.talla_nombre}. Disponible real: ${itemStockInfo.disponible}`);
+        return;
+      }
+    }
+
+    // Agregar a lista
+    const newItem = {
+      ...itemForm,
+      tempId: Date.now(), // para key única
+      talla_nombre: itemStockInfo ? itemStockInfo.talla_nombre : (itemForm.talla_id ? "..." : "Única")
+    };
+
+    setTransferItems(prev => [...prev, newItem]);
+
+    // Limpiar inputs parciales
+    setItemForm(prev => ({ ...prev, talla_id: "", cantidad: "" }));
+    setItemStockInfo(null);
+    // Nota: No limpiamos producto para facilitar agregar otra talla del mismo
+  }
+
+  function removeItem(tempId) {
+    setTransferItems(prev => prev.filter(i => i.tempId !== tempId));
+  }
+
+  async function submitTransfer() {
     if (!selectedBodega) return;
 
     setTransferLoading(true);
@@ -361,20 +571,22 @@ export default function WarehousesPage() {
     setTransferOk("");
 
     try {
+      if (!transferHeader.tercero_id) throw new Error("Selecciona el tercero.");
+      if (!transferHeader.bodega_destino_id) throw new Error("Selecciona la bodega destino.");
+      if (transferItems.length === 0) throw new Error("Agrega al menos un producto para trasladar.");
+
       const payload = {
-        tercero_id: Number(transferForm.tercero_id),
-        bodega_origen_id: Number(transferForm.bodega_origen_id),
-        bodega_destino_id: Number(transferForm.bodega_destino_id),
-        producto_id: transferForm.producto_id,
-        cantidad: String(transferForm.cantidad || "").trim(),
-        talla_id: transferForm.talla_id ? Number(transferForm.talla_id) : null,
+        tercero_id: Number(transferHeader.tercero_id),
+        bodega_origen_id: Number(transferHeader.bodega_origen_id),
+        bodega_destino_id: Number(transferHeader.bodega_destino_id),
+        items: transferItems.map(i => ({
+          producto_id: i.producto_id,
+          talla_id: i.talla_id ? Number(i.talla_id) : null,
+          cantidad: String(i.cantidad)
+        }))
       };
 
-      if (!payload.tercero_id) throw new Error("Selecciona el tercero.");
-      if (!payload.bodega_destino_id) throw new Error("Selecciona la bodega destino.");
-      if (!payload.cantidad) throw new Error("Ingresa la cantidad a trasladar.");
-
-      const res = await fetch(`${API_BASE}/traslados-producto/ejecutar/`, {
+      const res = await fetch(`${API_BASE}/traslados-producto/ejecutar-masivo/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -382,21 +594,19 @@ export default function WarehousesPage() {
 
       if (!res.ok) {
         const data = await safeJson(res);
-        const msg =
-          data?.detail ||
-          (data?.stock_insuficiente ? "Stock insuficiente en la bodega origen." : "No se pudo ejecutar el traslado.");
+        const msg = data?.detail ||
+          (data?.stock_insuficiente ?
+            `Stock insuficiente: ${data.stock_insuficiente.producto} (Faltan ${data.stock_insuficiente.faltante})`
+            : "No se pudo ejecutar el traslado.");
         throw new Error(msg);
       }
 
-      setTransferOk("Traslado realizado.");
+      const respData = await res.json();
+      setTransferOk(`Traslado realizado con éxito. Items movidos: ${respData.items_movidos}`);
 
-      // ✅ refrescar contenido UNA sola vez
+      setTransferItems([]);
       await openDetails(selectedBodega);
 
-      // ✅ si el modal de stock está abierto y corresponde al producto, refrescarlo
-      if (isStockOpen && stockSku && stockSku === transferForm.producto_id) {
-        await openStockPorTallas(stockSku);
-      }
     } catch (err) {
       setTransferError(err.message || "Error al realizar el traslado.");
     } finally {
@@ -533,6 +743,7 @@ export default function WarehousesPage() {
                     <th className="px-4 py-3 text-left">Código</th>
                     <th className="px-4 py-3 text-left">Nombre</th>
                     <th className="px-4 py-3 text-left hidden md:table-cell">Ubicación</th>
+                    <th className="px-4 py-3 text-left">Estado</th>
                     <th className="px-4 py-3 text-right">Insumos</th>
                     <th className="px-4 py-3 text-right">Productos</th>
                     <th className="px-4 py-3 text-center">Acciones</th>
@@ -542,51 +753,96 @@ export default function WarehousesPage() {
                 <tbody>
                   {bodegas.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-6 text-center text-sm text-slate-500">
+                      <td colSpan={7} className="px-6 py-6 text-center text-sm text-slate-500">
                         No se encontraron bodegas.
                       </td>
                     </tr>
                   )}
 
-                  {bodegas.map((b) => (
-                    <tr key={b.id} className="border-b border-slate-100 hover:bg-slate-50/80">
-                      <td className="px-4 py-3 text-sm font-medium text-slate-800">{b.codigo}</td>
-                      <td className="px-4 py-3 text-sm text-slate-800">{b.nombre}</td>
-                      <td className="px-4 py-3 text-xs text-slate-600 hidden md:table-cell">{b.ubicacion || "—"}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{b.insumos_count ?? 0}</td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-700">{b.productos_count ?? 0}</td>
-                      <td className="px-4 py-3 text-xs text-center">
-                        <div className="inline-flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openDetails(b)}
-                            className="px-2 py-1 rounded border border-slate-200 text-[11px] hover:bg-slate-50"
-                          >
-                            Ver contenido
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openEdit(b)}
-                            className="px-2 py-1 rounded border border-slate-200 text-[11px] hover:bg-slate-50"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(b)}
-                            className="px-2 py-1 rounded border border-red-100 text-[11px] text-red-600 hover:bg-red-50"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {bodegas.map((b) => {
+                    const isActive = b.es_activo !== false;
+                    return (
+                      <tr key={b.id} className={`border-b border-slate-100 transition-colors ${!isActive ? "bg-slate-50/70" : "hover:bg-slate-50/80"}`} >
+                        <td className="px-4 py-3 text-sm font-medium text-slate-800 font-mono">{b.codigo}</td>
+                        <td className={`px-4 py-3 text-sm font-medium ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"}`}>
+                          {b.nombre}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-600 hidden md:table-cell">{b.ubicacion || "—"}</td>
+                        <td className="px-4 py-3 text-xs">
+                          {isActive ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              Activo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 font-medium">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                              Inactivo
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">{b.insumos_count ?? 0}</td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700">{b.productos_count ?? 0}</td>
+                        <td className="px-4 py-3 text-xs text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openDetails(b)}
+                              className="px-2 py-1 rounded border border-slate-200 text-[11px] hover:bg-slate-50 bg-white"
+                            >
+                              Ver
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openEdit(b)}
+                              className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors bg-white"
+                              title="Editar"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openActionModal(b)}
+                              className={`p-1.5 rounded-md border transition-colors bg-white ${isActive
+                                ? "border-red-100 text-red-600 hover:bg-red-50"
+                                : "border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+                                }`}
+                              title={isActive ? "Desactivar" : "Reactivar"}
+                            >
+                              {isActive ? <Trash2 size={14} /> : <RotateCcw size={14} />}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </section>
+
+        {/* Modal Confirmación Acción Estilizado */}
+        <ConfirmActionModal
+          isOpen={actionModalOpen}
+          onClose={closeActionModal}
+          onConfirm={handleToggleActiveConfirm}
+          loading={actionLoading}
+          error={actionError}
+          title={itemToAction?.es_activo !== false ? "Desactivar Bodega" : "Reactivar Bodega"}
+          message={
+            itemToAction?.es_activo !== false
+              ? <span>¿Estás seguro de que deseas desactivar la bodega <strong>{itemToAction?.nombre}</strong>?</span>
+              : <span>¿Deseas reactivar la bodega <strong>{itemToAction?.nombre}</strong>?</span>
+          }
+          description={
+            itemToAction?.es_activo !== false
+              ? "La bodega dejará de ser visible en nuevos registros."
+              : "La bodega volverá a estar activa."
+          }
+          confirmText={itemToAction?.es_activo !== false ? "Desactivar" : "Reactivar"}
+          isDestructive={itemToAction?.es_activo !== false}
+        />
       </section>
 
       {/* Modal crear/editar bodega */}
@@ -761,34 +1017,36 @@ export default function WarehousesPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {details.productos.map((p, idx) => (
-                          <tr key={`${p.codigo}-${idx}`} className="border-b border-slate-100 hover:bg-slate-50/60">
-                            <td className="py-2 pr-2 text-slate-800">{p.codigo}</td>
-                            <td className="py-2 pr-2 text-slate-800">{p.nombre}</td>
-                            <td className="py-2 pr-2 text-right tabular-nums font-medium">{num(p.total_producido)} u</td>
-                            <td className="py-2 text-right">
-                              <div className="inline-flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => openStockPorTallas(p.codigo)}
-                                  className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                                  title="Ver por tallas"
-                                >
-                                  …
-                                </button>
+                        {details.productos
+                          .filter(p => (Number(p.total_producido) || 0) > 0)
+                          .map((p, idx) => (
+                            <tr key={`${p.codigo}-${idx}`} className="border-b border-slate-100 hover:bg-slate-50/60">
+                              <td className="py-2 pr-2 text-slate-800">{p.codigo}</td>
+                              <td className="py-2 pr-2 text-slate-800">{p.nombre}</td>
+                              <td className="py-2 pr-2 text-right tabular-nums font-medium">{num(p.total_producido)} u</td>
+                              <td className="py-2 text-right">
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openStockPorTallas(p.codigo)}
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                    title="Ver por tallas"
+                                  >
+                                    …
+                                  </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => openTransferModal(p.codigo, p.nombre)}
-                                  className="inline-flex items-center justify-center px-3 h-8 rounded-md bg-indigo-600 text-white text-[11px] font-medium shadow-sm hover:bg-indigo-700"
-                                  title="Trasladar"
-                                >
-                                  Trasladar
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                  <button
+                                    type="button"
+                                    onClick={() => openTransferModal(p.codigo, p.nombre)}
+                                    className="inline-flex items-center justify-center px-3 h-8 rounded-md bg-indigo-600 text-white text-[11px] font-medium shadow-sm hover:bg-indigo-700"
+                                    title="Trasladar"
+                                  >
+                                    Trasladar
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   )}
@@ -872,21 +1130,15 @@ export default function WarehousesPage() {
         </div>
       )}
 
-      {/* ✅ Modal Traslado */}
+      {/* ✅ Modal Traslado (MASIVO) */}
       {isTransferOpen && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between flex-shrink-0">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Trasladar producto</h2>
+                <h2 className="text-sm font-semibold text-slate-900">Traslado de Productos</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {transferForm.producto_id ? (
-                    <>
-                      SKU: <b>{transferForm.producto_id}</b> • {transferForm.producto_nombre || "—"}
-                    </>
-                  ) : (
-                    "—"
-                  )}
+                  Origen: <b>{selectedBodega ? selectedBodega.nombre : ""}</b>
                 </p>
               </div>
               <button className="text-slate-400 hover:text-slate-600" onClick={closeTransferModal}>
@@ -894,7 +1146,8 @@ export default function WarehousesPage() {
               </button>
             </div>
 
-            <form onSubmit={submitTransfer} className="p-6 space-y-4">
+            <div className="flex-1 overflow-auto p-6 space-y-6">
+              {/* Mensajes */}
               {transferError && (
                 <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
                   {transferError}
@@ -906,26 +1159,16 @@ export default function WarehousesPage() {
                 </div>
               )}
 
+              {/* 1. Cabecera */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-medium text-slate-600">Bodega origen</label>
-                  <input
-                    value={selectedBodega ? `${selectedBodega.codigo} - ${selectedBodega.nombre}` : "—"}
-                    readOnly
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-700"
-                  />
-                </div>
-
                 <div className="space-y-1">
                   <label className="text-[11px] font-medium text-slate-600">Bodega destino</label>
                   <select
-                    name="bodega_destino_id"
-                    value={transferForm.bodega_destino_id}
-                    onChange={onTransferChange}
+                    value={transferHeader.bodega_destino_id}
+                    onChange={e => setTransferHeader({ ...transferHeader, bodega_destino_id: e.target.value })}
                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white"
-                    required
                   >
-                    <option value="">Selecciona…</option>
+                    <option value="">Selecciona destino…</option>
                     {bodegas
                       .filter((b) => !selectedBodega || b.id !== selectedBodega.id)
                       .map((b) => (
@@ -939,72 +1182,163 @@ export default function WarehousesPage() {
                 <div className="space-y-1">
                   <label className="text-[11px] font-medium text-slate-600">Tercero (quién traslada)</label>
                   <select
-                    name="tercero_id"
-                    value={transferForm.tercero_id}
-                    onChange={onTransferChange}
+                    value={transferHeader.tercero_id}
+                    onChange={e => setTransferHeader({ ...transferHeader, tercero_id: e.target.value })}
                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white"
-                    required
                   >
-                    <option value="">Selecciona…</option>
+                    <option value="">Selecciona tercero…</option>
                     {terceros.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.codigo} — {t.nombre}
                       </option>
                     ))}
                   </select>
-                  {terceros.length === 0 && (
-                    <p className="text-[11px] text-slate-400">No hay terceros cargados (o no se pudieron cargar).</p>
-                  )}
                 </div>
+              </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-medium text-slate-600">Talla (opcional)</label>
-                  <select
-                    name="talla_id"
-                    value={transferForm.talla_id}
-                    onChange={onTransferChange}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white"
+              <div className="h-px bg-slate-100 my-2" />
+
+              {/* 2. Agregar Item */}
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <h4 className="text-xs font-semibold text-slate-700 mb-3 uppercase tracking-wide">Agregar item al traslado</h4>
+                <form onSubmit={addItem} className="flex flex-col md:flex-row gap-3 items-end">
+                  <div className="flex-1 space-y-1 w-full md:w-auto">
+                    <label className="text-[11px] font-medium text-slate-600">Producto</label>
+                    <select
+                      value={itemForm.producto_id}
+                      onChange={handleProductChange}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white"
+                    >
+                      <option value="">Selecciona producto ({availableProducts.length})</option>
+                      {availableProducts.map(p => (
+                        <option key={p.codigo} value={p.codigo}>
+                          {p.codigo} — {p.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-full md:w-48 space-y-1">
+                    <label className="text-[11px] font-medium text-slate-600">
+                      Talla
+                      {itemStockLoading && <span className="text-indigo-500 ml-1">(Cargando...)</span>}
+                    </label>
+                    <select
+                      value={itemForm.talla_id}
+                      onChange={handleSizeChange}
+                      disabled={!itemForm.producto_id}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                      <option value="">Selecciona talla...</option>
+                      {availableSizes.map(s => (
+                        <option key={s.id || "null"} value={s.id || ""}>
+                          {s.nombre} (Stock: {num(s.stock)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-full md:w-32 space-y-1">
+                    <label className="text-[11px] font-medium text-slate-600">Cantidad</label>
+                    <input
+                      type="text"
+                      placeholder="0"
+                      value={itemForm.cantidad}
+                      onChange={e => {
+                        // Solo números enteros
+                        const val = e.target.value.replace(/[^0-9]/g, "");
+                        setItemForm({ ...itemForm, cantidad: val });
+                      }}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={!itemForm.producto_id || !itemForm.cantidad}
+                    className="w-full md:w-auto px-4 py-2 bg-slate-800 text-white text-xs font-medium rounded-lg hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">Sin talla</option>
-                    {tallas.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    Agregar
+                  </button>
+                </form>
+
+                {/* Feedback de error al agregar */}
+                {itemError && (
+                  <div className="mt-2 text-xs text-red-600 font-medium">
+                    ⚠️ {itemError}
+                  </div>
+                )}
+
+                {/* Feedback de stock */}
+                {itemStockInfo && (
+                  <div className="mt-2 text-[11px] text-slate-500">
+                    Stock disponible de <b>{itemStockInfo.talla_nombre}</b>: <span className="font-medium text-slate-800">{num(itemStockInfo.disponible)}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-slate-600">Cantidad a trasladar</label>
-                <input
-                  name="cantidad"
-                  value={transferForm.cantidad}
-                  onChange={onTransferChange}
-                  placeholder="Ej: 2 o 2.5"
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  required
-                />
+              {/* 3. Lista de Items */}
+              <div>
+                <h4 className="text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+                  Items a trasladar ({transferItems.length})
+                </h4>
+                {transferItems.length === 0 ? (
+                  <div className="text-xs text-slate-400 italic py-4 border border-dashed border-slate-200 rounded-lg text-center">
+                    No has agregado items todavía.
+                  </div>
+                ) : (
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                        <tr>
+                          <th className="px-3 py-2">Producto</th>
+                          <th className="px-3 py-2">Talla</th>
+                          <th className="px-3 py-2 text-right">Cantidad</th>
+                          <th className="px-3 py-2 w-10"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {transferItems.map(item => (
+                          <tr key={item.tempId}>
+                            <td className="px-3 py-2">
+                              <div className="font-medium text-slate-800">{item.producto_id}</div>
+                              <div className="text-slate-500 text-[10px]">{item.producto_nombre}</div>
+                            </td>
+                            <td className="px-3 py-2 text-slate-600">{item.talla_nombre}</td>
+                            <td className="px-3 py-2 text-right font-medium text-slate-800">{num(item.cantidad)}</td>
+                            <td className="px-3 py-2 text-center">
+                              <button
+                                onClick={() => removeItem(item.tempId)}
+                                className="text-red-400 hover:text-red-600"
+                                title="Quitar"
+                              >×</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={closeTransferModal}
-                  className="px-3 py-2 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
-                  disabled={transferLoading}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60"
-                  disabled={transferLoading}
-                >
-                  {transferLoading ? "Trasladando..." : "Confirmar traslado"}
-                </button>
-              </div>
-            </form>
+            <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 flex-shrink-0">
+              <button
+                type="button"
+                onClick={closeTransferModal}
+                className="px-4 py-2 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-white transition-colors"
+                disabled={transferLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={submitTransfer}
+                className="px-4 py-2 text-xs rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60 shadow-sm shadow-indigo-200"
+                disabled={transferLoading || transferItems.length === 0}
+              >
+                {transferLoading ? "Procesando..." : "Confirmar Traslado Masivo"}
+              </button>
+            </div>
           </div>
         </div>
       )}
