@@ -129,8 +129,10 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
   const [savingAll, setSavingAll] = useState(false);
   const [error, setError] = useState("");
 
-  // modal crear impuesto
+  // modal crear/editar impuesto
   const [isImpuestoModalOpen, setIsImpuestoModalOpen] = useState(false);
+  const [editingImpuesto, setEditingImpuesto] = useState(null);
+  const [showInactiveTaxes, setShowInactiveTaxes] = useState(false);
 
   // modal guardado
   const [isSavedOpen, setIsSavedOpen] = useState(false);
@@ -206,11 +208,15 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
 
   const impuestosOptions = useMemo(
     () =>
-      (impuestos || []).map((i) => ({
-        id: i.id,
-        label: `${i.codigo} - ${i.nombre} (${formatCurrency(i.valor)}%)`,
-      })),
-    [impuestos]
+      (impuestos || [])
+        .filter((i) => showInactiveTaxes || i.es_activo !== false)
+        .map((i) => ({
+          id: i.id,
+          label: `${i.nombre} (${formatCurrency(i.valor)}%)`,
+          es_activo: i.es_activo !== false,
+          original: i,
+        })),
+    [impuestos, showInactiveTaxes]
   );
 
   function setField(name, value) {
@@ -267,6 +273,21 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
         ...prev,
         impuesto_ids: prev.impuesto_ids.includes(selectId) ? prev.impuesto_ids : [...prev.impuesto_ids, selectId],
       }));
+    }
+  }
+
+  async function handleToggleImpuestoActive(imp) {
+    try {
+      const res = await fetch(`${API_BASE}/impuestos/${imp.id}/`, {
+        method: imp.es_activo ? "DELETE" : "PATCH",
+        headers: imp.es_activo ? {} : { "Content-Type": "application/json" },
+        body: imp.es_activo ? null : JSON.stringify({ es_activo: true }),
+      });
+      if (!res.ok && res.status !== 204) throw new Error("No se pudo cambiar el estado del impuesto.");
+      await refreshImpuestos();
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Error al cambiar estado del impuesto.");
     }
   }
 
@@ -405,7 +426,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
             <div>
               <h1 className="text-sm font-semibold text-slate-900">Nuevo producto</h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Guarda producto, precios y datos adicionales. Luego se muestra el objeto completo.
+                Ingresa la información básica, precios y datos adicionales del nuevo producto.
               </p>
             </div>
             <div className="flex gap-2">
@@ -510,39 +531,80 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                   <h2 className="text-sm font-semibold text-slate-900">Impuestos</h2>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsImpuestoModalOpen(true)}
-                  className="px-3 py-2 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800"
-                >
-                  + Crear impuesto
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowInactiveTaxes(!showInactiveTaxes)}
+                    className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${showInactiveTaxes ? "bg-slate-100 border-slate-300 text-slate-700" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`}
+                  >
+                    {showInactiveTaxes ? "Ocultar inactivos" : "Mostrar inactivos"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingImpuesto(null);
+                      setIsImpuestoModalOpen(true);
+                    }}
+                    className="px-3 py-2 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800"
+                  >
+                    + Crear impuesto
+                  </button>
+                </div>
               </div>
 
               <div className="px-6 py-4">
                 {impuestosOptions.length === 0 ? (
                   <div className="text-xs text-slate-500">
-                    No hay impuestos registrados. Crea uno con el botón de arriba.
+                    {showInactiveTaxes ? "No hay impuestos registrados." : "No hay impuestos activos."}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {impuestosOptions.map((imp) => {
                       const checked = form.impuesto_ids.includes(imp.id);
                       return (
-                        <label
+                        <div
                           key={imp.id}
-                          className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer"
+                          className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs transition-colors ${!imp.es_activo ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"}`}
                         >
-                          <input type="checkbox" checked={checked} onChange={() => toggleImpuesto(imp.id)} />
-                          <span>{imp.label}</span>
-                        </label>
+                          <label className="flex items-center gap-2 cursor-pointer flex-1 py-1">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleImpuesto(imp.id)}
+                              disabled={!imp.es_activo}
+                            />
+                            <span className={!imp.es_activo ? "line-through opacity-70" : ""}>{imp.label}</span>
+                          </label>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingImpuesto(imp.original);
+                                setIsImpuestoModalOpen(true);
+                              }}
+                              className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
+                              title="Editar"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleImpuestoActive(imp)}
+                              className={`p-1.5 rounded-md transition-colors ${imp.es_activo ? "text-red-400 hover:bg-red-50" : "text-emerald-500 hover:bg-emerald-50"}`}
+                              title={imp.es_activo ? "Desactivar" : "Reactivar"}
+                            >
+                              {imp.es_activo ? "🗑️" : "🔄"}
+                            </button>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
                 )}
 
                 <p className="mt-3 text-[11px] text-slate-400">
-                  Puedes dejarlo vacío (equivale a <b>sin impuestos</b>).
+                  Puedes dejarlo vacío si el producto no aplica impuestos.
                 </p>
               </div>
             </section>
@@ -611,7 +673,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 ))}
 
                 <p className="text-[11px] text-slate-400">
-                  Se guardan por separado en <b>/producto-precios/</b> asociados al SKU.
+                  Define los diferentes niveles de precio o descuentos aplicables.
                 </p>
               </div>
             </section>
@@ -706,7 +768,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 </div>
 
                 <p className="text-[11px] text-slate-400 md:col-span-3">
-                  Se guarda en <b>/producto-datos-adicionales/</b> (1 por producto).
+                  Información complementaria para la gestión de inventario y aduanas.
                 </p>
               </div>
             </section>
@@ -714,9 +776,13 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
         </div>
       </div>
 
-      <CreateImpuestoModal
+      <ImpuestoModal
         isOpen={isImpuestoModalOpen}
-        onClose={() => setIsImpuestoModalOpen(false)}
+        onClose={() => {
+          setIsImpuestoModalOpen(false);
+          setEditingImpuesto(null);
+        }}
+        impuesto={editingImpuesto}
         onCreated={(imp) => refreshImpuestos(imp?.id)}
       />
 
@@ -730,50 +796,61 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
   );
 }
 
-/* ===================== MODAL: CREAR IMPUESTO ===================== */
-function CreateImpuestoModal({ isOpen, onClose, onCreated }) {
-  const [form, setForm] = useState({ nombre: "", codigo: "", valor: "" });
+/* ===================== MODAL: CREAR/EDITAR IMPUESTO ===================== */
+function ImpuestoModal({ isOpen, onClose, onCreated, impuesto = null }) {
+  const [form, setForm] = useState({ nombre: "", valor: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const isEdit = !!impuesto;
+
   useEffect(() => {
     if (!isOpen) return;
-    setForm({ nombre: "", codigo: "", valor: "" });
+    if (impuesto) {
+      setForm({
+        nombre: impuesto.nombre || "",
+        valor: formatCurrency(impuesto.valor) || "",
+      });
+    } else {
+      setForm({ nombre: "", valor: "" });
+    }
     setError("");
-  }, [isOpen]);
+  }, [isOpen, impuesto]);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
-    if (!form.nombre.trim() || !form.codigo.trim() || form.valor === "") {
-      setError("Nombre, código y valor son obligatorios.");
+    if (!form.nombre.trim() || form.valor === "") {
+      setError("Nombre y valor son obligatorios.");
       return;
     }
 
     try {
       setSaving(true);
-      const res = await fetch(`${API_BASE}/impuestos/`, {
-        method: "POST",
+      const url = isEdit ? `${API_BASE}/impuestos/${impuesto.id}/` : `${API_BASE}/impuestos/`;
+      const method = isEdit ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nombre: form.nombre.trim(),
-          codigo: form.codigo.trim(),
           valor: moneyStr(form.valor),
         }),
       });
 
       if (!res.ok) {
         const data = await safeJson(res);
-        throw new Error(data?.detail || JSON.stringify(data) || "No se pudo crear el impuesto.");
+        throw new Error(data?.detail || JSON.stringify(data) || `No se pudo ${isEdit ? "actualizar" : "crear"} el impuesto.`);
       }
 
-      const created = await res.json();
-      onCreated?.(created);
+      const saved = await res.json();
+      onCreated?.(saved);
       onClose();
     } catch (err) {
       console.error(err);
-      setError(err.message || "Error creando impuesto.");
+      setError(err.message || `Error ${isEdit ? "actualizando" : "creando"} impuesto.`);
     } finally {
       setSaving(false);
     }
@@ -785,7 +862,7 @@ function CreateImpuestoModal({ isOpen, onClose, onCreated }) {
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Crear impuesto</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{isEdit ? "Editar impuesto" : "Crear impuesto"}</h2>
           <button className="text-slate-400 hover:text-slate-600" onClick={onClose} disabled={saving}>
             ✕
           </button>
@@ -804,18 +881,7 @@ function CreateImpuestoModal({ isOpen, onClose, onCreated }) {
               value={form.nombre}
               onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
               className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ej: IVA"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Código</label>
-            <input
-              value={form.codigo}
-              onChange={(e) => setForm((p) => ({ ...p, codigo: e.target.value }))}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ej: IVA19"
+              placeholder="Ej: IVA 19%"
               required
             />
           </div>

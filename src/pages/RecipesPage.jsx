@@ -11,12 +11,12 @@ export default function NewRecipePage() {
   const [bodegas, setBodegas] = useState([]);
   const [selectedBodegaId, setSelectedBodegaId] = useState("");
   const insumosDeBodega = useMemo(() => {
-  const bId = Number(selectedBodegaId);
-  if (!bId) return [];
-  return insumos.filter(
-    (ins) => ins.bodega && ins.bodega.id === bId
-  );
-}, [insumos, selectedBodegaId]);
+    const bId = Number(selectedBodegaId);
+    if (!bId) return [];
+    return insumos.filter(
+      (ins) => (ins.bodega?.id === bId || ins.bodega === bId)
+    );
+  }, [insumos, selectedBodegaId]);
 
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -42,28 +42,26 @@ export default function NewRecipePage() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setError("");
         const [prodRes, insRes, recRes, histRes, bodRes] = await Promise.all([
-          fetch(`${API_URL}/productos/`),
-          fetch(`${API_URL}/insumos/`),
-          fetch(`${API_URL}/recetas/`),
-          fetch(`${API_URL}/producciones/`),
-        fetch(`${API_URL}/bodegas/`),
+          fetch(`${API_BASE}/productos/?page_size=1000`),
+          fetch(`${API_BASE}/insumos/?page_size=1000`),
+          fetch(`${API_BASE}/recetas/?page_size=1000`),
+          fetch(`${API_BASE}/producciones/?page_size=1000`),
+          fetch(`${API_BASE}/bodegas/?page_size=1000`),
         ]);
 
-        const productosData = await prodRes.json();
-        const insumosData = await insRes.json();
-        const recetasData = await recRes.json();
-        const historialData = await histRes.json();
-        const bodegasData = await bodRes.json();
+        const pData = await prodRes.json();
+        const iData = await insRes.json();
+        const rData = await recRes.json();
+        const hData = await histRes.json();
+        const bData = await bodRes.json();
 
-
-        setProductos(productosData);
-        setInsumos(insumosData);
-        setRecetas(recetasData);
-        setHistorial(historialData);
-        setBodegas(bodegasData);
-
-      
+        setProductos(Array.isArray(pData) ? pData : pData.results || []);
+        setInsumos(Array.isArray(iData) ? iData : iData.results || []);
+        setRecetas(Array.isArray(rData) ? rData : rData.results || []);
+        setHistorial(Array.isArray(hData) ? hData : hData.results || []);
+        setBodegas(Array.isArray(bData) ? bData : bData.results || []);
       } catch (err) {
         console.error(err);
         setError("Error cargando información inicial.");
@@ -92,36 +90,36 @@ export default function NewRecipePage() {
 
   // Cuando seleccionas una receta base, traemos lo que ya existe
   useEffect(() => {
-  if (!selectedRecipeId) return;
+    if (!selectedRecipeId) return;
 
-  const receta = recetas.find(
-    (r) => r.id === Number(selectedRecipeId)
-  );
-  if (!receta) return;
+    const receta = recetas.find(
+      (r) => r.id === Number(selectedRecipeId)
+    );
+    if (!receta) return;
 
-  // Si la receta base tiene bodega, la fijamos
-  if (receta.bodega?.id) {
-    setSelectedBodegaId(String(receta.bodega.id));
-  }
+    // Si la receta base tiene bodega, la fijamos
+    if (receta.bodega?.id) {
+      setSelectedBodegaId(String(receta.bodega.id));
+    }
 
-  // 1. Producto asociado directo desde la receta
-  if (receta.producto?.id) {
-    setSelectedProductId(String(receta.producto.id));
-  }
+    // 1. Producto asociado directo desde la receta
+    if (receta.producto?.id) {
+      setSelectedProductId(String(receta.producto.id));
+    }
 
-  // 2. Código de receta
-  setRecipeCode((prev) => prev || receta.codigo || "");
+    // 2. Código de receta
+    setRecipeCode((prev) => prev || receta.codigo || "");
 
-  // 3. Insumos
-  const nuevosItems =
-    (receta.items || []).map((it) => ({
-      id: Date.now() + Math.random(),
-      insumoId: it.insumo?.id ?? "",
-      cantidad: it.cantidad ?? 0,
-    })) || [];
+    // 3. Insumos
+    const nuevosItems =
+      (receta.items || []).map((it) => ({
+        id: Date.now() + Math.random(),
+        insumoId: it.insumo?.id ?? "",
+        cantidad: it.cantidad ?? 0,
+      })) || [];
 
-  setLineItems(nuevosItems);
-}, [selectedRecipeId, recetas]);
+    setLineItems(nuevosItems);
+  }, [selectedRecipeId, recetas]);
 
   // ---------- Helpers para comparar items ----------
   function areItemsEqual(receta, insumosValidos) {
@@ -245,7 +243,7 @@ export default function NewRecipePage() {
       setError("Debes seleccionar una bodega.");
       return;
     }
-    
+
     const selectedRecipe = selectedRecipeId
       ? recetas.find((r) => r.id === Number(selectedRecipeId))
       : null;
@@ -260,13 +258,13 @@ export default function NewRecipePage() {
         setProducing(true);
 
         const resProd = await fetch(
-          `${API_URL}/recetas/${selectedRecipe.id}/producir/`,
+          `${API_BASE}/recetas/${selectedRecipe.id}/producir/`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ cantidad: Number(produceQuantity), bodega_id: Number(selectedBodegaId),   }),
+            body: JSON.stringify({ cantidad: Number(produceQuantity), bodega_id: Number(selectedBodegaId), }),
           }
         );
 
@@ -331,24 +329,24 @@ export default function NewRecipePage() {
       const nombreReceta = producto.nombre || "Receta sin nombre";
 
       const payload = {
-  codigo: codigoReceta,
-  nombre: nombreReceta,
-  producto_id: Number(selectedProductId),
-  bodega_id: Number(selectedBodegaId),   // 👈 AQUÍ ESTABA FALTANDO
-  // Atributos asociados no se envían: ya están en producto
-  items: insumosValidos.map((item) => {
-    const insumoData = insumos.find(
-      (i) => i.id === Number(item.insumoId)
-    );
-    return {
-      insumo_id: Number(item.insumoId),
-      cantidad: Number(item.cantidad),
-      unidad: insumoData?.unidad || "UND",
-    };
-  }),
-};
+        codigo: codigoReceta,
+        nombre: nombreReceta,
+        producto_id: Number(selectedProductId),
+        bodega_id: Number(selectedBodegaId),   // 👈 AQUÍ ESTABA FALTANDO
+        // Atributos asociados no se envían: ya están en producto
+        items: insumosValidos.map((item) => {
+          const insumoData = insumos.find(
+            (i) => i.id === Number(item.insumoId)
+          );
+          return {
+            insumo_id: Number(item.insumoId),
+            cantidad: Number(item.cantidad),
+            unidad: insumoData?.unidad || "UND",
+          };
+        }),
+      };
 
-      const res = await fetch(`${API_URL}/recetas/`, {
+      const res = await fetch(`${API_BASE}/recetas/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -365,7 +363,7 @@ export default function NewRecipePage() {
           else if (data.codigo) msg = `codigo: ${data.codigo.join(" ")}`;
           else if (data.nombre) msg = `nombre: ${data.nombre.join(" ")}`;
           else if (data.items) msg = `items: ${data.items.join(" ")}`;
-        } catch (_) {}
+        } catch (_) { }
         throw new Error(msg);
       }
 
@@ -376,13 +374,13 @@ export default function NewRecipePage() {
       setProducing(true);
 
       const resProd = await fetch(
-        `${API_URL}/recetas/${recetaId}/producir/`,
+        `${API_BASE}/recetas/${recetaId}/producir/`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ cantidad: Number(produceQuantity) ,bodega_id: Number(selectedBodegaId),  }),
+          body: JSON.stringify({ cantidad: Number(produceQuantity), bodega_id: Number(selectedBodegaId), }),
         }
       );
 
@@ -555,7 +553,7 @@ export default function NewRecipePage() {
                     modificas, se producirá con el mismo código.
                   </p>
                 </div>
-                 {/* 👇 NUEVO BLOQUE: BODEGA */}
+                {/* 👇 NUEVO BLOQUE: BODEGA */}
                 <div className="grid md:grid-cols-2 gap-4 mt-2">
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-medium text-slate-700 mb-1">
@@ -567,18 +565,18 @@ export default function NewRecipePage() {
                       className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Seleccionar bodega…</option>
-                        {bodegas.map((b) => (
+                      {bodegas.map((b) => (
                         <option key={b.id} value={b.id}>
                           {b.codigo} — {b.nombre}
                         </option>
-                        ))}
+                      ))}
                     </select>
                     <p className="text-[11px] text-slate-500">
                       La receta y la producción quedarán asociadas a esta bodega.
                     </p>
                   </div>
                 </div>
-              </div> 
+              </div>
             </div>
           </section>
 
@@ -612,24 +610,24 @@ export default function NewRecipePage() {
                     className="grid grid-cols-[2fr,1fr,auto] gap-3 items-center"
                   >
                     <select
-  value={item.insumoId}
-  disabled={!selectedBodegaId || disabledButtons}
-  onChange={(e) =>
-    handleLineItemChange(item.id, "insumoId", e.target.value)
-  }
-  className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100"
->
-  <option value="">
-    {selectedBodegaId
-      ? "Selecciona un insumo..."
-      : "Selecciona primero una bodega"}
-  </option>
-  {insumosDeBodega.map((ins) => (
-    <option key={ins.id} value={ins.id}>
-      {ins.nombre} ({ins.codigo})
-    </option>
-  ))}
-</select>
+                      value={item.insumoId}
+                      disabled={!selectedBodegaId || disabledButtons}
+                      onChange={(e) =>
+                        handleLineItemChange(item.id, "insumoId", e.target.value)
+                      }
+                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100"
+                    >
+                      <option value="">
+                        {selectedBodegaId
+                          ? "Selecciona un insumo..."
+                          : "Selecciona primero una bodega"}
+                      </option>
+                      {insumosDeBodega.map((ins) => (
+                        <option key={ins.id} value={ins.id}>
+                          {ins.nombre} ({ins.codigo})
+                        </option>
+                      ))}
+                    </select>
 
                     <input
                       type="number"
@@ -724,65 +722,65 @@ export default function NewRecipePage() {
             </div>
           </section>
           {/* Historial de productos creados */}
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 mb-10">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-indigo-500 text-lg">🕒</span>
-              <h2 className="text-sm font-semibold text-slate-900">
-                Historial de productos creados
-              </h2>
+          <section className="bg-white rounded-xl shadow-sm border border-slate-200 mb-10">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-indigo-500 text-lg">🕒</span>
+                <h2 className="text-sm font-semibold text-slate-900">
+                  Historial de productos creados
+                </h2>
+              </div>
             </div>
-          </div>
 
-          {historial.length === 0 ? (
-            <div className="px-6 py-6 text-xs text-slate-500">
-              Aún no se han registrado producciones.
-            </div>
-          ) : (
-            <div className="px-4 py-4 overflow-x-auto">
-              <table className="min-w-full text-xs">
-                <thead className="bg-slate-50 border border-slate-100">
-                  <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                    <th className="px-3 py-2 text-left">Fecha</th>
-                    <th className="px-3 py-2 text-left">Bodega</th>  {/* 👈 nuevo */}
-                    <th className="px-3 py-2 text-left">Receta</th>
-                    <th className="px-3 py-2 text-right">Cantidad</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historial.map((h) => (
-                    <tr
-                      key={h.id}
-                      className="border-b border-slate-100 hover:bg-slate-50/80"
-                    >
-                      <td className="px-3 py-2 text-xs text-slate-600">
-                        {new Date(h.creado_en).toLocaleString()}
-                      </td>
-                      {/* 👇 NUEVO: Bodega */}
-                      <td className="px-3 py-2 text-xs text-slate-700">
-                        {h.bodega_codigo
-                          ? `${h.bodega_codigo} — ${h.bodega_nombre}`
-                          : h.bodega_nombre || "Sin bodega"}
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-medium text-slate-800">
-                            {h.receta_codigo
-                              ? `${h.receta_codigo} — ${h.receta_nombre}`
-                              : h.receta_nombre}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-right text-xs text-slate-700">
-                        {h.cantidad.toLocaleString()} u
-                      </td>
+            {historial.length === 0 ? (
+              <div className="px-6 py-6 text-xs text-slate-500">
+                Aún no se han registrado producciones.
+              </div>
+            ) : (
+              <div className="px-4 py-4 overflow-x-auto">
+                <table className="min-w-full text-xs">
+                  <thead className="bg-slate-50 border border-slate-100">
+                    <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                      <th className="px-3 py-2 text-left">Fecha</th>
+                      <th className="px-3 py-2 text-left">Bodega</th>  {/* 👈 nuevo */}
+                      <th className="px-3 py-2 text-left">Receta</th>
+                      <th className="px-3 py-2 text-right">Cantidad</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+                  </thead>
+                  <tbody>
+                    {historial.map((h) => (
+                      <tr
+                        key={h.id}
+                        className="border-b border-slate-100 hover:bg-slate-50/80"
+                      >
+                        <td className="px-3 py-2 text-xs text-slate-600">
+                          {new Date(h.creado_en).toLocaleString()}
+                        </td>
+                        {/* 👇 NUEVO: Bodega */}
+                        <td className="px-3 py-2 text-xs text-slate-700">
+                          {h.bodega_codigo
+                            ? `${h.bodega_codigo} — ${h.bodega_nombre}`
+                            : h.bodega_nombre || "Sin bodega"}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium text-slate-800">
+                              {h.receta_codigo
+                                ? `${h.receta_codigo} — ${h.receta_nombre}`
+                                : h.receta_nombre}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-right text-xs text-slate-700">
+                          {h.cantidad.toLocaleString()} u
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </div>

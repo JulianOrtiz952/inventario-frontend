@@ -7,6 +7,12 @@ import EditProductModal from "../components/EditProductModal";
 import CurrencyInput from "../components/CurrencyInput";
 import { formatCurrency } from "../utils/format";
 import { API_BASE } from "../config/api";
+import {
+  Search, Plus, ChevronLeft, ChevronRight,
+  Pencil, Trash2, RotateCcw, Eye,
+  Info, AlertCircle
+} from "lucide-react";
+import ConfirmActionModal from "../components/ConfirmActionModal";
 
 const PAGE_SIZE = 30;
 
@@ -42,8 +48,12 @@ export default function ProductsPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editSku, setEditSku] = useState(null);
 
-  // DELETE
+  // DELETE / TOGGLE ACTIVE
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [productToAction, setProductToAction] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   // STOCK POR TALLAS
   const [isStockOpen, setIsStockOpen] = useState(false);
@@ -155,40 +165,55 @@ export default function ProductsPage() {
     }
   }
 
-  async function handleDelete(sku) {
-    const ok = window.confirm(`¿Eliminar el producto ${sku}? Esta acción no se puede deshacer.`);
-    if (!ok) return;
+  const openActionModal = (prod) => {
+    setProductToAction(prod);
+    setActionError("");
+    setActionModalOpen(true);
+  };
+
+  const closeActionModal = () => {
+    if (actionLoading) return;
+    setActionModalOpen(false);
+    setProductToAction(null);
+  };
+
+  const handleToggleActiveConfirm = async () => {
+    if (!productToAction) return;
+
+    const sku = productToAction.codigo_sku;
+    const isActive = productToAction.es_activo !== false;
+    const actionName = isActive ? "Desactivar" : "Reactivar";
 
     try {
-      setDeleteLoading(true);
+      setActionLoading(true);
+      setActionError("");
 
-      const res = await fetch(`${API_BASE}/productos/${encodeURIComponent(sku)}/`, {
-        method: "DELETE",
-      });
+      let res;
+      if (isActive) {
+        // Desactivar (Soft Delete)
+        res = await fetch(`${API_BASE}/productos/${encodeURIComponent(sku)}/`, { method: "DELETE" });
+      } else {
+        // Reactivar (Patch)
+        res = await fetch(`${API_BASE}/productos/${encodeURIComponent(sku)}/`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ es_activo: true }),
+        });
+      }
 
       if (!res.ok && res.status !== 204) {
-        throw new Error("No se pudo eliminar el producto.");
+        throw new Error(`No se pudo ${actionName.toLowerCase()} el producto.`);
       }
 
-      // ✅ si borraste el último de la página, intenta ir a la anterior
-      const newCount = Math.max(0, count - 1);
-      const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
-      const target = Math.min(page, maxPage);
-
-      if (viewProduct?.codigo_sku === sku) {
-        setIsViewOpen(false);
-        setViewProduct(null);
-      }
-
-      await loadProductos(target);
-      setCount(newCount);
+      closeActionModal();
+      await loadProductos(page);
     } catch (e) {
       console.error(e);
-      alert(e.message || "Error eliminando producto.");
+      setActionError(e.message || `Error al ${actionName.toLowerCase()} producto.`);
     } finally {
-      setDeleteLoading(false);
+      setActionLoading(false);
     }
-  }
+  };
 
   async function openStockPorTallas(sku) {
     try {
@@ -253,7 +278,7 @@ export default function ProductsPage() {
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">Productos</h1>
             <p className="text-xs text-slate-500 mt-1">
-              Incluye precios, descuentos e IVA (price_breakdown).
+              Información detallada de precios, descuentos e impuestos.
             </p>
           </div>
 
@@ -290,8 +315,10 @@ export default function ProductsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
-              <span className="text-slate-400 text-sm">🔍</span>
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+              <span className="text-slate-400">
+                <Search size={16} />
+              </span>
               <input
                 type="text"
                 value={search}
@@ -304,9 +331,9 @@ export default function ProductsPage() {
             <button
               type="button"
               onClick={() => setIsCreateOpen(true)}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 transition-colors"
             >
-              <span className="mr-1">＋</span>
+              <Plus size={14} className="mr-1.5" />
               Agregar
             </button>
           </div>
@@ -324,17 +351,17 @@ export default function ProductsPage() {
               type="button"
               disabled={!prevUrl || loading}
               onClick={goPrev}
-              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50 transition-colors"
             >
-              ← Anterior
+              <ChevronLeft size={14} /> Anterior
             </button>
             <button
               type="button"
               disabled={!nextUrl || loading}
               onClick={goNext}
-              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50 transition-colors"
             >
-              Siguiente →
+              Siguiente <ChevronRight size={14} />
             </button>
           </div>
         </div>
@@ -374,6 +401,7 @@ export default function ProductsPage() {
                   {productos.map((p) => {
                     const sku = p.codigo_sku;
                     const bd = p.price_breakdown || null;
+                    const isActive = p.es_activo !== false;
 
                     const base = bd?.precio_base ?? null;
                     const desc = bd?.total_descuentos ?? null;
@@ -386,14 +414,18 @@ export default function ProductsPage() {
                     return (
                       <tr
                         key={sku}
-                        className="border-b border-slate-100 hover:bg-slate-50/70 transition-colors"
+                        className={`border-b border-slate-100 transition-colors ${!isActive ? "bg-slate-50/70" : "hover:bg-slate-50/70"}`}
                       >
-                        <td className="px-4 py-3 text-sm font-medium text-slate-800">{sku}</td>
-                        <td className="px-4 py-3 text-sm text-slate-800">{p.nombre}</td>
+                        <td className={`px-4 py-3 text-sm font-medium ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-800"}`}>
+                          {sku}
+                        </td>
+                        <td className={`px-4 py-3 text-sm ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-800"}`}>
+                          {p.nombre}
+                        </td>
 
                         <td className="px-4 py-3 text-xs text-slate-700">
                           {p?.tercero?.nombre ? (
-                            <span>
+                            <span className={!isActive ? "text-slate-400" : ""}>
                               {p.tercero.nombre}
                               <span className="text-slate-400">
                                 {p.tercero.codigo ? ` (${p.tercero.codigo})` : ""}
@@ -406,38 +438,51 @@ export default function ProductsPage() {
 
                         <td className="px-4 py-3 text-xs text-slate-700 tabular-nums">
                           <div className="flex items-center gap-2">
-                            <span>
-                              {p?.datos_adicionales?.stock ?? <span className="text-slate-400">—</span>}
-                            </span>
+                            {(() => {
+                              const stock = Number(p?.datos_adicionales?.stock ?? 0);
+                              const min = Number(p?.datos_adicionales?.stock_minimo ?? 0);
+                              const isLow = isActive && min > 0 && stock < min;
+
+                              return (
+                                <span className={`flex items-center gap-1.5 font-medium ${!isActive ? "text-slate-400" : isLow ? "text-red-600" : ""}`}>
+                                  {p?.datos_adicionales?.stock ?? <span className="text-slate-400">—</span>}
+                                  {isLow && (
+                                    <AlertCircle size={14} className="text-red-500" title={`Bajo mínimo (Min: ${min})`} />
+                                  )}
+                                </span>
+                              );
+                            })()}
 
                             <button
                               type="button"
                               onClick={() => openStockPorTallas(sku)}
-                              className="ml-auto inline-flex items-center justify-center w-7 h-7 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                              className="ml-auto inline-flex items-center justify-center w-7 h-7 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
                               title="Ver stock por tallas"
                             >
-                              …
+                              <Info size={14} />
                             </button>
                           </div>
                         </td>
 
-                        <td className="px-4 py-3 text-xs text-slate-600">{p.unidad_medida || "—"}</td>
-                        <td className="px-4 py-3 text-right tabular-nums">{money(base)}</td>
+                        <td className={`px-4 py-3 text-xs ${!isActive ? "text-slate-400" : "text-slate-600"}`}>
+                          {p.unidad_medida || "—"}
+                        </td>
+                        <td className={`px-4 py-3 text-right tabular-nums ${!isActive ? "text-slate-400" : ""}`}>{money(base)}</td>
 
                         <td className="px-4 py-3 text-right tabular-nums">
                           {toNumber(desc) ? (
-                            <span className="text-orange-700">-{money(desc)}</span>
+                            <span className={`${!isActive ? "text-orange-300" : "text-orange-700"}`}>-{money(desc)}</span>
                           ) : (
                             <span className="text-slate-400">—</span>
                           )}
                         </td>
 
-                        <td className="px-4 py-3 text-right tabular-nums">{money(sinIvaDesc)}</td>
+                        <td className={`px-4 py-3 text-right tabular-nums ${!isActive ? "text-slate-400" : ""}`}>{money(sinIvaDesc)}</td>
 
                         <td className="px-4 py-3 text-right tabular-nums">
                           {iva !== null ? (
                             <div className="flex flex-col items-end">
-                              <span className="text-slate-800">{money(iva)}</span>
+                              <span className={!isActive ? "text-slate-400" : "text-slate-800"}>{money(iva)}</span>
                               <span className="text-[11px] text-slate-400">{pct(ivaPct)}</span>
                             </div>
                           ) : (
@@ -445,14 +490,14 @@ export default function ProductsPage() {
                           )}
                         </td>
 
-                        <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-900">
+                        <td className={`px-4 py-3 text-right tabular-nums font-semibold ${!isActive ? "text-slate-400" : "text-slate-900"}`}>
                           {money(total)}
                         </td>
 
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1">
                             <ActionIconButton label="Ver" onClick={() => handleView(sku)}>
-                              👁️
+                              <Eye size={14} />
                             </ActionIconButton>
 
                             <ActionIconButton
@@ -462,16 +507,20 @@ export default function ProductsPage() {
                                 setIsEditOpen(true);
                               }}
                             >
-                              ✏️
+                              <Pencil size={14} />
                             </ActionIconButton>
 
-                            <ActionIconButton
-                              label="Eliminar"
-                              onClick={() => handleDelete(sku)}
-                              disabled={deleteLoading}
+                            <button
+                              type="button"
+                              onClick={() => openActionModal(p)}
+                              className={`p-1.5 rounded-md border transition-colors bg-white ${isActive
+                                ? "border-red-100 text-red-600 hover:bg-red-50"
+                                : "border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+                                }`}
+                              title={isActive ? "Desactivar" : "Reactivar"}
                             >
-                              🗑️
-                            </ActionIconButton>
+                              {isActive ? <Trash2 size={14} /> : <RotateCcw size={14} />}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -480,9 +529,7 @@ export default function ProductsPage() {
                 </tbody>
               </table>
 
-              <div className="px-4 py-3 text-[11px] text-slate-400 border-t border-slate-100">
-                Si algún producto no trae <b>price_breakdown</b> en el listado, se verá “—”.
-              </div>
+
             </div>
           )}
         </section>
@@ -526,6 +573,27 @@ export default function ProductsPage() {
           // ✅ en modo paginado: recarga para no desordenar la página
           await loadProductos(page);
         }}
+      />
+
+      <ConfirmActionModal
+        isOpen={actionModalOpen}
+        onClose={closeActionModal}
+        onConfirm={handleToggleActiveConfirm}
+        loading={actionLoading}
+        error={actionError}
+        title={(productToAction?.es_activo !== false) ? "Desactivar Producto" : "Reactivar Producto"}
+        message={
+          (productToAction?.es_activo !== false)
+            ? <span>¿Estás seguro de que deseas desactivar el producto <strong>{productToAction?.codigo_sku}</strong>?</span>
+            : <span>¿Deseas reactivar el producto <strong>{productToAction?.codigo_sku}</strong>?</span>
+        }
+        description={
+          (productToAction?.es_activo !== false)
+            ? "El producto ya no aparecerá en ventas o procesos activos, pero su historial se mantendrá."
+            : "El producto volverá a estar disponible para todos los procesos del sistema."
+        }
+        confirmText={(productToAction?.es_activo !== false) ? "Desactivar" : "Reactivar"}
+        isDestructive={(productToAction?.es_activo !== false)}
       />
 
       {/* MODAL: STOCK POR TALLAS */}
