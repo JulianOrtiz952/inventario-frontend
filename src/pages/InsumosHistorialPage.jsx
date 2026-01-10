@@ -50,7 +50,27 @@ const TIPOS = [
   { value: "SALIDA", label: "SALIDA" },
   { value: "CONSUMO_ENSAMBLE", label: "CONSUMO_ENSAMBLE" },
   { value: "AJUSTE", label: "AJUSTE" },
+  { value: "EDICION", label: "EDICION" },
 ];
+
+function getTipoColor(tipo) {
+  switch (tipo) {
+    case "CREACION":
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    case "ENTRADA":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "SALIDA":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "CONSUMO_ENSAMBLE":
+      return "bg-orange-100 text-orange-800 border-orange-200";
+    case "AJUSTE":
+      return "bg-purple-100 text-purple-800 border-purple-200";
+    case "EDICION":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    default:
+      return "bg-slate-100 text-slate-700 border-slate-200";
+  }
+}
 
 export default function InsumosHistorialPage() {
   // movimientos (paginado)
@@ -443,7 +463,7 @@ export default function InsumosHistorialPage() {
                     </td>
 
                     <td className="px-4 py-3 text-xs">
-                      <span className="inline-flex px-2 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                      <span className={`inline-flex px-2 py-1 rounded-md border text-[10px] font-semibold tracking-wide ${getTipoColor(r.tipo)}`}>
                         {r.tipo}
                       </span>
                     </td>

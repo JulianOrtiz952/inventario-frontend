@@ -7,6 +7,11 @@ import EditInsumoModal from "../components/EditInsumoModal";
 import ViewInsumoModal from "../components/ViewInsumoModal";
 import DeleteInsumoModal from "../components/DeleteInsumoModal";
 import { API_BASE } from "../config/api";
+import {
+  Search, Plus, ChevronLeft, ChevronRight,
+  Pencil, Trash2, RotateCcw, X, Eye,
+  ArrowDownCircle, ArrowUpCircle, AlertCircle, CheckCircle, Package
+} from "lucide-react";
 
 const PAGE_SIZE = 30;
 
@@ -688,7 +693,7 @@ export default function InventoryPage() {
     }
   }
 
-  // ---------- Eliminar ----------
+  // ---------- Eliminar / Reactivar ----------
   function openDeleteModal(insumo) {
     setInsumoToDelete(insumo);
     setDeleteError("");
@@ -701,29 +706,45 @@ export default function InventoryPage() {
     setInsumoToDelete(null);
   }
 
-  async function handleDeleteConfirm() {
+  async function handleToggleActiveConfirm() {
     if (!insumoToDelete) return;
 
     const pk = getInsumoPk(insumoToDelete);
     if (!pk) return setDeleteError("No se encontró el código del insumo.");
 
+    const isActive = insumoToDelete.es_activo !== false;
+
     try {
       setDeleteLoading(true);
       setDeleteError("");
 
-      const res = await fetch(`${API_BASE}/insumos/${pk}/`, { method: "DELETE" });
-      if (!res.ok && res.status !== 204) throw new Error("No se pudo eliminar el insumo.");
+      let res;
+      if (isActive) {
+        // Desactivar (DELETE)
+        res = await fetch(`${API_BASE}/insumos/${pk}/`, { method: "DELETE" });
+      } else {
+        // Reactivar (PATCH)
+        res = await fetch(`${API_BASE}/insumos/${pk}/`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ es_activo: true }),
+        });
+      }
+
+      if (!res.ok && res.status !== 204) throw new Error(`No se pudo ${isActive ? "eliminar" : "reactivar"} el insumo.`);
 
       closeDeleteModal();
 
-      const maybeNewCount = Math.max(0, insumosCount - 1);
-      const maxPage = Math.max(1, Math.ceil(maybeNewCount / PAGE_SIZE));
-      const target = Math.min(insumosPage, maxPage);
-      await loadInsumos(target);
-      setInsumosCount(maybeNewCount);
+      // Recarga inteligente
+      await loadInsumos(insumosPage);
+
+      // Ajuste de conteo algo naive pero funcional
+      // Si reactivamos, el conteo sube si mostramos activos? 
+      // Si mostramos todo, no cambia. Si ocultamos inactivos, cambia.
+      // Por simplicidad recargamos y ya.
     } catch (err) {
       console.error(err);
-      setDeleteError(err.message || "Error al eliminar el insumo.");
+      setDeleteError(err.message || `Error al ${isActive ? "eliminar" : "reactivar"} el insumo.`);
     } finally {
       setDeleteLoading(false);
     }
@@ -1227,22 +1248,34 @@ export default function InventoryPage() {
                       </td>
 
                       <td className="px-4 py-3 text-center">
-                        <div className="inline-flex items-center gap-1">
-                          <ActionIconButton label="Ver" onClick={() => handleView(i)}>
-                            👁️
-                          </ActionIconButton>
-                          <ActionIconButton
-                            label="Editar"
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleView(i)}
+                            className="p-1.5 rounded text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="Ver detalle"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleEdit(i)}
+                            className="p-1.5 rounded text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                            title="Editar"
                           >
-                            ✏️
-                          </ActionIconButton>
-                          <ActionIconButton
-                            label="Eliminar"
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => openDeleteModal(i)}
+                            className={`p-1.5 rounded transition-colors ${isInactive
+                              ? "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50"
+                              : "text-slate-400 hover:text-red-600 hover:bg-red-50"
+                              }`}
+                            title={isInactive ? "Reactivar" : "Desactivar"}
                           >
-                            🗑️
-                          </ActionIconButton>
+                            {isInactive ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1287,7 +1320,7 @@ export default function InventoryPage() {
         isOpen={isDeleteOpen}
         insumo={insumoToDelete}
         onClose={closeDeleteModal}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={handleToggleActiveConfirm}
         loading={deleteLoading}
         error={deleteError}
       />

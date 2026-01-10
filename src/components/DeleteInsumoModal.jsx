@@ -8,12 +8,14 @@ export default function DeleteInsumoModal({
 }) {
   if (!isOpen || !insumo) return null;
 
+  const isActive = insumo.es_activo !== false;
+
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-sm">
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-900">
-            {insumo.es_activo === false ? "Eliminar insumo" : "Inactivar insumo"}
+            {isActive ? "Desactivar insumo" : "Reactivar insumo"}
           </h2>
           <button
             className="text-slate-400 hover:text-slate-600"
@@ -28,14 +30,14 @@ export default function DeleteInsumoModal({
           {error && <div className="text-xs text-red-600">{error}</div>}
 
           <p className="text-sm text-slate-700">
-            ¿Estás seguro de que deseas {insumo.es_activo === false ? "eliminar" : "inactivar"} el insumo{" "}
+            ¿Estás seguro de que deseas {isActive ? "desactivar" : "reactivar"} el insumo{" "}
             <span className="font-semibold">“{insumo.nombre}”</span>?
           </p>
 
           <p className="text-xs text-slate-500">
-            {insumo.es_activo === false
-              ? "Esta acción no se puede deshacer."
-              : "El insumo pasará a estado inactivo y se mostrará al final de la lista."}
+            {isActive
+              ? "El insumo pasará a estado inactivo y se ocultará de algunas listas."
+              : "El insumo volverá a estar disponible para movimientos."}
           </p>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -51,11 +53,12 @@ export default function DeleteInsumoModal({
               type="button"
               onClick={onConfirm}
               disabled={loading}
-              className="px-4 py-2 rounded-md bg-red-600 text-white text-xs font-medium shadow-sm hover:bg-red-700 disabled:opacity-70"
+              className={`px-4 py-2 rounded-md text-white text-xs font-medium shadow-sm disabled:opacity-70 ${isActive ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
             >
               {loading
-                ? (insumo.es_activo === false ? "Eliminando..." : "Inactivando...")
-                : (insumo.es_activo === false ? "Eliminar" : "Inactivar")}
+                ? (isActive ? "Desactivando..." : "Reactivando...")
+                : (isActive ? "Desactivar" : "Reactivar")}
             </button>
           </div>
         </div>

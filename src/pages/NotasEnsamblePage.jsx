@@ -368,9 +368,8 @@ export default function NotasEnsamblePage() {
                         return (
                           <tr
                             key={n.id}
-                            className={`border-b border-slate-100 hover:bg-slate-50/80 ${
-                              active ? "bg-blue-50/50" : ""
-                            }`}
+                            className={`border-b border-slate-100 hover:bg-slate-50/80 ${active ? "bg-blue-50/50" : ""
+                              }`}
                           >
                             <td className="px-3 py-2 text-slate-700 font-medium">{n.id}</td>
                             <td className="px-3 py-2 text-slate-600">{n.fecha_elaboracion || "—"}</td>
