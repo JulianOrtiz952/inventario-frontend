@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import CreateNotaEnsambleModal from "../components/CreateNotaEnsambleModal"; // ajusta ruta si aplica
 import { API_BASE } from "../config/api";
+import { asRows, buildQueryParams } from "../utils/api";
 
 const PAGE_SIZE = 30;
 
 const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
 const num = (n) => nf.format(Number(n || 0));
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
+
 
 export default function NotasEnsamblePage() {
   const [notas, setNotas] = useState([]);
@@ -88,7 +87,11 @@ export default function NotasEnsamblePage() {
 
     try {
       setLoading(true);
-      const r = await fetch(`${API_BASE}/notas-ensamble/?page=${targetPage}&page_size=${PAGE_SIZE}`);
+      const query = buildQueryParams({
+        page: targetPage,
+        page_size: PAGE_SIZE,
+      });
+      const r = await fetch(`${API_BASE}/notas-ensamble/${query}`);
       if (!r.ok) throw new Error("Error cargando notas de ensamble.");
       const d = await r.json();
 

@@ -12,22 +12,11 @@ import {
   Pencil, Trash2, RotateCcw, X, Eye,
   ArrowDownCircle, ArrowUpCircle, AlertCircle, CheckCircle, Package
 } from "lucide-react";
+import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api";
 
 const PAGE_SIZE = 30;
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
 
-async function safeJson(res) {
-  const text = await res.text().catch(() => "");
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
-}
 
 function moneyStr(v) {
   // normaliza decimales: "2,5" => "2.5"
@@ -320,29 +309,7 @@ function getInsumoPk(insumo) {
   return insumo?.codigo ?? null;
 }
 
-async function fetchAllPages(url, { maxPages = 20 } = {}) {
-  const all = [];
-  let next = url;
-  let pages = 0;
 
-  while (next && pages < maxPages) {
-    // eslint-disable-next-line no-await-in-loop
-    const res = await fetch(next);
-    if (!res.ok) break;
-
-    // eslint-disable-next-line no-await-in-loop
-    const data = await res.json();
-    const rows = asRows(data);
-    all.push(...rows);
-
-    next = data?.next || null;
-    pages += 1;
-
-    if (Array.isArray(data)) break;
-  }
-
-  return all;
-}
 
 export default function InventoryPage() {
   // INSUMOS PAGINADOS
@@ -511,17 +478,18 @@ export default function InventoryPage() {
     async (page = 1) => {
       try {
         setLoading(true);
-        const params = new URLSearchParams();
-        params.append("page", page);
-        params.append("page_size", PAGE_SIZE);
-        if (search) params.append("search", search);
-        if (proveedorFiltro !== "todos") params.append("proveedor", proveedorFiltro);
-        if (terceroFiltro !== "todos") params.append("tercero", terceroFiltro);
-        if (bodegaFiltro !== "todos") params.append("bodega", bodegaFiltro);
-        if (precioMin) params.append("costo_unitario_min", precioMin);
-        if (precioMax) params.append("costo_unitario_max", precioMax);
+        const query = buildQueryParams({
+          page,
+          page_size: PAGE_SIZE,
+          search,
+          proveedor: proveedorFiltro,
+          tercero: terceroFiltro,
+          bodega: bodegaFiltro,
+          costo_unitario_min: precioMin,
+          costo_unitario_max: precioMax,
+        });
 
-        const res = await fetch(`${API_BASE}/insumos/?${params.toString()}`);
+        const res = await fetch(`${API_BASE}/insumos/${query}`);
         if (!res.ok) throw new Error("No se pudieron cargar los insumos.");
 
         const data = await res.json();
@@ -632,6 +600,18 @@ export default function InventoryPage() {
     if (!createForm.costo_unitario) return setCreateError("El costo unitario es obligatorio.");
     if (createForm.stock_actual === "" || createForm.stock_actual === null) {
       return setCreateError("La cantidad (stock actual) es obligatoria.");
+    }
+
+    const qty = parseFloat(String(createForm.stock_actual).replace(",", "."));
+    const min = parseFloat(String(createForm.stock_minimo || 0).replace(",", "."));
+
+    if (qty < 0) return setCreateError("La cantidad no puede ser negativa.");
+    if (min < 0) return setCreateError("El stock mínimo no puede ser negativo.");
+
+    const unit = (createForm.unidad_medida || "").toUpperCase();
+    if (["UN", "UND", "UNIDAD"].includes(unit)) {
+      if (qty % 1 !== 0) return setCreateError("Los insumos medidos en unidades no pueden tener decimales.");
+      if (min % 1 !== 0) return setCreateError("El stock mínimo para unidades debe ser un número entero.");
     }
 
     try {
@@ -809,6 +789,18 @@ export default function InventoryPage() {
     if (!editForm.costo_unitario) return setEditError("El costo unitario es obligatorio.");
     if (editForm.stock_actual === "" || editForm.stock_actual === null) return setEditError("La cantidad es obligatoria.");
 
+    const qty = parseFloat(String(editForm.stock_actual).replace(",", "."));
+    const min = parseFloat(String(editForm.stock_minimo || 0).replace(",", "."));
+
+    if (qty < 0) return setEditError("La cantidad no puede ser negativa.");
+    if (min < 0) return setEditError("El stock mínimo no puede ser negativo.");
+
+    const unit = (editForm.unidad_medida || "").toUpperCase();
+    if (["UN", "UND", "UNIDAD"].includes(unit)) {
+      if (qty % 1 !== 0) return setEditError("Los insumos medidos en unidades no pueden tener decimales.");
+      if (min % 1 !== 0) return setEditError("El stock mínimo para unidades debe ser un número entero.");
+    }
+
     try {
       setEditLoading(true);
 
@@ -928,6 +920,11 @@ export default function InventoryPage() {
 
     const qty = parseFloat(String(movementForm.cantidad).replace(",", "."));
     if (Number.isNaN(qty) || qty <= 0) return setMovementError("Ingresa una cantidad válida mayor a 0.");
+
+    const unit = (movementSelected.unidad_medida || "").toUpperCase();
+    if (["UN", "UND", "UNIDAD"].includes(unit)) {
+      if (qty % 1 !== 0) return setMovementError("Los insumos medidos en unidades no pueden tener decimales.");
+    }
 
     // Validar costo solo si NO es entrada (en entrada está oculto y se usa el del insumo)
     // UPDATE: User asked to remove cost for salida too. So we skip validation for both.

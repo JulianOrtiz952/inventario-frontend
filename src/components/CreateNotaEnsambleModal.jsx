@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { API_BASE } from "../config/api";
+import { asRows, safeJson, fetchAllPages } from "../utils/api";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -15,19 +16,7 @@ const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
 const TEMP_LOGO_URL =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/640px-Placeholder_view_vector.svg.png";
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
 
-async function safeJson(res) {
-  const text = await res.text().catch(() => "");
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
-}
 
 function FieldRow({ label, value }) {
   return (
@@ -477,37 +466,19 @@ export default function CreateNotaEnsambleModal({
       try {
         setLoading(true);
 
-        // ✅ pedimos grande para que no te limite la paginación
-        const qs = `?page_size=1000`;
-
-        const [rProd, rBod, rTal, rTer, rIns] = await Promise.all([
-          fetch(`${API_BASE}/productos/${qs}`),
-          fetch(`${API_BASE}/bodegas/${qs}`),
-          fetch(`${API_BASE}/tallas/${qs}`),
-          fetch(`${API_BASE}/terceros/${qs}`),
-          fetch(`${API_BASE}/insumos/${qs}`),
-        ]);
-
-        if (!rProd.ok) throw new Error("Error cargando productos.");
-        if (!rBod.ok) throw new Error("Error cargando bodegas.");
-        if (!rTal.ok) throw new Error("Error cargando tallas.");
-        if (!rTer.ok) throw new Error("Error cargando terceros.");
-        if (!rIns.ok) throw new Error("Error cargando insumos.");
-
         const [dProd, dBod, dTal, dTer, dIns] = await Promise.all([
-          rProd.json(),
-          rBod.json(),
-          rTal.json(),
-          rTer.json(),
-          rIns.json(),
+          fetchAllPages(`${API_BASE}/productos/?page_size=200`),
+          fetchAllPages(`${API_BASE}/bodegas/?page_size=200`),
+          fetchAllPages(`${API_BASE}/tallas/?page_size=200`),
+          fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
+          fetchAllPages(`${API_BASE}/insumos/?page_size=200`),
         ]);
 
-        // ✅ soporta paginado o lista
-        setProductos(asRows(dProd));
-        setBodegas(asRows(dBod));
-        setTallas(asRows(dTal));
-        setTerceros(asRows(dTer));
-        setInsumos(asRows(dIns));
+        setProductos(dProd);
+        setBodegas(dBod);
+        setTallas(dTal);
+        setTerceros(dTer);
+        setInsumos(dIns);
       } catch (e) {
         console.error(e);
         setError(e.message || "Error cargando catálogos.");
@@ -694,11 +665,11 @@ export default function CreateNotaEnsambleModal({
         }
 
         if (data?.code === "NOTA_CON_TRASLADOS") {
-  throw new Error(data.detail);
-}
-if (data && typeof data === "object") {
-  throw new Error(data.detail || JSON.stringify(data));
-}
+          throw new Error(data.detail);
+        }
+        if (data && typeof data === "object") {
+          throw new Error(data.detail || JSON.stringify(data));
+        }
         throw new Error("No se pudo guardar la nota.");
       }
 

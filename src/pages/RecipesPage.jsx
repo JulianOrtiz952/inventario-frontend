@@ -1,6 +1,7 @@
 // src/pages/NewRecipePage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import { asRows, fetchAllPages } from "../utils/api";
 
 
 export default function NewRecipePage() {
@@ -43,25 +44,19 @@ export default function NewRecipePage() {
     const loadData = async () => {
       try {
         setError("");
-        const [prodRes, insRes, recRes, histRes, bodRes] = await Promise.all([
-          fetch(`${API_BASE}/productos/?page_size=1000`),
-          fetch(`${API_BASE}/insumos/?page_size=1000`),
-          fetch(`${API_BASE}/recetas/?page_size=1000`),
-          fetch(`${API_BASE}/producciones/?page_size=1000`),
-          fetch(`${API_BASE}/bodegas/?page_size=1000`),
+        const [pData, iData, rData, hData, bData] = await Promise.all([
+          fetchAllPages(`${API_BASE}/productos/?page_size=200`),
+          fetchAllPages(`${API_BASE}/insumos/?page_size=200`),
+          fetchAllPages(`${API_BASE}/recetas/?page_size=200`),
+          fetchAllPages(`${API_BASE}/producciones/?page_size=200`),
+          fetchAllPages(`${API_BASE}/bodegas/?page_size=200`),
         ]);
 
-        const pData = await prodRes.json();
-        const iData = await insRes.json();
-        const rData = await recRes.json();
-        const hData = await histRes.json();
-        const bData = await bodRes.json();
-
-        setProductos(Array.isArray(pData) ? pData : pData.results || []);
-        setInsumos(Array.isArray(iData) ? iData : iData.results || []);
-        setRecetas(Array.isArray(rData) ? rData : rData.results || []);
-        setHistorial(Array.isArray(hData) ? hData : hData.results || []);
-        setBodegas(Array.isArray(bData) ? bData : bData.results || []);
+        setProductos(pData);
+        setInsumos(iData);
+        setRecetas(rData);
+        setHistorial(hData);
+        setBodegas(bData);
       } catch (err) {
         console.error(err);
         setError("Error cargando información inicial.");
@@ -227,6 +222,20 @@ export default function NewRecipePage() {
     if (insumosValidos.length === 0) {
       setError("Agrega al menos un insumo con cantidad mayor a 0.");
       return;
+    }
+
+    // Validar enteros para unidad
+    for (const item of insumosValidos) {
+      const insumo = insumos.find(i => i.id === Number(item.insumoId));
+      if (insumo) {
+        const unit = (insumo.unidad_medida || "").toUpperCase();
+        if (["UN", "UND", "UNIDAD"].includes(unit)) {
+          if (Number(item.cantidad) % 1 !== 0) {
+            setError(`El insumo "${insumo.nombre}" está medido en unidades y no permite decimales.`);
+            return;
+          }
+        }
+      }
     }
 
     if (!produceQuantity || produceQuantity <= 0) {

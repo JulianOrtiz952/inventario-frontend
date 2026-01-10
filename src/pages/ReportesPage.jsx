@@ -1,51 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api";
 
-/* ===================== helpers ===================== */
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
-
-async function safeJson(res) {
-  const text = await res.text().catch(() => "");
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
-}
-
-function buildQuery(params) {
-  const qs = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v === null || v === undefined) return;
-    const s = String(v).trim();
-    if (!s) return;
-    qs.set(k, s);
-  });
-  return qs.toString();
-}
-
-async function fetchAllPages(url, { maxPages = 20 } = {}) {
-  const all = [];
-  let next = url;
-  let pages = 0;
-
-  while (next && pages < maxPages) {
-    // eslint-disable-next-line no-await-in-loop
-    const res = await fetch(next);
-    if (!res.ok) break;
-    // eslint-disable-next-line no-await-in-loop
-    const data = await res.json();
-    all.push(...asRows(data));
-    next = data?.next || null;
-    pages += 1;
-    if (Array.isArray(data)) break;
-  }
-  return all;
-}
 
 const nfNum = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
 const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
@@ -292,7 +249,7 @@ export default function ReportesPage() {
   const canUseGroupBy = active.id.includes("serie"); // serie-* endpoints
 
   const query = useMemo(() => {
-    return buildQuery({
+    return buildQueryParams({
       fecha_desde: fechaDesde || null,
       fecha_hasta: fechaHasta || null,
       bodega_id: bodegaId || null,
@@ -308,7 +265,7 @@ export default function ReportesPage() {
     setLoading(true);
 
     try {
-      const url = `${API_BASE}${active.endpoint}${query ? `?${query}` : ""}`;
+      const url = `${API_BASE}${active.endpoint}${query}`;
       const res = await fetch(url);
       if (!res.ok) {
         const d = await safeJson(res);
@@ -358,9 +315,8 @@ export default function ReportesPage() {
                   setError("");
                   setPayload(null);
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  tab === t.id ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.id ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
               >
                 {t.label}
               </button>
@@ -440,9 +396,8 @@ export default function ReportesPage() {
                     value={top}
                     onChange={(e) => setTop(e.target.value)}
                     disabled={!canUseTop}
-                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm ${
-                      canUseTop ? "border-slate-200" : "border-slate-100 bg-slate-50 text-slate-400"
-                    }`}
+                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm ${canUseTop ? "border-slate-200" : "border-slate-100 bg-slate-50 text-slate-400"
+                      }`}
                   />
                 </div>
 
@@ -452,9 +407,8 @@ export default function ReportesPage() {
                     value={groupBy}
                     onChange={(e) => setGroupBy(e.target.value)}
                     disabled={!canUseGroupBy}
-                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm ${
-                      canUseGroupBy ? "border-slate-200 bg-white" : "border-slate-100 bg-slate-50 text-slate-400"
-                    }`}
+                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm ${canUseGroupBy ? "border-slate-200 bg-white" : "border-slate-100 bg-slate-50 text-slate-400"
+                      }`}
                   >
                     <option value="dia">dia</option>
                     <option value="mes">mes</option>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import CurrencyInput from "./CurrencyInput";
 import { formatCurrency, parseCurrency } from "../utils/format";
+import { asRows, safeJson, fetchAllPages } from "../utils/api";
 
 /* ===================== CONFIG ===================== */
 
@@ -23,19 +24,7 @@ const DIAN_UOM = [
   { code: "ROL", name: "Rollo" },
 ];
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
 
-async function safeJson(res) {
-  const text = await res.text().catch(() => "");
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
-}
 
 // normaliza a string decimal (para DRF DecimalField)
 function moneyStr(v) {
@@ -170,25 +159,15 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
         setLoadingDeps(true);
 
         // ✅ pedir grande (porque ahora tienes paginación)
-        const qs = `?page_size=1000`;
-
-        const [terRes, impRes] = await Promise.all([
-          fetch(`${API_BASE}/terceros/${qs}`),
-          fetch(`${API_BASE}/impuestos/${qs}`),
+        const [terAll, impAll] = await Promise.all([
+          fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
+          fetchAllPages(`${API_BASE}/impuestos/?page_size=200`),
         ]);
-
-        if (!terRes.ok) throw new Error("No se pudieron cargar terceros.");
-        if (!impRes.ok) throw new Error("No se pudieron cargar impuestos.");
-
-        const terData = await terRes.json();
-        const impData = await impRes.json();
-
-        // ✅ soporta lista o paginado
-        setTerceros(asRows(terData));
-        setImpuestos(asRows(impData));
-      } catch (e) {
-        console.error(e);
-        setError(e.message || "Error cargando datos para crear producto.");
+        setTerceros(terAll);
+        setImpuestos(asRows(impAll));
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Error cargando datos para crear producto.");
       } finally {
         setLoadingDeps(false);
       }
@@ -261,20 +240,23 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
     }));
   }
 
-  async function refreshImpuestos(selectId = null) {
-    const impRes = await fetch(`${API_BASE}/impuestos/?page_size=1000`);
-    if (!impRes.ok) return;
-    const impData = await impRes.json();
+  const refreshImpuestos = async (selectId = null) => {
+    try {
+      const impData = await fetchAllPages(`${API_BASE}/impuestos/?page_size=200`);
+      setImpuestos(asRows(impData));
 
-    setImpuestos(asRows(impData));
-
-    if (selectId) {
-      setForm((prev) => ({
-        ...prev,
-        impuesto_ids: prev.impuesto_ids.includes(selectId) ? prev.impuesto_ids : [...prev.impuesto_ids, selectId],
-      }));
+      if (selectId) {
+        setForm((prev) => ({
+          ...prev,
+          impuesto_ids: prev.impuesto_ids.includes(selectId)
+            ? prev.impuesto_ids
+            : [...prev.impuesto_ids, selectId],
+        }));
+      }
+    } catch (err) {
+      console.error(err);
     }
-  }
+  };
 
   async function handleToggleImpuestoActive(imp) {
     try {
@@ -302,6 +284,31 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
     if (!form.unidad_medida) {
       setError("Selecciona una unidad de medida.");
       return;
+    }
+
+    const da = form.datos_adicionales || {};
+    const stockVal = parseFloat(String(da.stock || 0).replace(",", "."));
+    const stockMinVal = parseFloat(String(da.stock_minimo || 0).replace(",", "."));
+
+    if (stockVal < 0) {
+      setError("El stock no puede ser negativo.");
+      return;
+    }
+    if (stockMinVal < 0) {
+      setError("El stock mínimo no puede ser negativo.");
+      return;
+    }
+
+    const unit = (form.unidad_medida || da.unidad || "").toUpperCase();
+    if (["UN", "UND", "UNIDAD"].includes(unit)) {
+      if (stockVal % 1 !== 0) {
+        setError("El stock para unidades debe ser un número entero.");
+        return;
+      }
+      if (stockMinVal % 1 !== 0) {
+        setError("El stock mínimo para unidades debe ser un número entero.");
+        return;
+      }
     }
 
     if (!form.precios?.length) {

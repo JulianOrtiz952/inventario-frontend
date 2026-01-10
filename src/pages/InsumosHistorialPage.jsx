@@ -1,47 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import CreateInsumoMovimientoModal from "../components/CreateInsumoMovimientoModal";
+import { asRows, fetchAllPages, buildQueryParams } from "../utils/api";
 
 const PAGE_SIZE = 30;
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
 
-async function fetchAllPages(url, { maxPages = 20 } = {}) {
-  const all = [];
-  let next = url;
-  let pages = 0;
-
-  while (next && pages < maxPages) {
-    // eslint-disable-next-line no-await-in-loop
-    const res = await fetch(next);
-    if (!res.ok) break;
-
-    // eslint-disable-next-line no-await-in-loop
-    const data = await res.json();
-    const rows = asRows(data);
-    all.push(...rows);
-
-    next = data?.next || null;
-    pages += 1;
-
-    if (Array.isArray(data)) break;
-  }
-
-  return all;
-}
-
-function buildQuery(params) {
-  const qs = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v === null || v === undefined) return;
-    const s = String(v).trim();
-    if (!s) return;
-    qs.set(k, s);
-  });
-  return qs.toString();
-}
 
 const TIPOS = [
   { value: "", label: "Todos" },
@@ -147,13 +111,13 @@ export default function InsumosHistorialPage() {
       tercero_id: fTercero,
     };
 
-    const qs = buildQuery({
+    const query = buildQueryParams({
       page: targetPage,
       page_size: PAGE_SIZE,
       ...filters,
     });
 
-    const url = `${API_BASE}/insumo-movimientos/?${qs}`;
+    const url = `${API_BASE}/insumo-movimientos/${query}`;
 
     const res = await fetch(url);
     if (!res.ok) throw new Error("No se pudo cargar el kardex de insumos.");

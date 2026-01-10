@@ -5,12 +5,11 @@ import {
   Pencil, Trash2, RotateCcw, X
 } from "lucide-react";
 import ConfirmActionModal from "../components/ConfirmActionModal";
+import { asRows, buildQueryParams } from "../utils/api";
 
 const PAGE_SIZE = 30;
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
+
 
 export default function ProvidersPage() {
   const [proveedores, setProveedores] = useState([]);
@@ -41,7 +40,11 @@ export default function ProvidersPage() {
   const [actionError, setActionError] = useState("");
 
   async function loadProveedores(targetPage = 1) {
-    const res = await fetch(`${API_BASE}/proveedores/?page=${targetPage}&page_size=${PAGE_SIZE}`);
+    const query = buildQueryParams({
+      page: targetPage,
+      page_size: PAGE_SIZE,
+    });
+    const res = await fetch(`${API_BASE}/proveedores/${query}`);
     if (!res.ok) throw new Error("Error al cargar proveedores.");
 
     const data = await res.json();

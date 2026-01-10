@@ -1,29 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import ProductDetailsModal from "./ProductDetailsModal";
 import { API_BASE } from "../config/api";
-
-
 import CurrencyInput from "./CurrencyInput";
 import { formatCurrency, parseCurrency } from "../utils/format";
+import { asRows, safeJson, fetchAllPages } from "../utils/api";
 
 
 const DIAN_UOM = [
   "UN", "H87", "KGM", "GRM", "MTR", "CMT", "MMT", "MTK", "MTQ", "LTR", "MLT", "BX", "PK", "ROL",
 ];
 
-function asRows(data) {
-  return Array.isArray(data)
-    ? data
-    : Array.isArray(data?.results)
-      ? data.results
-      : [];
-}
-
-async function safeJson(res) {
-  const text = await res.text().catch(() => "");
-  if (!text) return null;
-  try { return JSON.parse(text); } catch { return { raw: text }; }
-}
 
 function fmtMoney(v) {
   const n = Number(v);
@@ -256,65 +242,63 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
   useEffect(() => {
     if (!isOpen || !sku) return;
 
-    let cancelled = false;
-
-    const load = async () => {
+    async function load() {
       try {
         setLoading(true);
-        setSaving(false);
         setError("");
         setForm(null);
         setOriginal(null);
         setShowResult(false);
         setResultProduct(null);
 
-        const [resProd, resT, resImp] = await Promise.all([
+        const [prodFull, terAll, impAll] = await Promise.all([
           fetch(`${API_BASE}/productos/${encodeURIComponent(sku)}/`),
-          fetch(`${API_BASE}/terceros/`),
-          fetch(`${API_BASE}/impuestos/`),
+          fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
+          fetchAllPages(`${API_BASE}/impuestos/?page_size=200`),
         ]);
 
-        if (!resProd.ok) {
-          const data = await safeJson(resProd);
-          throw new Error(data?.detail || "No se pudo cargar el producto.");
-        }
+        if (!prodFull.ok) throw new Error("No se pudo cargar el producto.");
+        const pData = await prodFull.json();
 
-        const data = await resProd.json();
-        if (cancelled) return;
-
-        if (resT.ok) {
-          const tData = await resT.json();
-          if (!cancelled) setTercerosOptions(asRows(tData));
-        }
-
-        if (resImp.ok) {
-          const impData = await resImp.json();
-          setImpuestos(asRows(impData));
-        }
-
-        setOriginal(data);
+        setOriginal(pData);
+        setTercerosOptions(terAll);
+        setImpuestos(asRows(impAll));
 
         setForm({
-          codigo_sku: data.codigo_sku,
-          nombre: data.nombre || "",
-          codigo_barras: data.codigo_barras || "",
-          unidad_medida: data.unidad_medida || "UN",
-          tercero_id: data.tercero?.id ? String(data.tercero.id) : "",
-          impuesto_ids: Array.isArray(data.impuestos) ? data.impuestos.map((i) => i.id) : [],
-          precios: Array.isArray(data.precios) ? data.precios.map((p) => ({ ...p })) : [],
-          // Nota: a veces el backend no manda "id" aquí. Por eso existe el UPSERT.
-          datos_adicionales: data.datos_adicionales ? { ...data.datos_adicionales } : null,
+          codigo_sku: pData.codigo_sku,
+          nombre: pData.nombre || "",
+          codigo_barras: pData.codigo_barras || "",
+          unidad_medida: pData.unidad_medida || "",
+          tercero_id: pData.tercero?.id || "",
+          impuesto_ids: (pData.impuestos || []).map((i) => i.id),
+          precios: (pData.precios || []).length
+            ? pData.precios.map((p) => ({
+              id: p.id,
+              nombre: p.nombre,
+              valor: formatCurrency(p.valor),
+              es_descuento: p.es_descuento,
+            }))
+            : [{ nombre: "", valor: "", es_descuento: false }],
+          datos_adicionales: pData.datos_adicionales || {
+            referencia: "",
+            unidad: "",
+            stock: "0",
+            stock_minimo: "0",
+            descripcion: "",
+            marca: "",
+            modelo: "",
+            codigo_arancelario: "",
+          },
         });
-      } catch (e) {
-        if (cancelled) return;
-        setError(e.message || "Error cargando producto.");
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Error cargando producto.");
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
 
     load();
-    return () => { cancelled = true; };
   }, [isOpen, sku]);
 
   const canRenderForm = !!form && !!original;
@@ -349,18 +333,20 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
   };
 
   const refreshImpuestos = async (selectId = null) => {
-    const resImp = await fetch(`${API_BASE}/impuestos/`);
-    if (!resImp.ok) return;
-    const impData = await resImp.json();
-    setImpuestos(asRows(impData));
+    try {
+      const impData = await fetchAllPages(`${API_BASE}/impuestos/?page_size=200`);
+      setImpuestos(asRows(impData));
 
-    if (selectId) {
-      setForm((prev) => ({
-        ...prev,
-        impuesto_ids: prev.impuesto_ids.includes(selectId)
-          ? prev.impuesto_ids
-          : [...prev.impuesto_ids, selectId],
-      }));
+      if (selectId) {
+        setForm((prev) => ({
+          ...prev,
+          impuesto_ids: prev.impuesto_ids.includes(selectId)
+            ? prev.impuesto_ids
+            : [...prev.impuesto_ids, selectId],
+        }));
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -456,6 +442,31 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
       if (!form.unidad_medida) {
         setError("La unidad de medida es obligatoria.");
         return;
+      }
+
+      const da = form.datos_adicionales || {};
+      const stockVal = parseFloat(String(da.stock || 0).replace(",", "."));
+      const stockMinVal = parseFloat(String(da.stock_minimo || 0).replace(",", "."));
+
+      if (stockVal < 0) {
+        setError("El stock no puede ser negativo.");
+        return;
+      }
+      if (stockMinVal < 0) {
+        setError("El stock mínimo no puede ser negativo.");
+        return;
+      }
+
+      const unit = (form.unidad_medida || da.unidad || "").toUpperCase();
+      if (["UN", "UND", "UNIDAD"].includes(unit)) {
+        if (stockVal % 1 !== 0) {
+          setError("El stock para unidades debe ser un número entero.");
+          return;
+        }
+        if (stockMinVal % 1 !== 0) {
+          setError("El stock mínimo para unidades debe ser un número entero.");
+          return;
+        }
       }
 
       // 1) PATCH producto

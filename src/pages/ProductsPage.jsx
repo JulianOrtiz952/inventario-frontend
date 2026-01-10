@@ -12,13 +12,12 @@ import {
   Pencil, Trash2, RotateCcw, Eye,
   Info, AlertCircle
 } from "lucide-react";
+import { asRows, fetchAllPages, buildQueryParams } from "../utils/api";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 
 const PAGE_SIZE = 30;
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
+
 
 export default function ProductsPage() {
   const [productos, setProductos] = useState([]);
@@ -81,15 +80,17 @@ export default function ProductsPage() {
   };
 
   async function loadProductos(targetPage = 1) {
-    const params = new URLSearchParams();
-    params.append("page", targetPage);
-    params.append("page_size", PAGE_SIZE);
-    if (search) params.append("search", search);
-    if (terceroFiltro !== "todos") params.append("tercero", terceroFiltro);
-    if (precioMin) params.append("precio_min", precioMin);
-    if (precioMax) params.append("precio_max", precioMax);
+    const filteredTercero = terceroFiltro !== "todos" ? terceroFiltro : undefined;
+    const query = buildQueryParams({
+      page: targetPage,
+      page_size: PAGE_SIZE,
+      search,
+      tercero: filteredTercero,
+      precio_min: precioMin,
+      precio_max: precioMax,
+    });
 
-    const res = await fetch(`${API_BASE}/productos/?${params.toString()}`);
+    const res = await fetch(`${API_BASE}/productos/${query}`);
     if (!res.ok) throw new Error("No se pudieron cargar los productos.");
     const data = await res.json();
 
@@ -106,13 +107,8 @@ export default function ProductsPage() {
       try {
         setLoading(true);
         setError("");
-
-        // Cargar terceros si no están cargados (para el filtro)
-        const resTerceros = await fetch(`${API_BASE}/terceros/?page_size=1000`);
-        if (resTerceros.ok) {
-          const dataT = await resTerceros.json();
-          setTerceros(asRows(dataT));
-        }
+        const tData = await fetchAllPages(`${API_BASE}/terceros/`);
+        setTerceros(tData);
 
         await loadProductos(1);
       } catch (err) {

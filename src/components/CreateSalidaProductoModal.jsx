@@ -1,25 +1,13 @@
-// src/components/CreateSalidaProductoModal.jsx
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
+import { asRows, safeJson, fetchAllPages } from "../utils/api";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 const nfNum = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
 const num = (n) => nfNum.format(Number(n || 0));
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
 
-async function safeJson(res) {
-  const text = await res.text().catch(() => "");
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { raw: text };
-  }
-}
 
 function FieldRow({ label, value }) {
   return (
@@ -251,22 +239,11 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
       try {
         setLoadingCatalogs(true);
 
-        const qs = `?page_size=1000`;
-        const [rBod, rTer, rTal] = await Promise.all([
-          fetch(`${API_BASE}/bodegas/${qs}`),
-          fetch(`${API_BASE}/terceros/${qs}`),
-          fetch(`${API_BASE}/tallas/${qs}`),
+        const [bodegasArr, tercerosArr, tallasArr] = await Promise.all([
+          fetchAllPages(`${API_BASE}/bodegas/?page_size=200`),
+          fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
+          fetchAllPages(`${API_BASE}/tallas/?page_size=200`),
         ]);
-
-        if (!rBod.ok) throw new Error("Error cargando bodegas.");
-        if (!rTer.ok) throw new Error("Error cargando terceros.");
-        if (!rTal.ok) throw new Error("Error cargando tallas.");
-
-        const [dBod, dTer, dTal] = await Promise.all([rBod.json(), rTer.json(), rTal.json()]);
-
-        const bodegasArr = asRows(dBod);
-        const tercerosArr = asRows(dTer);
-        const tallasArr = asRows(dTal);
 
         setBodegas(bodegasArr);
         setTerceros(tercerosArr);

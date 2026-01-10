@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { RotateCcw, Trash2, Pencil } from "lucide-react";
 import ConfirmActionModal from "../components/ConfirmActionModal";
+import { asRows, buildQueryParams } from "../utils/api";
 
 const PAGE_SIZE = 30;
 
-function asRows(data) {
-  return Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-}
+
 
 export default function TercerosPage() {
   const [terceros, setTerceros] = useState([]);
@@ -37,12 +36,13 @@ export default function TercerosPage() {
     setError("");
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      params.append("page", targetPage);
-      params.append("page_size", PAGE_SIZE);
-      if (search) params.append("search", search);
+      const query = buildQueryParams({
+        page: targetPage,
+        page_size: PAGE_SIZE,
+        search,
+      });
 
-      const res = await fetch(`${API_BASE}/terceros/?${params.toString()}`);
+      const res = await fetch(`${API_BASE}/terceros/${query}`);
       if (!res.ok) throw new Error("Error cargando terceros.");
 
       const data = await res.json();
