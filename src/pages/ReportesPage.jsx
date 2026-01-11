@@ -1,16 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api";
-
-
-
 import { formatCurrency } from "../utils/format";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, Legend
+} from 'recharts';
+import {
+  TrendingUp, TrendingDown, Package, ShoppingCart, Truck, Layers,
+  BarChart3, PieChart as PieChartIcon, LayoutDashboard, Calendar, Search, FilterX,
+  CreditCard, Boxes, Activity, ArrowUpRight, ArrowDownRight
+} from "lucide-react";
+
+const CHART_COLORS = [
+  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#a855f7'
+];
 
 const num = (n) => formatCurrency(n);
 const money = (n) => `$${formatCurrency(n)}`;
 
 function looksMoneyUnit(unit) {
-  return unit === "valor" || unit === "costo";
+  const u = String(unit || "").toLowerCase();
+  return u.includes("valor") || u.includes("costo") || u.includes("total");
 }
 
 function formatMaybeNumber(s, unit) {
@@ -22,16 +34,55 @@ function formatMaybeNumber(s, unit) {
 
 /* ===================== UI blocks ===================== */
 
-function Card({ title, right, children }) {
+function Card({ title, subtitle, icon: Icon, right, children, className = "" }) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
-      <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-white dark:bg-slate-900 rounded-t-xl">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h2>
+    <div className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md overflow-hidden ${className}`}>
+      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          {Icon && <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400">
+            <Icon size={18} />
+          </div>}
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">{title}</h2>
+            {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
+          </div>
         </div>
-        {right ? <div className="text-xs text-slate-500 dark:text-slate-400">{right}</div> : null}
+        {right && <div className="text-xs text-slate-500 dark:text-slate-400">{right}</div>}
       </div>
-      <div className="px-5 py-4">{children}</div>
+      <div className="px-6 py-6">{children}</div>
+    </div>
+  );
+}
+
+function KpiItem({ label, value, icon: Icon, color = "blue" }) {
+  const colorMaps = {
+    blue: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
+    green: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400",
+    orange: "bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400",
+    red: "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400",
+    purple: "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400",
+  };
+
+  return (
+    <div className="relative group overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 transition-all hover:scale-[1.02] hover:shadow-lg">
+      <div className="flex items-center justify-between items-start">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            {label.replaceAll("_", " ")}
+          </p>
+          <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
+            {value}
+          </p>
+        </div>
+        {Icon && (
+          <div className={`rounded-xl p-3 ${colorMaps[color] || colorMaps.blue}`}>
+            <Icon size={24} />
+          </div>
+        )}
+      </div>
+      <div className="absolute -bottom-6 -right-6 opacity-[0.03] dark:opacity-[0.05] pointer-events-none group-hover:scale-110 transition-transform">
+        {Icon && <Icon size={120} />}
+      </div>
     </div>
   );
 }
@@ -39,27 +90,69 @@ function Card({ title, right, children }) {
 function KpiGrid({ kpis }) {
   const entries = Object.entries(kpis || {});
   if (entries.length === 0) {
-    return <div className="text-sm text-slate-500 dark:text-slate-400">Sin KPIs para este reporte.</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center">Sin KPIs para este reporte.</div>;
   }
 
+  const getIcon = (k) => {
+    const key = k.toLowerCase();
+    if (key.includes("venta") || key.includes("salida")) return ShoppingCart;
+    if (key.includes("compra") || key.includes("entrada")) return CreditCard;
+    if (key.includes("producc") || key.includes("ensamble")) return Layers;
+    if (key.includes("inve") || key.includes("stock") || key.includes("unidad")) return Package;
+    if (key.includes("traslado")) return Truck;
+    if (key.includes("costo") || key.includes("valor")) return Activity;
+    return BarChart3;
+  };
+
+  const getColor = (k) => {
+    const key = k.toLowerCase();
+    if (key.includes("venta") || key.includes("salida")) return "green";
+    if (key.includes("compra") || key.includes("entrada")) return "blue";
+    if (key.includes("producc") || key.includes("ensamble")) return "purple";
+    if (key.includes("costo") || key.includes("valor")) return "orange";
+    return "blue";
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {entries.map(([k, v]) => (
-        <div key={k} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-bold">{k.replaceAll("_", " ")}</p>
-          <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{String(v)}</p>
-        </div>
+        <KpiItem
+          key={k}
+          label={k}
+          value={formatMaybeNumber(v, k)}
+          icon={getIcon(k)}
+          color={getColor(k)}
+        />
       ))}
     </div>
   );
 }
 
-/**
- * Render simple (sin librerías) de charts del contrato:
- * - Muestra título + unidad + preview en tabla (labels x serie)
- * Esto evita depender de Recharts ahora mismo, pero deja el backend “listo”.
- */
-function ChartPreview({ chart }) {
+function CustomTooltip({ active, payload, label, unit }) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 shadow-xl rounded-xl">
+        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">{label}</p>
+        <div className="space-y-1">
+          {payload.map((entry, index) => (
+            <div key={index} className="flex items-center justify-between gap-4 py-1">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400">{entry.name}</p>
+              </div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                {formatMaybeNumber(entry.value, unit)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+function ChartRenderer({ chart }) {
   if (!chart) return null;
 
   const labels = Array.isArray(chart.labels) ? chart.labels : [];
@@ -68,78 +161,148 @@ function ChartPreview({ chart }) {
 
   if (labels.length === 0 || series.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3 text-sm text-slate-600 dark:text-slate-400">
-        <div className="font-semibold text-slate-800 dark:text-slate-200">{chart.title || chart.id}</div>
-        <div className="text-xs text-slate-500 dark:text-slate-500 mt-1">Sin datos para graficar.</div>
+      <div className="h-[300px] flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30">
+        <BarChart3 className="text-slate-300 dark:text-slate-600 mb-3" size={48} />
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Sin datos para graficar.</p>
       </div>
     );
   }
 
-  // Solo preview de primeras 12 filas para no reventar UI
-  const max = Math.min(labels.length, 12);
+  // Prepara datos para recharts
+  const data = labels.map((label, idx) => {
+    const obj = { name: label };
+    series.forEach(s => {
+      obj[s.name] = Number(s?.data?.[idx]) || 0;
+    });
+    return obj;
+  });
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const gridColor = isDark ? '#1e293b' : '#f1f5f9';
+  const textColor = isDark ? '#94a3b8' : '#64748b';
+
+  const renderChart = () => {
+    switch (chart.type) {
+      case 'pie':
+        const pieData = series[0]?.data?.map((val, idx) => ({
+          name: labels[idx],
+          value: Number(val)
+        })) || [];
+        return (
+          <PieChart>
+            <Pie
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={100}
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {pieData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} stroke="rgba(0,0,0,0.1)" />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip unit={unit} />} />
+            <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 'bold' }} />
+          </PieChart>
+        );
+
+      case 'line':
+        return (
+          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+            <XAxis dataKey="name" stroke={textColor} fontSize={10} tickLine={false} axisLine={false} dy={10} />
+            <YAxis stroke={textColor} fontSize={10} tickLine={false} axisLine={false} />
+            <Tooltip content={<CustomTooltip unit={unit} />} cursor={{ stroke: gridColor, strokeWidth: 2 }} />
+            {series.map((s, idx) => (
+              <Line
+                key={s.name}
+                type="monotone"
+                dataKey={s.name}
+                stroke={CHART_COLORS[idx % CHART_COLORS.length]}
+                strokeWidth={3}
+                dot={{ r: 4, strokeWidth: 2, fill: isDark ? '#0f172a' : '#fff' }}
+                activeDot={{ r: 6, strokeWidth: 0 }}
+                animationDuration={1500}
+              />
+            ))}
+          </LineChart>
+        );
+
+      case 'area':
+        return (
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              {series.map((s, idx) => (
+                <linearGradient key={`grad-${idx}`} id={`color-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={CHART_COLORS[idx % CHART_COLORS.length]} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={CHART_COLORS[idx % CHART_COLORS.length]} stopOpacity={0} />
+                </linearGradient>
+              ))}
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+            <XAxis dataKey="name" stroke={textColor} fontSize={10} tickLine={false} axisLine={false} dy={10} />
+            <YAxis stroke={textColor} fontSize={10} tickLine={false} axisLine={false} />
+            <Tooltip content={<CustomTooltip unit={unit} />} />
+            {series.map((s, idx) => (
+              <Area
+                key={s.name}
+                type="monotone"
+                dataKey={s.name}
+                stroke={CHART_COLORS[idx % CHART_COLORS.length]}
+                fillOpacity={1}
+                fill={`url(#color-${idx})`}
+                strokeWidth={2}
+                animationDuration={1500}
+              />
+            ))}
+          </AreaChart>
+        );
+
+      case 'bar':
+      default:
+        return (
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+            <XAxis dataKey="name" stroke={textColor} fontSize={10} tickLine={false} axisLine={false} dy={10} />
+            <YAxis stroke={textColor} fontSize={10} tickLine={false} axisLine={false} />
+            <Tooltip content={<CustomTooltip unit={unit} />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }} />
+            {series.map((s, idx) => (
+              <Bar
+                key={s.name}
+                dataKey={s.name}
+                fill={CHART_COLORS[idx % CHART_COLORS.length]}
+                radius={[4, 4, 0, 0]}
+                barSize={32}
+                animationDuration={1500}
+              />
+            ))}
+          </BarChart>
+        );
+    }
+  };
 
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">{chart.title || chart.id}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              tipo: <span className="font-mono text-blue-600 dark:text-blue-400">{chart.type}</span> • unidad:{" "}
-              <span className="font-mono text-emerald-600 dark:text-emerald-400">{unit || "—"}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="overflow-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-xs">
-            <tr>
-              <th className="text-left px-4 py-2.5 font-semibold">Periodo / Label</th>
-              {series.map((s) => (
-                <th key={s?.name} className="text-left px-4 py-2.5 font-semibold">
-                  {s?.name || "Serie"}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {Array.from({ length: max }).map((_, idx) => (
-              <tr key={labels[idx]} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">{labels[idx]}</td>
-                {series.map((s, sidx) => (
-                  <td key={`${labels[idx]}-${sidx}`} className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
-                    {formatMaybeNumber(s?.data?.[idx], unit)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {labels.length > max && (
-        <div className="px-4 py-2 text-[11px] text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-          Mostrando {max} de {labels.length} puntos.
-        </div>
-      )}
+    <div className="h-[350px] w-full mt-4">
+      <ResponsiveContainer width="100%" height="100%">
+        {renderChart()}
+      </ResponsiveContainer>
     </div>
   );
 }
 
 function RowsTable({ rows }) {
-  if (!rows) return <div className="text-sm text-slate-500 dark:text-slate-400">Sin filas.</div>;
+  if (!rows) return <div className="text-sm text-slate-500 dark:text-slate-400 italic">Sin filas.</div>;
 
-  // Caso especial: rows es objeto con secciones (stock por bodega)
   if (!Array.isArray(rows) && typeof rows === "object") {
-    const keys = Object.keys(rows);
-    if (keys.length === 0) return <div className="text-sm text-slate-500 dark:text-slate-400">Sin filas.</div>;
+    const keys = Object.keys(rows).filter(k => k !== 'ok' && k !== 'filters' && k !== 'kpis' && k !== 'charts');
+    if (keys.length === 0) return <div className="text-sm text-slate-500 dark:text-slate-400 italic text-center p-8">Sin filas.</div>;
 
     return (
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {keys.map((k) => (
-          <Card key={k} title={`Tabla: ${k}`}>
+          <Card key={k} title={`Detalle: ${k}`} icon={Search}>
             <RowsTable rows={rows[k]} />
           </Card>
         ))}
@@ -148,31 +311,31 @@ function RowsTable({ rows }) {
   }
 
   if (!Array.isArray(rows) || rows.length === 0) {
-    return <div className="text-sm text-slate-500 dark:text-slate-400">Sin filas (rows vacío).</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400 italic text-center p-8">Sin datos para mostrar en la tabla.</div>;
   }
 
   const columns = Object.keys(rows[0] || {});
-  if (columns.length === 0) return <div className="text-sm text-slate-500 dark:text-slate-400">Sin columnas.</div>;
+  if (columns.length === 0) return <div className="text-sm text-slate-500 dark:text-slate-400 italic">Sin columnas.</div>;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
-      <div className="overflow-auto">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+      <div className="overflow-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-xs">
+          <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-widest font-bold">
             <tr>
               {columns.map((c) => (
-                <th key={c} className="text-left px-4 py-2.5 font-semibold">
-                  {c}
+                <th key={c} className="text-left px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+                  {c.replaceAll("_", " ")}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {rows.map((r, idx) => (
-              <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+              <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                 {columns.map((c) => (
-                  <td key={c} className="px-4 py-2.5 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
-                    {String(r?.[c] ?? "—")}
+                  <td key={c} className="px-5 py-3 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                    {formatMaybeNumber(r?.[c] ?? "—", c)}
                   </td>
                 ))}
               </tr>
@@ -191,17 +354,12 @@ export default function ReportesPage() {
   const tabs = useMemo(
     () => [
       { id: "resumen", label: "Dashboard", endpoint: "/reportes/resumen/", hint: "KPIs + series principales" },
-
       { id: "ins_top_comprados", label: "Insumos • Top comprados", endpoint: "/reportes/insumos/top-comprados/" },
       { id: "ins_top_consumidos", label: "Insumos • Top consumidos", endpoint: "/reportes/insumos/top-consumidos/" },
-
       { id: "prod_top_vendidos", label: "Productos • Top vendidos", endpoint: "/reportes/productos/top-vendidos/" },
       { id: "prod_serie_ventas", label: "Productos • Serie ventas", endpoint: "/reportes/productos/serie-ventas/" },
-
       { id: "prod_top_producidos", label: "Producción • Top producidos", endpoint: "/reportes/produccion/top-producidos/" },
-
       { id: "bod_stock", label: "Bodegas • Stock actual", endpoint: "/reportes/bodegas/stock/" },
-
       { id: "notas_salidas", label: "Notas • Salidas resumen", endpoint: "/reportes/notas/salidas/resumen/" },
     ],
     []
@@ -235,18 +393,17 @@ export default function ReportesPage() {
           fetchAllPages(`${API_BASE}/bodegas/?page_size=200`),
           fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
         ]);
-        setBodegas(bodAll);
-        setTerceros(terAll);
+        setBodegas(bodAll || []);
+        setTerceros(terAll || []);
       } catch (e) {
-        // no bloquea reportes, pero muestra warning
         console.error(e);
       }
     };
     load();
   }, []);
 
-  const canUseTop = active.id.includes("top-") || active.id.includes("top_"); // top-* endpoints
-  const canUseGroupBy = active.id.includes("serie"); // serie-* endpoints
+  const canUseTop = active.id.includes("top-") || active.id.includes("top_");
+  const canUseGroupBy = active.id.includes("serie");
 
   const query = useMemo(() => {
     return buildQueryParams({
@@ -281,7 +438,6 @@ export default function ReportesPage() {
     }
   };
 
-  // auto-load cuando cambias de tab (sin disparar por cada tecla de fecha; solo tab)
   useEffect(() => {
     fetchReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -293,209 +449,244 @@ export default function ReportesPage() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
-      <div className="flex-1 p-6 lg:p-8 overflow-auto">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+      <div className="flex-1 p-6 lg:p-10 overflow-auto scroll-smooth">
+        <div className="max-w-7xl mx-auto space-y-8">
+
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Reportes</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                KPIs, series y tablas basadas en <span className="font-mono text-blue-600 dark:text-blue-400">/api/reportes/</span>.
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-200 dark:shadow-none">
+                  <LayoutDashboard size={24} />
+                </div>
+                <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Reportes de Negocio</h1>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 font-medium opacity-80">
+                Visualiza el rendimiento de <span className="text-blue-600 dark:text-blue-400 font-bold">CALA</span> en tiempo real.
               </p>
             </div>
-          </div>
 
-          {/* Tabs (mismo look que tu app) */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 flex flex-col md:flex-row gap-2 shadow-sm">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => {
-                  setTab(t.id);
-                  setError("");
-                  setPayload(null);
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === t.id ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md shadow-slate-200/50 dark:shadow-none" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Filtros estándar */}
-          <Card
-            title="Filtros"
-            right={
-              active.hint ? (
-                <span className="text-[11px] text-slate-400 dark:text-slate-500">{active.hint}</span>
-              ) : (
-                <span className="text-[11px] text-slate-400 dark:text-slate-500">{active.endpoint}</span>
-              )
-            }
-          >
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Desde</label>
-                <input
-                  type="date"
-                  value={fechaDesde}
-                  onChange={(e) => setFechaDesde(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Hasta</label>
-                <input
-                  type="date"
-                  value={fechaHasta}
-                  onChange={(e) => setFechaHasta(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Bodega</label>
-                <select
-                  value={bodegaId}
-                  onChange={(e) => setBodegaId(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Todas</option>
-                  {bodegas.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.codigo ? `${b.codigo} — ${b.nombre}` : `${b.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tercero</label>
-                <select
-                  value={terceroId}
-                  onChange={(e) => setTerceroId(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Todos</option>
-                  {terceros.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.codigo ? `${t.codigo} — ${t.nombre}` : `${t.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Top</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={top}
-                    onChange={(e) => setTop(e.target.value)}
-                    disabled={!canUseTop}
-                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${canUseTop ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500" : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-600"
-                      }`}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Group by</label>
-                  <select
-                    value={groupBy}
-                    onChange={(e) => setGroupBy(e.target.value)}
-                    disabled={!canUseGroupBy}
-                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${canUseGroupBy ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500" : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-600"
-                      }`}
-                  >
-                    <option value="dia">dia</option>
-                    <option value="mes">mes</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <div className="text-[11px] text-slate-400 dark:text-slate-500">
-                URL: <span className="font-mono text-blue-600 dark:text-blue-400">{active.endpoint}{query ? `?${query}` : ""}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar">
+              {tabs.map((t) => (
                 <button
+                  key={t.id}
                   type="button"
                   onClick={() => {
-                    setFechaDesde("");
-                    setFechaHasta("");
-                    setBodegaId("");
-                    setTerceroId("");
-                    setTop("10");
-                    setGroupBy("dia");
+                    setTab(t.id);
+                    setError("");
+                    setPayload(null);
                   }}
-                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all"
+                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${tab === t.id
+                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-[1.05]"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                    }`}
                 >
-                  Limpiar Filtros
+                  {t.label}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={fetchReport}
-                  disabled={loading}
-                  className="px-6 py-2 rounded-xl bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-700 dark:hover:bg-blue-600 transition-all disabled:opacity-70 active:scale-[0.98]"
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Cargando...</span>
-                    </div>
-                  ) : "Aplicar Filtros"}
-                </button>
-              </div>
+              ))}
             </div>
-          </Card>
+          </div>
 
-          {/* Alertas */}
-          {(error || loading) && (
-            <div className="space-y-2">
-              {error && (
-                <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-sm text-red-700 dark:text-red-400 whitespace-pre-wrap">
-                  {error}
-                </div>
-              )}
-              {loading && (
-                <div className="rounded-md bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm text-slate-600 dark:text-slate-400 flex items-center gap-3">
-                  <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                  Cargando reporte…
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Contenido */}
-          {!loading && payload && (
-            <div className="space-y-6">
-              <Card title="KPIs">
-                <KpiGrid kpis={kpis} />
-              </Card>
-
-              <Card title="Gráficos">
-                {charts.length === 0 ? (
-                  <div className="text-sm text-slate-500 dark:text-slate-400 italic">Sin charts (charts vacío).</div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4">
-                    {charts.map((c) => (
-                      <ChartPreview key={c.id || c.title} chart={c} />
-                    ))}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar Filtros */}
+            <div className="lg:col-span-1 space-y-6">
+              <Card
+                title="Filtros"
+                subtitle="Refina tus resultados"
+                icon={FilterX}
+                right={active.hint || active.endpoint}
+              >
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <Calendar size={12} /> Periodo Desde
+                    </label>
+                    <input
+                      type="date"
+                      value={fechaDesde}
+                      onChange={(e) => setFechaDesde(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    />
                   </div>
-                )}
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <Calendar size={12} /> Periodo Hasta
+                    </label>
+                    <input
+                      type="date"
+                      value={fechaHasta}
+                      onChange={(e) => setFechaHasta(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Bodega</label>
+                    <select
+                      value={bodegaId}
+                      onChange={(e) => setBodegaId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    >
+                      <option value="">Todas las bodegas</option>
+                      {bodegas.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.codigo ? `${b.codigo} — ${b.nombre}` : `${b.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tercero</label>
+                    <select
+                      value={terceroId}
+                      onChange={(e) => setTerceroId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    >
+                      <option value="">Todos los terceros</option>
+                      {terceros.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.codigo ? `${t.codigo} — ${t.nombre}` : `${t.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Top</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={top}
+                        onChange={(e) => setTop(e.target.value)}
+                        disabled={!canUseTop}
+                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${canUseTop
+                            ? "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            : "border-slate-100 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/50 text-slate-400 cursor-not-allowed"
+                          }`}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Agrupar</label>
+                      <select
+                        value={groupBy}
+                        onChange={(e) => setGroupBy(e.target.value)}
+                        disabled={!canUseGroupBy}
+                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${canUseGroupBy
+                            ? "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            : "border-slate-100 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/50 text-slate-400 cursor-not-allowed"
+                          }`}
+                      >
+                        <option value="dia">Día</option>
+                        <option value="mes">Mes</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex flex-col gap-3">
+                    <button
+                      type="button"
+                      onClick={fetchReport}
+                      disabled={loading}
+                      className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-xl shadow-blue-200 dark:shadow-none transition-all disabled:opacity-70 flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      {loading ? (
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      ) : (
+                        <>
+                          <Search size={16} />
+                          Aplicar Filtros
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFechaDesde("");
+                        setFechaHasta("");
+                        setBodegaId("");
+                        setTerceroId("");
+                        setTop("10");
+                        setGroupBy("dia");
+                      }}
+                      className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                    >
+                      Limpiar todo
+                    </button>
+                  </div>
+                </div>
               </Card>
 
-              <Card title="Detalle (rows)">
-                <RowsTable rows={rows} />
-              </Card>
+              {error && (
+                <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30">
+                  <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-2">
+                    <Activity size={16} />
+                    <p className="text-xs font-bold uppercase tracking-wider">Error de Carga</p>
+                  </div>
+                  <p className="text-sm text-red-700 dark:text-red-300 font-medium whitespace-pre-wrap">{error}</p>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Contenido Principal */}
+            <div className="lg:col-span-3 space-y-8">
+              {loading ? (
+                <div className="h-[600px] flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent dark:from-blue-900/10 pointer-events-none"></div>
+                  <div className="relative">
+                    <div className="w-20 h-20 border-4 border-blue-600/10 border-t-blue-600 rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-10 h-10 border-4 border-blue-600/10 border-b-blue-600 rounded-full animate-spin-reverse"></div>
+                    </div>
+                  </div>
+                  <p className="mt-8 text-slate-500 dark:text-slate-400 font-black animate-pulse uppercase tracking-[0.3em] text-[10px]">Analizando indicadores...</p>
+                </div>
+              ) : payload ? (
+                <>
+                  {/* KPIs Section */}
+                  <KpiGrid kpis={kpis} />
+
+                  {/* Charts Section */}
+                  {charts.length > 0 && (
+                    <div className="grid grid-cols-1 gap-8">
+                      {charts.map((c, idx) => (
+                        <Card
+                          key={c.id || idx}
+                          title={c.title || "Análisis Visual"}
+                          subtitle={`${c.type.toUpperCase()} chart • Unidad: ${c.unit || 'N/A'}`}
+                          icon={c.type === 'pie' ? PieChartIcon : BarChart3}
+                        >
+                          <ChartRenderer chart={c} />
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Table Section */}
+                  <Card
+                    title="Detalle de Datos"
+                    subtitle="Vista tabular completa"
+                    icon={Search}
+                  >
+                    <RowsTable rows={rows} />
+                  </Card>
+                </>
+              ) : (
+                <div className="h-[600px] flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <div className="p-8 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-300 dark:text-slate-700 mb-8 transform hover:scale-110 transition-transform">
+                    <Search size={80} />
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">Sin información disponible</h3>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-sm text-center font-medium px-6 leading-relaxed">
+                    Ajusta los filtros o selecciona otra pestaña para comenzar a visualizar los datos estratégicos de tu negocio.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

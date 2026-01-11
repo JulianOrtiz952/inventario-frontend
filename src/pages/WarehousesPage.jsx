@@ -1018,12 +1018,12 @@ export default function WarehousesPage() {
                       </thead>
                       <tbody>
                         {details.productos
-                          .filter(p => (Number(p.total_producido) || 0) > 0)
+                          .filter(p => (Number(p.stock_actual) || 0) > 0)
                           .map((p, idx) => (
                             <tr key={`${p.codigo}-${idx}`} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                               <td className="py-2 pr-2 text-slate-800 dark:text-slate-300">{p.codigo}</td>
                               <td className="py-2 pr-2 text-slate-800 dark:text-slate-300">{p.nombre}</td>
-                              <td className="py-2 pr-2 text-right tabular-nums font-medium dark:text-slate-100">{num(p.total_producido)} u</td>
+                              <td className="py-2 pr-2 text-right tabular-nums font-medium dark:text-slate-100">{num(p.stock_actual)} u</td>
                               <td className="py-2 text-right">
                                 <div className="inline-flex items-center gap-2">
                                   <button
