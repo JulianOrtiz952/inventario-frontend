@@ -227,12 +227,12 @@ export default function SalidasProductoPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
+      <div className="flex-1 p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 overflow-auto">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">Notas de Salida</h1>
-              <p className="text-sm text-slate-500">
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Notas de Salida</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Despachos de producto terminado. Descuenta stock por FIFO.
               </p>
             </div>
@@ -241,7 +241,7 @@ export default function SalidasProductoPage() {
               <button
                 type="button"
                 onClick={() => loadSalidas(page)}
-                className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                 disabled={loading}
               >
                 {loading ? "Actualizando…" : "Actualizar"}
@@ -260,41 +260,41 @@ export default function SalidasProductoPage() {
           {(error || success) && (
             <div className="space-y-2">
               {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700 whitespace-pre-line">
+                <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-2 text-sm text-red-700 dark:text-red-400 whitespace-pre-line">
                   {error}
                 </div>
               )}
               {success && (
-                <div className="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-2 text-sm text-emerald-700">
+                <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 px-4 py-2 text-sm text-emerald-700 dark:text-emerald-400">
                   {success}
                 </div>
               )}
             </div>
           )}
 
-          <section className="bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">Filtros</h2>
+          <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Filtros</h2>
             </div>
             <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="md:col-span-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Buscador Global
                 </label>
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Producto, ID..."
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Bodega</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Bodega</label>
                 <select
                   value={bodegaId}
                   onChange={(e) => setBodegaId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 >
                   <option value="">Todas</option>
                   {bodegas.map(b => (
@@ -304,11 +304,11 @@ export default function SalidasProductoPage() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tercero</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tercero</label>
                 <select
                   value={terceroId}
                   onChange={(e) => setTerceroId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 >
                   <option value="">Todos</option>
                   {terceros.map(t => (
@@ -318,31 +318,31 @@ export default function SalidasProductoPage() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Desde</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Desde</label>
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Hasta</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Hasta</label>
                 <input
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
             </div>
           </section>
 
           <div className="flex items-center justify-between gap-3">
-            <div className="text-xs text-slate-500">
-              Total: <b>{count}</b> • Página <b>{page}</b>
-              <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+              <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -350,7 +350,7 @@ export default function SalidasProductoPage() {
                 type="button"
                 disabled={!prevUrl || loading}
                 onClick={goPrev}
-                className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+                className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 ← Anterior
               </button>
@@ -358,30 +358,30 @@ export default function SalidasProductoPage() {
                 type="button"
                 disabled={!nextUrl || loading}
                 onClick={goNext}
-                className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+                className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 Siguiente →
               </button>
             </div>
           </div>
 
-          <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">
+          <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Listado de Salidas ({salidas.length})
               </h2>
-              <p className="text-[11px] text-slate-500 italic">Haz clic en "Ver" para ver el detalle completo.</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">Haz clic en "Ver" para ver el detalle completo.</p>
             </div>
 
             <div className="overflow-x-auto">
               {salidas.length === 0 ? (
-                <div className="p-10 text-center text-sm text-slate-500">
+                <div className="p-10 text-center text-sm text-slate-500 dark:text-slate-400">
                   {loading ? "Cargando…" : "No se encontraron notas de salida."}
                 </div>
               ) : (
                 <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-100">
-                    <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                    <tr className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       <th className="px-4 py-3 text-left">Número / ID</th>
                       <th className="px-4 py-3 text-left">Fecha</th>
                       <th className="px-4 py-3 text-left">Productos</th>
@@ -393,30 +393,30 @@ export default function SalidasProductoPage() {
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {salidas.map((s) => {
                       const totalCant = getTotalCantidad(s);
 
                       return (
                         <tr
                           key={s.id}
-                          className="hover:bg-slate-50/80 transition-colors"
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors"
                         >
-                          <td className="px-4 py-3 text-slate-700 font-bold">
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-200 font-bold">
                             {s.numero || `#${s.id}`}
                           </td>
-                          <td className="px-4 py-3 text-slate-600 font-medium">{s.fecha || "—"}</td>
-                          <td className="px-4 py-3 text-slate-700 font-medium">{getProductosResumen(s)}</td>
-                          <td className="px-4 py-3 text-slate-700">{getBodegaLabel(s)}</td>
-                          <td className="px-4 py-3 text-slate-700">{getTerceroLabel(s)}</td>
-                          <td className="px-4 py-3 text-right font-bold text-slate-900">{num(totalCant)}</td>
-                          <td className="px-4 py-3 text-right font-bold text-blue-700">{money(getTotalPrecio(s))}</td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-400 font-medium">{s.fecha || "—"}</td>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">{getProductosResumen(s)}</td>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{getBodegaLabel(s)}</td>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{getTerceroLabel(s)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">{num(totalCant)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-blue-700 dark:text-blue-400">{money(getTotalPrecio(s))}</td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex justify-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => loadDetalle(s.id)}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm flex items-center gap-1.5 transition-all"
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm flex items-center gap-1.5 transition-all"
                               >
                                 Ver
                               </button>
@@ -424,7 +424,7 @@ export default function SalidasProductoPage() {
                               <button
                                 type="button"
                                 onClick={() => handleEditClick(s.id)}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm flex items-center gap-1.5 transition-all"
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm flex items-center gap-1.5 transition-all"
                               >
                                 Editar
                               </button>
@@ -432,7 +432,7 @@ export default function SalidasProductoPage() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteClick(s.id)}
-                                className="p-1.5 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 transition-all"
+                                className="p-1.5 rounded-lg border border-red-100 dark:border-red-900/50 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-all"
                                 title="Eliminar"
                               >
                                 <Trash2 size={16} />

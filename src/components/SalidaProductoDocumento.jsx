@@ -98,27 +98,32 @@ export default function SalidaProductoDocumento({ salida, onClose, onCreateAnoth
             </style>
 
             {showActions && (
-                <div className="no-print flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div>
-                        <h2 className="text-sm font-semibold text-slate-900">
-                            Salida registrada: <span className="text-blue-700">{docCode}</span>
-                        </h2>
-                        <p className="text-xs text-slate-500">Vista tipo documento (lista para imprimir o descargar).</p>
+                <div className="no-print flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 p-4 rounded-xl mb-4 transition-colors">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                            ✅
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                                Salida Registrada: <span className="text-blue-600 dark:text-blue-400">{docCode}</span>
+                            </h2>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Vista tipo documento (lista para imprimir o descargar).</p>
+                        </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={descargarPDF}
                             disabled={downloading}
-                            className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70"
+                            className="px-4 py-2 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-xs font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-70 shadow-sm transition-all active:scale-95 flex items-center gap-2"
                         >
-                            {downloading ? "Generando…" : "Descargar PDF"}
+                            {downloading ? "Generando..." : "Descargar PDF"}
                         </button>
                         <button
                             type="button"
                             onClick={imprimir}
-                            className="px-4 py-2 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800"
+                            className="px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-white transition-all shadow-sm active:scale-95"
                         >
                             Imprimir
                         </button>
@@ -126,7 +131,7 @@ export default function SalidaProductoDocumento({ salida, onClose, onCreateAnoth
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95"
                             >
                                 Cerrar
                             </button>
@@ -135,7 +140,7 @@ export default function SalidaProductoDocumento({ salida, onClose, onCreateAnoth
                             <button
                                 type="button"
                                 onClick={onCreateAnother}
-                                className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95"
                             >
                                 Crear otra
                             </button>
@@ -145,14 +150,14 @@ export default function SalidaProductoDocumento({ salida, onClose, onCreateAnoth
             )}
 
             {!showActions && (
-                <div className="no-print flex justify-end mb-2">
+                <div className="no-print flex justify-end mb-4">
                     <button
                         type="button"
                         onClick={descargarPDF}
                         disabled={downloading}
-                        className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70 flex items-center gap-2"
+                        className="px-4 py-2 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-xs font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 shadow-sm transition-all active:scale-95 flex items-center gap-2"
                     >
-                        {downloading ? "Generando…" : "Descargar PDF"}
+                        {downloading ? "Generando..." : "Descargar PDF"}
                     </button>
                 </div>
             )}

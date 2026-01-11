@@ -154,9 +154,9 @@ const navItems = [
 
 export default function SideNav() {
   return (
-    <aside className="hidden md:flex md:flex-col w-64 bg-white border-r border-slate-200">
-      <div className="px-4 py-4 border-b border-slate-100">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Menú</p>
+    <aside className="hidden md:flex md:flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-colors duration-300">
+      <div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800">
+        <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Menú</p>
       </div>
 
       <nav className="flex-1 py-3">
@@ -168,17 +168,17 @@ export default function SideNav() {
                 <NavLink
                   to={item.path}
                   className={({ isActive }) =>
-                    `group w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    `group w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${isActive
+                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
                     }`
                   }
                 >
                   <span
                     className="w-9 h-9 rounded-lg flex items-center justify-center border transition-colors
-                    border-slate-200 text-slate-500 group-hover:text-slate-700 group-hover:border-slate-300
-                    group-[.active]:border-white/20 group-[.active]:text-white"
+                    border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 
+                    group-hover:text-slate-700 dark:group-hover:text-slate-200 group-hover:border-slate-300 dark:group-hover:border-slate-600
+                    group-[.active]:border-white/20 dark:group-[.active]:border-slate-900/20 group-[.active]:text-white dark:group-[.active]:text-slate-900"
                   >
                     <Icon />
                   </span>
@@ -191,8 +191,8 @@ export default function SideNav() {
         </ul>
       </nav>
 
-      <div className="border-t border-slate-200 px-4 py-3">
-        <p className="text-[10px] text-slate-400">© {new Date().getFullYear()} CALA</p>
+      <div className="border-t border-slate-200 dark:border-slate-800 px-4 py-3">
+        <p className="text-[10px] text-slate-400 dark:text-slate-500">© {new Date().getFullYear()} CALA</p>
       </div>
     </aside>
   );

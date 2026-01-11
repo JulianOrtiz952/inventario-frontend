@@ -268,12 +268,12 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
+    <div className="flex-1 p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 overflow-auto">
       <section className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Productos</h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Productos</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Información detallada de precios, descuentos e impuestos.
             </p>
           </div>
@@ -284,7 +284,7 @@ export default function ProductsPage() {
               <select
                 value={terceroFiltro}
                 onChange={(e) => setTerceroFiltro(e.target.value)}
-                className="bg-white border border-slate-200 rounded-lg px-2 py-2 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 max-w-[140px]"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-2 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-blue-500 max-w-[140px]"
               >
                 <option value="todos">Todos los terceros</option>
                 {terceros.map((t) => (
@@ -294,24 +294,24 @@ export default function ProductsPage() {
                 ))}
               </select>
 
-              <div className="flex items-center gap-0 bg-white border border-slate-200 rounded-lg px-2 py-1 h-[34px]">
-                <span className="text-[10px] text-slate-500 uppercase font-semibold mr-1">$$</span>
+              <div className="flex items-center gap-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 h-[34px]">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold mr-1">$$</span>
                 <CurrencyInput
                   placeholder="Min"
                   value={precioMin}
                   onChange={(e) => setPrecioMin(e.target.value)}
-                  className="w-20 outline-none text-xs text-slate-700 placeholder:text-slate-400 border-r border-slate-100 pr-1 text-right"
+                  className="w-20 outline-none text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 placeholder:text-slate-400 border-r border-slate-100 dark:border-slate-800 pr-1 text-right"
                 />
                 <CurrencyInput
                   placeholder="Max"
                   value={precioMax}
                   onChange={(e) => setPrecioMax(e.target.value)}
-                  className="w-20 outline-none text-xs text-slate-700 placeholder:text-slate-400 pl-1 text-right"
+                  className="w-20 outline-none text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 placeholder:text-slate-400 pl-1 text-right"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900 transition-all">
               <span className="text-slate-400">
                 <Search size={16} />
               </span>
@@ -320,7 +320,7 @@ export default function ProductsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar SKU, nombre..."
-                className="bg-transparent outline-none text-xs text-slate-700 placeholder:text-slate-400 w-32 md:w-48"
+                className="bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 w-32 md:w-48"
               />
             </div>
 
@@ -337,9 +337,9 @@ export default function ProductsPage() {
 
         {/* ✅ Barra de paginación */}
         <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-slate-500">
-            Total: <b>{count}</b> • Página <b>{page}</b>
-            <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+            <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -347,7 +347,7 @@ export default function ProductsPage() {
               type="button"
               disabled={!prevUrl || loading}
               onClick={goPrev}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
               <ChevronLeft size={14} /> Anterior
             </button>
@@ -355,22 +355,22 @@ export default function ProductsPage() {
               type="button"
               disabled={!nextUrl || loading}
               onClick={goNext}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
               Siguiente <ChevronRight size={14} />
             </button>
           </div>
         </div>
 
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          {loading && <div className="p-6 text-sm text-slate-500">Cargando productos...</div>}
-          {error && !loading && <div className="p-6 text-sm text-red-600">{error}</div>}
+        <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+          {loading && <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando productos...</div>}
+          {error && !loading && <div className="p-6 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
           {!loading && !error && (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                  <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     <th className="px-4 py-3 text-left">SKU</th>
                     <th className="px-4 py-3 text-left">Nombre</th>
                     <th className="px-4 py-3 text-left">Tercero</th>
@@ -385,10 +385,10 @@ export default function ProductsPage() {
                   </tr>
                 </thead>
 
-                <tbody>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {productos.length === 0 && (
                     <tr>
-                      <td colSpan={11} className="px-6 py-6 text-center text-sm text-slate-500">
+                      <td colSpan={11} className="px-6 py-6 text-center text-sm text-slate-500 dark:text-slate-400">
                         No se encontraron productos{search ? " que coincidan con la búsqueda" : ""}.
                       </td>
                     </tr>
@@ -410,29 +410,29 @@ export default function ProductsPage() {
                     return (
                       <tr
                         key={sku}
-                        className={`border-b border-slate-100 transition-colors ${!isActive ? "bg-slate-50/70" : "hover:bg-slate-50/70"}`}
+                        className={`transition-colors ${!isActive ? "bg-slate-50/70 dark:bg-slate-800/20" : "hover:bg-slate-50/60 dark:hover:bg-slate-800/40"}`}
                       >
-                        <td className={`px-4 py-3 text-sm font-medium ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-800"}`}>
+                        <td className={`px-4 py-3 text-sm font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-800 dark:text-slate-200"}`}>
                           {sku}
                         </td>
-                        <td className={`px-4 py-3 text-sm ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-800"}`}>
+                        <td className={`px-4 py-3 text-sm ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-800 dark:text-slate-200"}`}>
                           {p.nombre}
                         </td>
 
-                        <td className="px-4 py-3 text-xs text-slate-700">
+                        <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
                           {p?.tercero?.nombre ? (
-                            <span className={!isActive ? "text-slate-400" : ""}>
+                            <span className={!isActive ? "text-slate-400 dark:text-slate-600" : ""}>
                               {p.tercero.nombre}
-                              <span className="text-slate-400">
+                              <span className="text-slate-400 dark:text-slate-500">
                                 {p.tercero.codigo ? ` (${p.tercero.codigo})` : ""}
                               </span>
                             </span>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-400 dark:text-slate-500">—</span>
                           )}
                         </td>
 
-                        <td className="px-4 py-3 text-xs text-slate-700 tabular-nums">
+                        <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 tabular-nums">
                           <div className="flex items-center gap-2">
                             {(() => {
                               const stock = Number(p?.datos_adicionales?.stock ?? 0);
@@ -440,10 +440,10 @@ export default function ProductsPage() {
                               const isLow = isActive && min > 0 && stock < min;
 
                               return (
-                                <span className={`flex items-center gap-1.5 font-medium ${!isActive ? "text-slate-400" : isLow ? "text-red-600" : ""}`}>
-                                  {p?.datos_adicionales?.stock ?? <span className="text-slate-400">—</span>}
+                                <span className={`flex items-center gap-1.5 font-medium ${!isActive ? "text-slate-400 dark:text-slate-600" : isLow ? "text-red-600 dark:text-red-400" : ""}`}>
+                                  {p?.datos_adicionales?.stock ?? <span className="text-slate-400 dark:text-slate-600">—</span>}
                                   {isLow && (
-                                    <AlertCircle size={14} className="text-red-500" title={`Bajo mínimo (Min: ${min})`} />
+                                    <AlertCircle size={14} className="text-red-500 dark:text-red-400" title={`Bajo mínimo (Min: ${min})`} />
                                   )}
                                 </span>
                               );
@@ -452,7 +452,7 @@ export default function ProductsPage() {
                             <button
                               type="button"
                               onClick={() => openStockPorTallas(sku)}
-                              className="ml-auto inline-flex items-center justify-center w-7 h-7 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors"
+                              className="ml-auto inline-flex items-center justify-center w-7 h-7 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                               title="Ver stock por tallas"
                             >
                               <Info size={14} />
@@ -460,33 +460,33 @@ export default function ProductsPage() {
                           </div>
                         </td>
 
-                        <td className={`px-4 py-3 text-xs ${!isActive ? "text-slate-400" : "text-slate-600"}`}>
+                        <td className={`px-4 py-3 text-xs ${!isActive ? "text-slate-400 dark:text-slate-600" : "text-slate-600 dark:text-slate-400"}`}>
                           {p.unidad_medida || "—"}
                         </td>
-                        <td className={`px-4 py-3 text-right tabular-nums ${!isActive ? "text-slate-400" : ""}`}>{money(base)}</td>
+                        <td className={`px-4 py-3 text-right tabular-nums ${!isActive ? "text-slate-400 dark:text-slate-600" : "dark:text-slate-200"}`}>{money(base)}</td>
 
                         <td className="px-4 py-3 text-right tabular-nums">
                           {toNumber(desc) ? (
-                            <span className={`${!isActive ? "text-orange-300" : "text-orange-700"}`}>-{money(desc)}</span>
+                            <span className={`${!isActive ? "text-orange-300 dark:text-orange-900/40" : "text-orange-700 dark:text-orange-400"}`}>-{money(desc)}</span>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-400 dark:text-slate-600">—</span>
                           )}
                         </td>
 
-                        <td className={`px-4 py-3 text-right tabular-nums ${!isActive ? "text-slate-400" : ""}`}>{money(sinIvaDesc)}</td>
+                        <td className={`px-4 py-3 text-right tabular-nums ${!isActive ? "text-slate-400 dark:text-slate-600" : "dark:text-slate-200"}`}>{money(sinIvaDesc)}</td>
 
                         <td className="px-4 py-3 text-right tabular-nums">
                           {iva !== null ? (
                             <div className="flex flex-col items-end">
-                              <span className={!isActive ? "text-slate-400" : "text-slate-800"}>{money(iva)}</span>
-                              <span className="text-[11px] text-slate-400">{pct(ivaPct)}</span>
+                              <span className={!isActive ? "text-slate-400 dark:text-slate-600" : "text-slate-800 dark:text-slate-200"}>{money(iva)}</span>
+                              <span className="text-[11px] text-slate-400 dark:text-slate-500">{pct(ivaPct)}</span>
                             </div>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-400 dark:text-slate-600">—</span>
                           )}
                         </td>
 
-                        <td className={`px-4 py-3 text-right tabular-nums font-semibold ${!isActive ? "text-slate-400" : "text-slate-900"}`}>
+                        <td className={`px-4 py-3 text-right tabular-nums font-semibold ${!isActive ? "text-slate-400 dark:text-slate-600" : "text-slate-900 dark:text-white"}`}>
                           {money(total)}
                         </td>
 
@@ -509,9 +509,9 @@ export default function ProductsPage() {
                             <button
                               type="button"
                               onClick={() => openActionModal(p)}
-                              className={`p-1.5 rounded-md border transition-colors bg-white ${isActive
-                                ? "border-red-100 text-red-600 hover:bg-red-50"
-                                : "border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+                              className={`p-1.5 rounded-md border transition-colors bg-white dark:bg-slate-900 ${isActive
+                                ? "border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                : "border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                                 }`}
                               title={isActive ? "Desactivar" : "Reactivar"}
                             >
@@ -552,7 +552,7 @@ export default function ProductsPage() {
 
       {isViewOpen && viewError && (
         <div className="fixed inset-0 z-[55] flex items-center justify-center pointer-events-none">
-          <div className="pointer-events-auto bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-lg shadow">
+          <div className="pointer-events-auto bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-xs px-4 py-3 rounded-lg shadow">
             {viewError}
           </div>
         </div>
@@ -580,8 +580,8 @@ export default function ProductsPage() {
         title={(productToAction?.es_activo !== false) ? "Desactivar Producto" : "Reactivar Producto"}
         message={
           (productToAction?.es_activo !== false)
-            ? <span>¿Estás seguro de que deseas desactivar el producto <strong>{productToAction?.codigo_sku}</strong>?</span>
-            : <span>¿Deseas reactivar el producto <strong>{productToAction?.codigo_sku}</strong>?</span>
+            ? <span>¿Estás seguro de que deseas desactivar el producto <strong className="text-slate-900 dark:text-slate-100">{productToAction?.codigo_sku}</strong>?</span>
+            : <span>¿Deseas reactivar el producto <strong className="text-slate-900 dark:text-slate-100">{productToAction?.codigo_sku}</strong>?</span>
         }
         description={
           (productToAction?.es_activo !== false)
@@ -594,25 +594,25 @@ export default function ProductsPage() {
 
       {/* MODAL: STOCK POR TALLAS */}
       {isStockOpen && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-[85vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-3xl max-h-[85vh] overflow-y-auto border border-white/10 dark:border-slate-800">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Stock por tallas</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  SKU: <b>{stockHeader?.codigo || stockSku || "—"}</b> • {stockHeader?.nombre || "—"}
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Stock por tallas</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  SKU: <b className="dark:text-slate-300">{stockHeader?.codigo || stockSku || "—"}</b> • {stockHeader?.nombre || "—"}
                 </p>
               </div>
-              <button className="text-slate-400 hover:text-slate-600" onClick={closeStockModal}>
+              <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={closeStockModal}>
                 ✕
               </button>
             </div>
 
             <div className="px-6 py-4">
-              {stockLoading && <div className="text-xs text-slate-500">Cargando...</div>}
+              {stockLoading && <div className="text-xs text-slate-500 dark:text-slate-400">Cargando...</div>}
 
               {stockError && !stockLoading && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+                <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
                   {stockError}
                 </div>
               )}
@@ -620,27 +620,27 @@ export default function ProductsPage() {
               {!stockLoading && !stockError && (
                 <>
                   {stockItems.length === 0 ? (
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
                       No hay movimientos/ensambles con tallas para este producto.
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm">
-                        <thead className="bg-slate-50 border border-slate-200">
-                          <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        <thead className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                          <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                             <th className="px-3 py-2 text-left">Código</th>
                             <th className="px-3 py-2 text-left">Nombre</th>
                             <th className="px-3 py-2 text-left">Talla</th>
                             <th className="px-3 py-2 text-right">Cantidad</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                           {stockItems.map((it, idx) => (
-                            <tr key={`${it.codigo}-${it.talla}-${idx}`} className="border-b border-slate-100">
-                              <td className="px-3 py-2 text-slate-800">{it.codigo}</td>
-                              <td className="px-3 py-2 text-slate-800">{it.nombre}</td>
-                              <td className="px-3 py-2 text-slate-700">{it.talla}</td>
-                              <td className="px-3 py-2 text-right tabular-nums text-slate-900 font-medium">
+                            <tr key={`${it.codigo}-${it.talla}-${idx}`} className="">
+                              <td className="px-3 py-2 text-slate-800 dark:text-slate-300">{it.codigo}</td>
+                              <td className="px-3 py-2 text-slate-800 dark:text-slate-300">{it.nombre}</td>
+                              <td className="px-3 py-2 text-slate-700 dark:text-slate-400">{it.talla}</td>
+                              <td className="px-3 py-2 text-right tabular-nums text-slate-900 dark:text-slate-100 font-medium">
                                 {it.cantidad}
                               </td>
                             </tr>
@@ -653,7 +653,7 @@ export default function ProductsPage() {
                   <div className="flex justify-end pt-4">
                     <button
                       onClick={closeStockModal}
-                      className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700"
+                      className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 transition-colors"
                     >
                       Cerrar
                     </button>

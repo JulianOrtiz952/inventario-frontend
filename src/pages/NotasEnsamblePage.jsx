@@ -231,12 +231,12 @@ export default function NotasEnsamblePage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
+      <div className="flex-1 p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 overflow-auto">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">Notas de Ensamble</h1>
-              <p className="text-sm text-slate-500">
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Notas de Ensamble</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Crear actualiza stock y descuenta insumos. Editar revierte y reaplica (según backend). Eliminar revierte.
               </p>
             </div>
@@ -245,7 +245,7 @@ export default function NotasEnsamblePage() {
               <button
                 type="button"
                 onClick={() => loadNotas(page)}
-                className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 disabled={loading}
               >
                 {loading ? "Actualizando…" : "Actualizar"}
@@ -254,7 +254,7 @@ export default function NotasEnsamblePage() {
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(true)}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+                className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-all active:scale-95 shadow-sm shadow-blue-500/20"
               >
                 + Nueva nota
               </button>
@@ -264,41 +264,43 @@ export default function NotasEnsamblePage() {
           {(error || success) && (
             <div className="space-y-2">
               {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700 whitespace-pre-line">
+                <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-sm text-red-700 dark:text-red-400 whitespace-pre-line flex items-center gap-2">
+                  <span className="shrink-0">⚠️</span>
                   {error}
                 </div>
               )}
               {success && (
-                <div className="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-2 text-sm text-emerald-700">
+                <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-900/50 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                  <span className="shrink-0">✅</span>
                   {success}
                 </div>
               )}
             </div>
           )}
 
-          <section className="bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">Filtros</h2>
+          <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Filtros</h2>
             </div>
             <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="md:col-span-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Buscador Global
                 </label>
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Producto, Obs, ID..."
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Bodega</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Bodega</label>
                 <select
                   value={bodegaId}
                   onChange={(e) => setBodegaId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 >
                   <option value="">Todas</option>
                   {bodegas.map(b => (
@@ -308,11 +310,11 @@ export default function NotasEnsamblePage() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tercero</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tercero</label>
                 <select
                   value={terceroId}
                   onChange={(e) => setTerceroId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 >
                   <option value="">Todos</option>
                   {terceros.map(t => (
@@ -322,22 +324,22 @@ export default function NotasEnsamblePage() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Desde</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Desde</label>
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Hasta</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Hasta</label>
                 <input
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
             </div>
@@ -345,9 +347,9 @@ export default function NotasEnsamblePage() {
 
           {/* ✅ Barra de paginación */}
           <div className="flex items-center justify-between gap-3">
-            <div className="text-xs text-slate-500">
-              Total: <b>{count}</b> • Página <b>{page}</b>
-              <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+              <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -355,7 +357,7 @@ export default function NotasEnsamblePage() {
                 type="button"
                 disabled={!prevUrl || loading}
                 onClick={goPrev}
-                className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+                className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 ← Anterior
               </button>
@@ -363,30 +365,30 @@ export default function NotasEnsamblePage() {
                 type="button"
                 disabled={!nextUrl || loading}
                 onClick={goNext}
-                className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+                className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 Siguiente →
               </button>
             </div>
           </div>
 
-          <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">
+          <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Listado de Notas ({notasFiltradas.length})
               </h2>
-              <p className="text-[11px] text-slate-500 italic">Haz clic en "Ver" para ver el detalle completo e insumos consumidos.</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">Haz clic en "Ver" para ver el detalle completo e insumos consumidos.</p>
             </div>
 
             <div className="overflow-x-auto">
               {notasFiltradas.length === 0 ? (
-                <div className="p-10 text-center text-sm text-slate-500">
+                <div className="p-10 text-center text-sm text-slate-500 dark:text-slate-400">
                   {loading ? "Cargando…" : "No se encontraron notas de ensamble."}
                 </div>
               ) : (
                 <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-100">
-                    <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                  <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
+                    <tr className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                       <th className="px-4 py-3 text-left">ID</th>
                       <th className="px-4 py-3 text-left">Fecha</th>
                       <th className="px-4 py-3 text-left">Productos</th>
@@ -397,27 +399,27 @@ export default function NotasEnsamblePage() {
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {notasFiltradas.map((n) => {
                       const totalCant = getTotalCantidad(n);
 
                       return (
                         <tr
                           key={n.id}
-                          className="hover:bg-slate-50/80 transition-colors"
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
                         >
-                          <td className="px-4 py-3 text-slate-700 font-bold">#{n.id}</td>
-                          <td className="px-4 py-3 text-slate-600 font-medium">{n.fecha_elaboracion || "—"}</td>
-                          <td className="px-4 py-3 text-slate-700 font-medium">{getProductosResumen(n)}</td>
-                          <td className="px-4 py-3 text-slate-700">{getBodegaLabel(n)}</td>
-                          <td className="px-4 py-3 text-slate-700">{getTerceroLabel(n)}</td>
-                          <td className="px-4 py-3 text-right font-bold text-slate-900">{num(totalCant)}</td>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-bold">#{n.id}</td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-400 font-medium">{n.fecha_elaboracion || "—"}</td>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">{getProductosResumen(n)}</td>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{getBodegaLabel(n)}</td>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{getTerceroLabel(n)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">{num(totalCant)}</td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex justify-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => loadDetalle(n.id)}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm flex items-center gap-1.5 transition-all"
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm flex items-center gap-1.5 transition-all"
                               >
                                 Ver
                               </button>
@@ -425,7 +427,7 @@ export default function NotasEnsamblePage() {
                               <button
                                 type="button"
                                 onClick={() => handleOpenEdit(n.id)}
-                                className="px-3 py-1.5 rounded-lg border border-blue-100 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 shadow-sm transition-all"
+                                className="px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/20 text-xs font-semibold text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 shadow-sm transition-all"
                               >
                                 Editar
                               </button>
@@ -433,7 +435,7 @@ export default function NotasEnsamblePage() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteClick(n.id)}
-                                className="p-1.5 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 transition-all"
+                                className="p-1.5 rounded-lg border border-red-100 dark:border-red-900/30 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all font-medium"
                                 title="Eliminar"
                               >
                                 <Trash2 size={16} />

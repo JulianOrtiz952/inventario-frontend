@@ -18,8 +18,8 @@ const TEMP_LOGO_URL =
 function FieldRow({ label, value }) {
     return (
         <div className="flex items-start justify-between gap-3">
-            <div className="text-[11px] text-slate-500">{label}</div>
-            <div className="text-xs font-semibold text-slate-900 text-right whitespace-pre-line">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">{label}</div>
+            <div className="text-xs font-semibold text-slate-900 dark:text-white text-right whitespace-pre-line">
                 {value ?? "—"}
             </div>
         </div>
@@ -220,19 +220,19 @@ export default function EditSalidaProductoModal({ isOpen, onClose, onSaved, sali
     if (!isOpen) return null;
 
     return (
-        <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-xl shadow-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto border border-white/10 dark:border-slate-800">
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                     <div>
-                        <h1 className="text-sm font-semibold text-slate-900">Editar Nota de Salida</h1>
-                        <p className="text-xs text-slate-500">Modifica los datos y cantidades de la salida.</p>
+                        <h1 className="text-sm font-semibold text-slate-900 dark:text-white">Editar Nota de Salida</h1>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Modifica los datos y cantidades de la salida.</p>
                     </div>
                     <div className="flex gap-3">
                         <button
                             type="button"
                             disabled={saving}
                             onClick={onClose}
-                            className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+                            className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                         >
                             Cancelar
                         </button>
@@ -249,59 +249,58 @@ export default function EditSalidaProductoModal({ isOpen, onClose, onSaved, sali
 
                 <form id="edit-salida-form" onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
                     {error && (
-                        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700 whitespace-pre-line">
+                        <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400 whitespace-pre-line">
                             {error}
                         </div>
                     )}
 
                     {loadingInitial ? (
-                        <div className="py-20 text-center text-slate-500 animate-pulse">Cargando datos de la nota...</div>
+                        <div className="py-20 text-center text-slate-500 dark:text-slate-400 animate-pulse">Cargando datos de la nota...</div>
                     ) : (
                         <>
-                            {/* 1. Datos Generales */}
-                            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
+                            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                                 <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-5">
                                     <div>
-                                        <label className="text-xs font-medium text-slate-700">Fecha</label>
-                                        <input type="date" className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={fecha} onChange={e => setFecha(e.target.value)} />
+                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Fecha</label>
+                                        <input type="date" className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none" value={fecha} onChange={e => setFecha(e.target.value)} />
                                     </div>
                                     <div>
-                                        <label className="text-xs font-medium text-slate-700">Bodega</label>
-                                        <select className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={bodegaId} onChange={e => setBodegaId(e.target.value)}>
+                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Bodega</label>
+                                        <select className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none" value={bodegaId} onChange={e => setBodegaId(e.target.value)}>
                                             {bodegas.map(b => (
                                                 <option key={b.id} value={b.id}>{b.nombre}</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-medium text-slate-700">Tercero / Cliente</label>
-                                        <select className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={terceroId} onChange={e => setTerceroId(e.target.value)}>
+                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tercero / Cliente</label>
+                                        <select className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none" value={terceroId} onChange={e => setTerceroId(e.target.value)}>
                                             {terceros.map(t => (
                                                 <option key={t.id} value={t.id}>{t.nombre}</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div className="md:col-span-3">
-                                        <label className="text-xs font-medium text-slate-700">Observación</label>
-                                        <input className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={observacion} onChange={e => setObservacion(e.target.value)} />
+                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Observación</label>
+                                        <input className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none" value={observacion} onChange={e => setObservacion(e.target.value)} />
                                     </div>
                                 </div>
                             </section>
 
                             {/* 2. Producto */}
-                            <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 p-6 dark:border-slate-800">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="text-xs font-medium text-slate-700">Producto</label>
-                                        <select className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm" value={productoId} onChange={e => setProductoId(e.target.value)}>
+                                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Producto</label>
+                                        <select className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none" value={productoId} onChange={e => setProductoId(e.target.value)}>
                                             {productosEnBodega.map(p => (
                                                 <option key={p.producto_id} value={p.producto_id}>{p.producto_id} - {p.producto_nombre}</option>
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                        <div className="text-[10px] font-bold text-slate-500 uppercase mb-2">Stock Disponible (Actual en Bodega)</div>
-                                        <div className="space-y-1">
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Stock Disponible (Actual en Bodega)</div>
+                                        <div className="space-y-1 text-slate-700 dark:text-slate-300">
                                             {tallasDisponiblesProducto.map(t => (
                                                 <div key={t.talla_nombre} className="flex justify-between text-xs">
                                                     <span>{t.talla_nombre}</span>
@@ -314,19 +313,19 @@ export default function EditSalidaProductoModal({ isOpen, onClose, onSaved, sali
                             </section>
 
                             {/* 3. Detalles */}
-                            <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                                    <h2 className="text-sm font-semibold text-slate-900">Cantidades de Salida</h2>
+                            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                                    <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Cantidades de Salida</h2>
                                     <button type="button" onClick={addLine} className="px-4 py-2 bg-blue-600 text-white text-[11px] font-bold rounded-lg uppercase tracking-wider">
                                         + Agregar Talla
                                     </button>
                                 </div>
                                 <div className="p-6 space-y-4">
                                     {detalleLines.map(l => (
-                                        <div key={l.id} className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end bg-slate-50/50 p-4 rounded-xl border border-slate-200">
+                                        <div key={l.id} className="grid grid-cols-1 md:grid-cols-12 gap-5 items-end bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-xl border border-slate-200 dark:border-slate-700 transition-all">
                                             <div className="md:col-span-12 lg:col-span-5">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Talla</label>
-                                                <select className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm bg-white" value={l.talla_nombre} onChange={e => updateLine(l.id, "talla_nombre", e.target.value)}>
+                                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Talla</label>
+                                                <select className="w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none" value={l.talla_nombre} onChange={e => updateLine(l.id, "talla_nombre", e.target.value)}>
                                                     <option value="">Seleccionar...</option>
                                                     {tallasDisponiblesProducto.map(t => (
                                                         <option key={t.talla_nombre} value={t.talla_nombre}>{t.talla_nombre}</option>
@@ -337,16 +336,16 @@ export default function EditSalidaProductoModal({ isOpen, onClose, onSaved, sali
                                                 </select>
                                             </div>
                                             <div className="md:col-span-6 lg:col-span-2">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Cantidad</label>
-                                                <input className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right bg-white" value={l.cantidad} onChange={e => updateLine(l.id, "cantidad", e.target.value)} />
+                                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Cantidad</label>
+                                                <input className="w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-right bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none" value={l.cantidad} onChange={e => updateLine(l.id, "cantidad", e.target.value)} />
                                             </div>
                                             <div className="md:col-span-6 lg:col-span-2">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Costo Unit.</label>
-                                                <input className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right bg-white" value={l.costo_unitario} onChange={e => updateLine(l.id, "costo_unitario", e.target.value)} />
+                                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Costo Unit.</label>
+                                                <input className="w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-right bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none" value={l.costo_unitario} onChange={e => updateLine(l.id, "costo_unitario", e.target.value)} />
                                             </div>
                                             <div className="md:col-span-6 lg:col-span-2 text-right">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Subtotal</label>
-                                                <div className="py-2 text-xs font-bold text-blue-600">
+                                                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Subtotal</label>
+                                                <div className="py-2 text-xs font-bold text-blue-600 dark:text-blue-400">
                                                     {money(Number(l.cantidad || 0) * Number(l.costo_unitario || 0))}
                                                 </div>
                                             </div>
@@ -357,12 +356,12 @@ export default function EditSalidaProductoModal({ isOpen, onClose, onSaved, sali
                                             </div>
                                         </div>
                                     ))}
-                                    <div className="flex items-center justify-between px-2 pt-2 border-t border-slate-100">
-                                        <div className="text-xs text-slate-500">
-                                            Total unidades: <span className="font-bold text-slate-900">{num(totalCantidad)}</span>
+                                    <div className="flex items-center justify-between px-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                            Total unidades: <span className="font-bold text-slate-900 dark:text-white">{num(totalCantidad)}</span>
                                         </div>
-                                        <div className="text-right text-sm">
-                                            Total Nota: <span className="font-bold text-blue-700 text-lg ml-2">
+                                        <div className="text-right text-sm text-slate-700 dark:text-slate-300">
+                                            Total Nota: <span className="font-bold text-blue-700 dark:text-blue-400 text-lg ml-2">
                                                 {money(detalleLines.reduce((acc, l) => acc + (Number(l.cantidad || 0) * Number(l.costo_unitario || 0)), 0))}
                                             </span>
                                         </div>

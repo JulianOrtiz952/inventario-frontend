@@ -45,28 +45,28 @@ function ErrorsTable({ errores }) {
   if (!Array.isArray(errores) || errores.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-100">
-        <h3 className="text-sm font-semibold text-slate-900">Errores por fila</h3>
-        <p className="text-xs text-slate-500 mt-0.5">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Errores por fila</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
           El backend no cae toda la importación: procesa lo válido y reporta las filas inválidas.
         </p>
       </div>
 
-      <div className="overflow-auto">
+      <div className="overflow-auto font-sans">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600 text-xs">
+          <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-xs text-left">
             <tr>
-              <th className="text-left px-4 py-2.5 font-semibold">Fila</th>
-              <th className="text-left px-4 py-2.5 font-semibold">Error</th>
+              <th className="px-4 py-2.5 font-semibold">Fila</th>
+              <th className="px-4 py-2.5 font-semibold">Error</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {errores.map((e, idx) => (
-              <tr key={`${e?.fila ?? "x"}-${idx}`} className="hover:bg-slate-50">
-                <td className="px-4 py-2.5 text-slate-700 whitespace-nowrap">{e?.fila ?? "—"}</td>
-                <td className="px-4 py-2.5 text-slate-700">
-                  <pre className="text-xs whitespace-pre-wrap break-words font-mono bg-slate-50 border border-slate-100 rounded-md p-2">
+              <tr key={`${e?.fila ?? "x"}-${idx}`} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300 whitespace-nowrap font-medium">{e?.fila ?? "—"}</td>
+                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
+                  <pre className="text-xs whitespace-pre-wrap break-words font-mono bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-lg p-3">
                     {String(e?.error ?? "")}
                   </pre>
                 </td>
@@ -86,50 +86,49 @@ function ResultCard({ result }) {
   const notas = Array.isArray(result.notas_creadas) ? result.notas_creadas : [];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">Resultado</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Resumen devuelto por el backend.</p>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Resultado</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Resumen devuelto por el backend.</p>
         </div>
 
         <span
-          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-            result.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
-          }`}
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${result.ok ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50" : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/50"
+            }`}
         >
           {result.ok ? "OK" : "Con errores"}
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Procesadas OK</p>
-          <p className="text-lg font-semibold text-slate-900">{Number(result.procesadas_ok || 0)}</p>
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Procesadas OK</p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">{Number(result.procesadas_ok || 0)}</p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Movimientos creados</p>
-          <p className="text-lg font-semibold text-slate-900">{movimientos.length}</p>
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Movimientos creados</p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">{movimientos.length}</p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Notas creadas</p>
-          <p className="text-lg font-semibold text-slate-900">{notas.length}</p>
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Notas creadas</p>
+          <p className="text-lg font-semibold text-slate-900 dark:text-white">{notas.length}</p>
         </div>
       </div>
 
       {(movimientos.length > 0 || notas.length > 0) && (
-        <div className="text-xs text-slate-600 space-y-1">
+        <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
           {movimientos.length > 0 && (
             <div>
-              <span className="font-semibold">movimientos_ids:</span>{" "}
+              <span className="font-semibold text-slate-700 dark:text-slate-300">movimientos_ids:</span>{" "}
               <span className="font-mono">{movimientos.join(", ")}</span>
             </div>
           )}
           {notas.length > 0 && (
             <div>
-              <span className="font-semibold">notas_creadas:</span>{" "}
+              <span className="font-semibold text-slate-700 dark:text-slate-300">notas_creadas:</span>{" "}
               <span className="font-mono">{notas.join(", ")}</span>
             </div>
           )}
@@ -151,26 +150,26 @@ function HelpBox({ mode }) {
     : ["talla", "costo_unitario", "observacion"];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <h3 className="text-sm font-semibold text-slate-900">Estructura del Excel</h3>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
+      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Estructura del Excel</h3>
 
       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Columnas requeridas</p>
-          <ul className="mt-2 text-xs text-slate-700 space-y-1 list-disc ml-5">
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Columnas requeridas</p>
+          <ul className="mt-2 text-xs text-slate-700 dark:text-slate-400 space-y-1 list-disc ml-5 font-medium">
             {colsReq.map((c) => (
-              <li key={c} className="font-mono">
+              <li key={c} className="font-mono text-slate-600 dark:text-slate-300">
                 {c}
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">Columnas opcionales</p>
-          <ul className="mt-2 text-xs text-slate-700 space-y-1 list-disc ml-5">
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Columnas opcionales</p>
+          <ul className="mt-2 text-xs text-slate-700 dark:text-slate-400 space-y-1 list-disc ml-5 font-medium">
             {colsOpt.map((c) => (
-              <li key={c} className="font-mono">
+              <li key={c} className="font-mono text-slate-600 dark:text-slate-300">
                 {c}
               </li>
             ))}
@@ -178,12 +177,12 @@ function HelpBox({ mode }) {
         </div>
       </div>
 
-      <div className="mt-3 text-xs text-slate-600">
-        <p className="font-semibold text-slate-700">Notas:</p>
-        <ul className="mt-1 space-y-1 list-disc ml-5">
-          <li>La fecha puede venir como <span className="font-mono">2025-12-27</span> o <span className="font-mono">27/12/2025</span> (según tu contrato).</li>
-          <li>El front solo sube el archivo; el backend valida headers/filas y devuelve el resumen.</li>
-          <li>Si el backend responde 400 por headers/archivo, se muestra el error tal cual.</li>
+      <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3">
+        <p className="font-semibold text-slate-700 dark:text-slate-300 mb-1">Notas:</p>
+        <ul className="space-y-1.5 list-disc ml-5">
+          <li>La fecha puede venir como <span className="font-mono text-blue-600 dark:text-blue-400">2025-12-27</span> o <span className="font-mono text-blue-600 dark:text-blue-400">27/12/2025</span>.</li>
+          <li>El front solo sube el archivo; el backend valida todo.</li>
+          <li>Si el backend responde con error, se mostrará en el panel.</li>
         </ul>
       </div>
     </div>
@@ -276,20 +275,20 @@ export default function ExcelImportPage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+      <div className="flex-1 p-6 lg:p-8 overflow-auto">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">Importar Excel</h1>
-              <p className="text-sm text-slate-500">
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Importar Excel</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Descarga la plantilla, llena las columnas y sube el .xlsx para registrar movimientos masivos.
               </p>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="bg-white border border-slate-200 rounded-xl p-2 flex flex-col md:flex-row gap-2">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 flex flex-col md:flex-row gap-2 shadow-sm">
             {tabs.map((t) => (
               <button
                 key={t.id}
@@ -300,9 +299,8 @@ export default function ExcelImportPage() {
                   setError("");
                   setResult(null);
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  tab === t.id ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === t.id ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md shadow-slate-200/50 dark:shadow-none" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  }`}
               >
                 {t.label}
               </button>
@@ -312,7 +310,7 @@ export default function ExcelImportPage() {
           {(error || result) && (
             <div className="space-y-3">
               {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 whitespace-pre-wrap">
+                <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-sm text-red-700 dark:text-red-400 whitespace-pre-wrap">
                   {error}
                 </div>
               )}
@@ -324,47 +322,54 @@ export default function ExcelImportPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Panel principal */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
                   <div>
-                    <h2 className="text-sm font-semibold text-slate-900">{active.label}</h2>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      1) Descarga plantilla → 2) Llénala → 3) Importa el archivo.
+                    <h2 className="text-base font-semibold text-slate-900 dark:text-white">{active.label}</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Descarga la plantilla, llénala con los datos correspondientes e importa el archivo.
                     </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={onDownload}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
                   >
                     ⬇ Descargar plantilla
                   </button>
                 </div>
 
-                <form onSubmit={onImport} className="mt-4 space-y-4">
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <label className="block text-xs font-semibold text-slate-700">Archivo Excel (.xlsx)</label>
+                <form onSubmit={onImport} className="mt-6 space-y-6">
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Archivo Excel (.xlsx)</label>
                     <input
                       type="file"
                       accept=".xlsx"
                       onChange={onPick}
-                      className="mt-2 block w-full text-sm text-slate-700 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-slate-900 file:text-white file:text-xs file:font-semibold hover:file:bg-slate-800"
+                      className="block w-full text-sm text-slate-700 dark:text-slate-300 file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:bg-slate-900 dark:file:bg-slate-100 file:text-white dark:file:text-slate-900 file:text-xs file:font-bold hover:file:bg-slate-800 dark:hover:file:bg-slate-200 file:transition-all cursor-pointer"
                     />
                     {file && (
-                      <p className="mt-2 text-xs text-slate-600">
-                        Seleccionado: <span className="font-mono">{file.name}</span>
+                      <p className="mt-4 text-xs text-slate-600 dark:text-slate-400 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+                        <span>Archivo seleccionado: <span className="font-bold text-blue-700 dark:text-blue-400">{file.name}</span></span>
                       </p>
                     )}
                   </div>
 
-                  <div className="flex flex-col md:flex-row gap-2 md:justify-end">
+                  <div className="flex flex-col md:flex-row gap-3 md:justify-end border-t border-slate-100 dark:border-slate-800 pt-5">
                     <button
                       type="submit"
                       disabled={loading}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-md bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700 disabled:opacity-60"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-700 dark:hover:bg-blue-600 transition-all disabled:opacity-60 active:scale-[0.98]"
                     >
-                      {loading ? "Importando…" : "⬆ Importar"}
+                      {loading ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Importando…
+                        </>
+                      ) : (
+                        <>⬆ Importar Archivo</>
+                      )}
                     </button>
                   </div>
                 </form>

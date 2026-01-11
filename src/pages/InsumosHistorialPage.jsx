@@ -20,19 +20,19 @@ const TIPOS = [
 function getTipoColor(tipo) {
   switch (tipo) {
     case "CREACION":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      return "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800";
     case "ENTRADA":
-      return "bg-green-100 text-green-800 border-green-200";
+      return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800";
     case "SALIDA":
-      return "bg-red-100 text-red-800 border-red-200";
+      return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border-red-200 dark:border-red-800";
     case "CONSUMO_ENSAMBLE":
-      return "bg-orange-100 text-orange-800 border-orange-200";
+      return "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 border-orange-200 dark:border-orange-800";
     case "AJUSTE":
-      return "bg-purple-100 text-purple-800 border-purple-200";
+      return "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 border-purple-200 dark:border-purple-800";
     case "EDICION":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-800";
     default:
-      return "bg-slate-100 text-slate-700 border-slate-200";
+      return "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
   }
 }
 
@@ -240,8 +240,8 @@ export default function InsumosHistorialPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900">Historial de Insumos (Kardex)</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Historial de Insumos (Kardex)</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Movimientos globales: creación, entradas, salidas, consumos por ensamble y ajustes.
           </p>
         </div>
@@ -256,14 +256,14 @@ export default function InsumosHistorialPage() {
       </div>
 
       {/* filtros */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 mb-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-4 mb-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Insumo</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Insumo</label>
             <select
               value={fInsumo}
               onChange={(e) => setFInsumo(e.target.value)}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
               <option value="">Todos</option>
               {insumoOptions.map((i) => (
@@ -275,11 +275,11 @@ export default function InsumosHistorialPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Tipo</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tipo</label>
             <select
               value={fTipo}
               onChange={(e) => setFTipo(e.target.value)}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
               {TIPOS.map((t) => (
                 <option key={t.value || "all"} value={t.value}>
@@ -290,11 +290,11 @@ export default function InsumosHistorialPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Bodega</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Bodega</label>
             <select
               value={fBodega}
               onChange={(e) => setFBodega(e.target.value)}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
               <option value="">Todas</option>
               {bodegaOptions.map((b) => (
@@ -306,11 +306,11 @@ export default function InsumosHistorialPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Tercero</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tercero</label>
             <select
               value={fTercero}
               onChange={(e) => setFTercero(e.target.value)}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
               <option value="">Todos</option>
               {terceroOptions.map((t) => (
@@ -322,12 +322,12 @@ export default function InsumosHistorialPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Buscar (en esta página)</label>
-            <div className="flex items-center bg-white rounded-md border border-slate-200 px-3 py-2 text-sm shadow-sm">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Buscar (en esta página)</label>
+            <div className="flex items-center bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <span className="mr-2 text-slate-400 text-sm">🔍</span>
               <input
                 type="text"
-                className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+                className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 placeholder="insumo, tipo, tercero, bodega..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -341,7 +341,7 @@ export default function InsumosHistorialPage() {
             type="button"
             onClick={clearFilters}
             disabled={loading}
-            className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-70"
+            className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-70 transition-colors"
           >
             Limpiar
           </button>
@@ -358,9 +358,9 @@ export default function InsumosHistorialPage() {
 
       {/* header paginación */}
       <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="text-xs text-slate-500">
-          Total: <b>{count}</b> • Página <b>{page}</b>
-          <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+        <div className="text-xs text-slate-500 dark:text-slate-400">
+          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+          <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -368,7 +368,7 @@ export default function InsumosHistorialPage() {
             type="button"
             disabled={!prevUrl || loading}
             onClick={goPrev}
-            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             ← Anterior
           </button>
@@ -376,22 +376,22 @@ export default function InsumosHistorialPage() {
             type="button"
             disabled={!nextUrl || loading}
             onClick={goNext}
-            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             Siguiente →
           </button>
         </div>
       </div>
 
-      <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        {loading && <div className="p-6 text-sm text-slate-600">Cargando kardex...</div>}
+      <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+        {loading && <div className="p-6 text-sm text-slate-600 dark:text-slate-400">Cargando kardex...</div>}
         {error && !loading && <div className="p-6 text-sm text-red-600">{error}</div>}
 
         {!loading && !error && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
+                <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                   <th className="px-4 py-3 text-left">Fecha</th>
                   <th className="px-4 py-3 text-left">Insumo</th>
                   <th className="px-4 py-3 text-left">Tipo</th>
@@ -418,12 +418,12 @@ export default function InsumosHistorialPage() {
                 )}
 
                 {filteredLocalRows.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50/80">
-                    <td className="px-4 py-3 text-xs text-slate-600">{r.fecha}</td>
+                  <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">{r.fecha}</td>
 
                     <td className="px-4 py-3">
-                      <div className="text-sm text-slate-800 font-medium">{r.insumo_codigo}</div>
-                      <div className="text-xs text-slate-500">{r.insumo_nombre}</div>
+                      <div className="text-sm text-slate-800 dark:text-slate-200 font-medium">{r.insumo_codigo}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{r.insumo_nombre}</div>
                     </td>
 
                     <td className="px-4 py-3 text-xs">
@@ -432,28 +432,28 @@ export default function InsumosHistorialPage() {
                       </span>
                     </td>
 
-                    <td className="px-4 py-3 text-xs text-slate-700">{r.bodega_nombre || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-700">{r.tercero_nombre || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.bodega_nombre || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.tercero_nombre || "—"}</td>
 
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-800">{r.cantidad}</td>
-                    <td className="px-4 py-3 text-xs text-slate-700">{r.unidad_medida || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-800 dark:text-slate-200">{r.cantidad}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.unidad_medida || "—"}</td>
 
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">
+                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700 dark:text-slate-300">
                       {r.costo_unitario ? `$${r.costo_unitario}` : "—"}
                     </td>
 
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">
+                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700 dark:text-slate-300">
                       {r.total ? `$${r.total}` : "—"}
                     </td>
 
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700">
+                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700 dark:text-slate-300">
                       {r.saldo_resultante ?? "—"}
                     </td>
 
-                    <td className="px-4 py-3 text-xs text-slate-700">{r.factura || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-700">{r.observacion || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.factura || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.observacion || "—"}</td>
 
-                    <td className="px-4 py-3 text-center text-xs text-slate-700">
+                    <td className="px-4 py-3 text-center text-xs text-slate-700 dark:text-slate-300">
                       {r.nota_ensamble ? `#${r.nota_ensamble}` : "—"}
                     </td>
                   </tr>

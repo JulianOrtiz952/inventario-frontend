@@ -60,19 +60,19 @@ function MovementModal({
   // Entrada: bg-blue-600 (como crear). Salida: bg-rose-600 (advertencia suave).
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto border border-slate-100 scale-100 opacity-100 transition-all">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-all">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto border border-slate-100 dark:border-slate-800 scale-100 opacity-100 transition-all">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${isEntrada ? "bg-blue-600" : "bg-rose-500"}`}></span>
               {isEntrada ? "Registrar Entrada de Insumo" : "Registrar Salida de Insumo"}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Busca y selecciona el insumo para registrar el movimiento.
             </p>
           </div>
-          <button className="text-slate-400 hover:text-slate-600 transition-colors" onClick={onClose} disabled={loading}>
+          <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={onClose} disabled={loading}>
             ✕
           </button>
         </div>
@@ -93,15 +93,15 @@ function MovementModal({
                 <input
                   value={search}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 focus:border-blue-500 transition-all placeholder:text-slate-400"
                   placeholder="Buscar por nombre o código..."
                   autoFocus
                 />
               </div>
 
-              <div className="flex-1 rounded-xl border border-slate-200 overflow-hidden bg-slate-50/30 flex flex-col">
+              <div className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50/30 dark:bg-slate-950/30 flex flex-col">
                 {/* Header de lista */}
-                <div className="px-4 py-2 bg-slate-100/50 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase flex justify-between">
+                <div className="px-4 py-2 bg-slate-100/50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase flex justify-between">
                   <span>Insumo</span>
                   <span>Stock Global</span>
                 </div>
@@ -127,19 +127,19 @@ function MovementModal({
                           onClick={() => onSelect(i)}
                           className={`w-full text-left px-3 py-2.5 rounded-lg border transition-all duration-200 group
                                    ${active
-                              ? "bg-white border-blue-500 shadow-md ring-1 ring-blue-500/20 z-10"
-                              : "bg-transparent border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm"
+                              ? "bg-white dark:bg-slate-800 border-blue-500 shadow-md ring-1 ring-blue-500/20 z-10"
+                              : "bg-transparent border-transparent hover:bg-white dark:hover:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm"
                             }
-                                   ${isInactive ? "opacity-60 bg-slate-50" : ""}
+                                   ${isInactive ? "opacity-60 bg-slate-50 dark:bg-slate-900" : ""}
                                  `}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <p className={`text-sm font-medium ${active ? "text-blue-700" : isInactive ? "text-slate-500 line-through" : "text-slate-700 group-hover:text-slate-900"}`}>
+                              <p className={`text-sm font-medium ${active ? "text-blue-700 dark:text-blue-400" : isInactive ? "text-slate-500 line-through" : "text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100"}`}>
                                 {i.nombre}
                               </p>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
+                                <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono">
                                   {i.codigo}
                                 </span>
                                 {isInactive && <span className="text-[9px] text-slate-400">(Inactivo)</span>}
@@ -161,9 +161,9 @@ function MovementModal({
             </div>
 
             {/* Panel Derecho: Formulario */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 flex flex-col justify-between h-[420px]">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50 p-5 flex flex-col justify-between h-[420px]">
               <div>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">
+                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">
                   Detalle del Movimiento
                 </h3>
 
@@ -175,13 +175,13 @@ function MovementModal({
                 ) : (
                   <div className="space-y-4 animate-fadeIn">
                     {/* Insumo seleccionado preview */}
-                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${isEntrada ? "bg-blue-50 text-blue-600" : "bg-rose-50 text-rose-600"}`}>
+                    <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${isEntrada ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"}`}>
                         {isEntrada ? "⬇" : "⬆"}
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs text-slate-500 font-medium">Insumo seleccionado</p>
-                        <p className="text-sm font-bold text-slate-900 line-clamp-1">{selected.nombre}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Insumo seleccionado</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1">{selected.nombre}</p>
                       </div>
                     </div>
 
@@ -192,7 +192,7 @@ function MovementModal({
                           name="tercero_id"
                           value={form.tercero_id}
                           onChange={onFormChange}
-                          className="w-full bg-white rounded-md border border-slate-300 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow shadow-sm"
+                          className="w-full bg-white dark:bg-slate-800 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow shadow-sm dark:text-slate-200"
                           required
                         >
                           <option value="">Selecciona...</option>
@@ -207,7 +207,7 @@ function MovementModal({
                           name="bodega_id"
                           value={form.bodega_id}
                           onChange={onFormChange}
-                          className="w-full bg-white rounded-md border border-slate-300 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow shadow-sm"
+                          className="w-full bg-white dark:bg-slate-800 rounded-md border border-slate-300 dark:border-slate-700 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow shadow-sm dark:text-slate-200"
                           required
                         >
                           <option value="">Selecciona...</option>
@@ -266,7 +266,7 @@ function MovementModal({
                   type="button"
                   onClick={onClose}
                   disabled={loading}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-200/50 hover:text-slate-700 transition-colors"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -1008,19 +1008,19 @@ export default function InventoryPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <h1 className="text-3xl font-semibold text-slate-900 mb-6">Inventario de Insumos</h1>
+      <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100 mb-6">Inventario de Insumos</h1>
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
         <div className="flex gap-3">
           <button
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white border border-slate-200 text-blue-600 text-sm font-semibold shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400 text-sm font-semibold shadow-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition-all font-sans"
             onClick={() => openMovementModal("entrada")}
           >
             <span className="text-lg leading-none">⬇</span>
             Registrar Entrada
           </button>
           <button
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white border border-slate-200 text-rose-600 text-sm font-semibold shadow-sm hover:bg-rose-50 hover:border-rose-300 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-rose-600 dark:text-rose-400 text-sm font-semibold shadow-sm hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-300 dark:hover:border-rose-700 transition-all"
             onClick={() => openMovementModal("salida")}
           >
             <span className="text-lg leading-none">⬆</span>
@@ -1029,11 +1029,11 @@ export default function InventoryPage() {
         </div>
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="flex items-center w-full md:w-72 bg-white rounded-md border border-slate-200 px-3 py-2 text-sm shadow-sm">
+          <div className="flex items-center w-full md:w-72 bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm shadow-sm">
             <span className="mr-2 text-slate-400 text-sm">🔍</span>
             <input
               type="text"
-              className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+              className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
               placeholder="Buscar insumos (en esta página)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -1055,7 +1055,7 @@ export default function InventoryPage() {
         <select
           value={bodegaFiltro}
           onChange={(e) => setBodegaFiltro(e.target.value)}
-          className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-indigo-500"
         >
           <option value="todos">Todas las bodegas</option>
           {bodegasOptions.map((b) => (
@@ -1068,7 +1068,7 @@ export default function InventoryPage() {
         <select
           value={proveedorFiltro}
           onChange={(e) => setProveedorFiltro(e.target.value)}
-          className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-indigo-500"
         >
           <option value="todos">Todos los proveedores</option>
           {proveedoresOptions.map((p) => (
@@ -1081,7 +1081,7 @@ export default function InventoryPage() {
         <select
           value={terceroFiltro}
           onChange={(e) => setTerceroFiltro(e.target.value)}
-          className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-indigo-500"
         >
           <option value="todos">Todos los terceros</option>
           {tercerosOptions.map((t) => (
@@ -1091,31 +1091,31 @@ export default function InventoryPage() {
           ))}
         </select>
 
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1">
-          <span className="text-[10px] text-slate-500 uppercase font-semibold">Precio</span>
+        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1">
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Precio</span>
           <CurrencyInput
             placeholder="Min"
             value={precioMin}
             onChange={(e) => setPrecioMin(e.target.value)}
-            className="w-20 outline-none text-xs text-slate-700 placeholder:text-slate-400 border-r border-slate-100 pr-1 text-right"
+            className="w-20 bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 border-r border-slate-100 dark:border-slate-800 pr-1 text-right"
           />
           <CurrencyInput
             placeholder="Max"
             value={precioMax}
             onChange={(e) => setPrecioMax(e.target.value)}
-            className="w-20 outline-none text-xs text-slate-700 placeholder:text-slate-400 pl-1 text-right"
+            className="w-20 bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 pl-1 text-right"
           />
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 md:items-center ml-auto">
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 shadow-sm">
             <span className="text-slate-400 text-sm">🔍</span>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar insumo..."
-              className="bg-transparent outline-none text-xs text-slate-700 placeholder:text-slate-400 w-44 lg:w-60"
+              className="bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 w-44 lg:w-60"
             />
           </div>
 
@@ -1133,7 +1133,7 @@ export default function InventoryPage() {
             type="button"
             disabled={!insumosPrev || loading}
             onClick={goPrevPage}
-            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 dark:text-slate-300 font-medium transition-colors"
           >
             ← Anterior
           </button>
@@ -1141,22 +1141,22 @@ export default function InventoryPage() {
             type="button"
             disabled={!insumosNext || loading}
             onClick={goNextPage}
-            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 dark:text-slate-300 font-medium transition-colors"
           >
             Siguiente →
           </button>
         </div>
       </div>
 
-      <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         {loading && <div className="p-6 text-sm text-slate-600">Cargando datos...</div>}
         {error && !loading && <div className="p-6 text-sm text-red-600">{error}</div>}
 
         {!loading && !error && (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                   <th className="px-4 py-3 text-left">Código</th>
                   <th className="px-4 py-3 text-left">Nombre</th>
                   <th className="px-4 py-3 text-left">Proveedor</th>
@@ -1186,59 +1186,59 @@ export default function InventoryPage() {
                   return (
                     <tr
                       key={pk}
-                      className={`border-b border-slate-100 transition-colors ${isInactive
-                        ? "bg-slate-100/60 text-slate-400 hover:bg-slate-100"
-                        : "hover:bg-slate-50/70"
+                      className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${isInactive
+                        ? "bg-slate-100/60 dark:bg-slate-800/60 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
                         }`}
                     >
                       <td className="px-4 py-3 font-medium text-xs">
-                        <span className={isInactive ? "text-slate-500 line-through decoration-slate-300" : "text-slate-800"}>
+                        <span className={isInactive ? "text-slate-500 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-800 dark:text-slate-200"}>
                           {pk}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <p className={`font-medium ${isInactive ? "text-slate-600" : "text-slate-800"}`}>{i.nombre}</p>
+                        <p className={`font-medium ${isInactive ? "text-slate-600 dark:text-slate-400" : "text-slate-800 dark:text-slate-200"}`}>{i.nombre}</p>
                         {i.referencia && i.referencia !== pk && (
                           <p className="text-[10px] text-slate-400">Ref: {i.referencia}</p>
                         )}
-                        {isInactive && <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded border border-slate-300 text-slate-500 font-medium">Inactivo</span>}
+                        {isInactive && <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-medium">Inactivo</span>}
                       </td>
 
-                      <td className="px-4 py-3 text-xs text-slate-600">
-                        {i.proveedor?.nombre || <span className="text-slate-300">—</span>}
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
+                        {i.proveedor?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}
                       </td>
 
-                      <td className="px-4 py-3 text-xs text-slate-600">
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
                         <div className="flex flex-col">
-                          <span>{i.bodega?.nombre || <span className="text-slate-300">—</span>}</span>
-                          <span className="text-[10px] text-slate-400">
-                            {i.tercero?.nombre || <span className="text-slate-300">—</span>}
+                          <span>{i.bodega?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                            {i.tercero?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}
                           </span>
                         </div>
                       </td>
 
                       <td className="px-4 py-3">
                         {isInactive ? (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border border-slate-200 bg-slate-100 text-slate-500">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                             Inactivo
                           </div>
                         ) : (
-                          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${estado.colorClass} border-transparent bg-white shadow-sm ring-1 ring-slate-100`}>
+                          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${estado.colorClass} border-transparent bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
                             {estado.label}
                           </div>
                         )}
                       </td>
 
-                      <td className={`px-4 py-3 text-right font-medium tabular-nums ${isInactive ? "text-slate-500" : "text-slate-900"}`}>
+                      <td className={`px-4 py-3 text-right font-medium tabular-nums ${isInactive ? "text-slate-500 dark:text-slate-500" : "text-slate-900 dark:text-slate-100"}`}>
                         {formatCurrency(stock)}
-                        <span className="ml-1 text-[10px] text-slate-400 font-normal">
+                        <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500 font-normal">
                           {i.unidad_medida || "u"}
                         </span>
                       </td>
 
-                      <td className="px-4 py-3 text-right text-slate-600 text-xs tabular-nums">
+                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400 text-xs tabular-nums">
                         {i.costo_unitario
                           ? `$${formatCurrency(i.costo_unitario)}`
                           : "—"}
@@ -1249,7 +1249,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => handleView(i)}
-                            className="p-1.5 rounded text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                             title="Ver detalle"
                           >
                             <Eye size={16} />
@@ -1257,7 +1257,7 @@ export default function InventoryPage() {
                           <button
                             type="button"
                             onClick={() => handleEdit(i)}
-                            className="p-1.5 rounded text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                            className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors"
                             title="Editar"
                           >
                             <Pencil size={16} />
@@ -1266,8 +1266,8 @@ export default function InventoryPage() {
                             type="button"
                             onClick={() => openDeleteModal(i)}
                             className={`p-1.5 rounded transition-colors ${isInactive
-                              ? "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50"
-                              : "text-slate-400 hover:text-red-600 hover:bg-red-50"
+                              ? "text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                              : "text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                               }`}
                             title={isInactive ? "Reactivar" : "Desactivar"}
                           >

@@ -80,9 +80,9 @@ async function postDatosAdicionalesWithFallback({ sku, payload }) {
 /* ===================== UI HELPERS ===================== */
 function Card({ title, children }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-      <div className="px-6 py-4 border-b border-slate-100">
-        <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
       </div>
       <div className="px-6 py-4">{children}</div>
     </div>
@@ -427,19 +427,19 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-        <div className="bg-white rounded-xl shadow-lg w-full max-w-5xl max-h-[95vh] overflow-y-auto">
-          <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-5xl max-h-[95vh] overflow-y-auto border border-white/10 dark:border-slate-800">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
             <div>
-              <h1 className="text-sm font-semibold text-slate-900">Nuevo producto</h1>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h1 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Nuevo producto</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Ingresa la información básica, precios y datos adicionales del nuevo producto.
               </p>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
-                className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 onClick={onClose}
                 disabled={savingAll}
               >
@@ -449,7 +449,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 type="submit"
                 form="product-modal-form"
                 disabled={savingAll || loadingDeps}
-                className="px-5 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70"
+                className="px-5 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70 transition-all active:scale-95"
               >
                 {savingAll ? "Guardando..." : "Guardar"}
               </button>
@@ -458,42 +458,42 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
 
           <form id="product-modal-form" onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
             {error && (
-              <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+              <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
                 {error}
               </div>
             )}
-            {loadingDeps && <div className="text-xs text-slate-500">Cargando terceros e impuestos…</div>}
+            {loadingDeps && <div className="text-xs text-slate-500 dark:text-slate-400">Cargando terceros e impuestos…</div>}
 
             <Card title="Básico">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Código SKU</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Código SKU</label>
                   <input
                     value={form.codigo_sku}
                     onChange={(e) => setField("codigo_sku", e.target.value)}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="SKU-0001"
                     required
                   />
                 </div>
 
                 <div className="space-y-1 md:col-span-2">
-                  <label className="text-xs font-medium text-slate-700">Nombre</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nombre</label>
                   <input
                     value={form.nombre}
                     onChange={(e) => setField("nombre", e.target.value)}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="Ej: Camisa blanca"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Unidad de medida</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Unidad de medida</label>
                   <select
                     value={form.unidad_medida}
                     onChange={(e) => setField("unidad_medida", e.target.value)}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   >
                     {DIAN_UOM.map((u) => (
                       <option key={u.code} value={u.code}>
@@ -504,21 +504,21 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 </div>
 
                 <div className="space-y-1 md:col-span-2">
-                  <label className="text-xs font-medium text-slate-700">Código de barras (opcional)</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Código de barras (opcional)</label>
                   <input
                     value={form.codigo_barras}
                     onChange={(e) => setField("codigo_barras", e.target.value)}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="7709998887776"
                   />
                 </div>
 
                 <div className="space-y-1 md:col-span-3">
-                  <label className="text-xs font-medium text-slate-700">Tercero (opcional)</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tercero (opcional)</label>
                   <select
                     value={form.tercero_id}
                     onChange={(e) => setField("tercero_id", e.target.value)}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   >
                     <option value="">—</option>
                     {tercerosOptions.map((t) => (
@@ -531,18 +531,18 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
               </div>
             </Card>
 
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-indigo-500 text-lg">%</span>
-                  <h2 className="text-sm font-semibold text-slate-900">Impuestos</h2>
+                  <span className="text-indigo-500 dark:text-indigo-400 text-lg">%</span>
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Impuestos</h2>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setShowInactiveTaxes(!showInactiveTaxes)}
-                    className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${showInactiveTaxes ? "bg-slate-100 border-slate-300 text-slate-700" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`}
+                    className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${showInactiveTaxes ? "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
                   >
                     {showInactiveTaxes ? "Ocultar inactivos" : "Mostrar inactivos"}
                   </button>
@@ -561,7 +561,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
 
               <div className="px-6 py-4">
                 {impuestosOptions.length === 0 ? (
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {showInactiveTaxes ? "No hay impuestos registrados." : "No hay impuestos activos."}
                   </div>
                 ) : (
@@ -571,7 +571,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                       return (
                         <div
                           key={imp.id}
-                          className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs transition-colors ${!imp.es_activo ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"}`}
+                          className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs transition-colors ${!imp.es_activo ? "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-600" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"}`}
                         >
                           <label className="flex items-center gap-2 cursor-pointer flex-1 py-1">
                             <input
@@ -590,7 +590,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                                 setEditingImpuesto(imp.original);
                                 setIsImpuestoModalOpen(true);
                               }}
-                              className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
+                              className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
                               title="Editar"
                             >
                               ✏️
@@ -598,7 +598,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                             <button
                               type="button"
                               onClick={() => handleToggleImpuestoActive(imp)}
-                              className={`p-1.5 rounded-md transition-colors ${imp.es_activo ? "text-red-400 hover:bg-red-50" : "text-emerald-500 hover:bg-emerald-50"}`}
+                              className={`p-1.5 rounded-md transition-colors ${imp.es_activo ? "text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" : "text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"}`}
                               title={imp.es_activo ? "Desactivar" : "Reactivar"}
                             >
                               {imp.es_activo ? "🗑️" : "🔄"}
@@ -610,17 +610,17 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                   </div>
                 )}
 
-                <p className="mt-3 text-[11px] text-slate-400">
+                <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500">
                   Puedes dejarlo vacío si el producto no aplica impuestos.
                 </p>
               </div>
             </section>
 
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-emerald-600 text-lg">$</span>
-                  <h2 className="text-sm font-semibold text-slate-900">Precios</h2>
+                  <span className="text-emerald-600 dark:text-emerald-400 text-lg">$</span>
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Precios</h2>
                 </div>
                 <button
                   type="button"
@@ -635,27 +635,27 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                 {form.precios.map((p, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
                     <div className="md:col-span-5 space-y-1">
-                      <label className="text-[11px] text-slate-500">Nombre</label>
+                      <label className="text-[11px] text-slate-500 dark:text-slate-400">Nombre</label>
                       <input
                         value={p.nombre}
                         onChange={(e) => updatePrecio(idx, { nombre: e.target.value })}
-                        className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                         placeholder="Ej: Precio base"
                       />
                     </div>
 
                     <div className="md:col-span-4 space-y-1">
-                      <label className="text-[11px] text-slate-500">Valor</label>
+                      <label className="text-[11px] text-slate-500 dark:text-slate-400">Valor</label>
                       <CurrencyInput
                         value={p.valor}
                         onChange={(e) => updatePrecio(idx, { valor: e.target.value })}
-                        className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                         placeholder="60.000"
                       />
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="flex items-center gap-2 text-xs text-slate-700">
+                      <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
                         <input
                           type="checkbox"
                           checked={!!p.es_descuento}
@@ -669,7 +669,7 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                       <button
                         type="button"
                         onClick={() => removePrecio(idx)}
-                        className="px-3 py-2 rounded-md text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        className="px-3 py-2 rounded-md text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 transition-colors"
                         disabled={form.precios.length === 1}
                         title="Eliminar"
                       >
@@ -679,36 +679,36 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
                   </div>
                 ))}
 
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
                   Define los diferentes niveles de precio o descuentos aplicables.
                 </p>
               </div>
             </section>
 
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-                <span className="text-slate-700 text-lg">🧾</span>
-                <h2 className="text-sm font-semibold text-slate-900">Datos adicionales (opcional)</h2>
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                <span className="text-slate-700 dark:text-slate-300 text-lg">🧾</span>
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Datos adicionales (opcional)</h2>
               </div>
 
               <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Referencia</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Referencia</label>
                   <input
                     type="text"
                     value={form.datos_adicionales.referencia}
                     onChange={(e) => updateDatos({ referencia: e.target.value })}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="Ej: CAM-BLA-ML"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Unidad</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Unidad</label>
                   <select
                     value={form.datos_adicionales.unidad}
                     onChange={(e) => updateDatos({ unidad: e.target.value })}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   >
                     {DIAN_UOM.map((u) => (
                       <option key={u.code} value={u.code}>
@@ -721,60 +721,60 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
 
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Stock mínimo</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stock mínimo</label>
                   <CurrencyInput
                     value={form.datos_adicionales.stock_minimo}
                     onChange={(e) => updateDatos({ stock_minimo: e.target.value })}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="0"
                   />
                 </div>
 
                 <div className="space-y-1 md:col-span-3">
-                  <label className="text-xs font-medium text-slate-700">Descripción</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Descripción</label>
                   <input
                     type="text"
                     value={form.datos_adicionales.descripcion}
                     onChange={(e) => updateDatos({ descripcion: e.target.value })}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="Ej: Camisa blanca formal"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Marca</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Marca</label>
                   <input
                     type="text"
                     value={form.datos_adicionales.marca}
                     onChange={(e) => updateDatos({ marca: e.target.value })}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="Marca X"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Modelo</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Modelo</label>
                   <input
                     type="text"
                     value={form.datos_adicionales.modelo}
                     onChange={(e) => updateDatos({ modelo: e.target.value })}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="ML-2025"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Código arancelario</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Código arancelario</label>
                   <input
                     type="text"
                     value={form.datos_adicionales.codigo_arancelario}
                     onChange={(e) => updateDatos({ codigo_arancelario: e.target.value })}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     placeholder="6105.10.00"
                   />
                 </div>
 
-                <p className="text-[11px] text-slate-400 md:col-span-3">
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 md:col-span-3">
                   Información complementaria para la gestión de inventario y aduanas.
                 </p>
               </div>
@@ -866,39 +866,39 @@ function ImpuestoModal({ isOpen, onClose, onCreated, impuesto = null }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">{isEdit ? "Editar impuesto" : "Crear impuesto"}</h2>
-          <button className="text-slate-400 hover:text-slate-600" onClick={onClose} disabled={saving}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-md border border-white/10 dark:border-slate-800">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{isEdit ? "Editar impuesto" : "Crear impuesto"}</h2>
+          <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={onClose} disabled={saving}>
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-3">
           {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+            <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
               {error}
             </div>
           )}
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Nombre</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nombre</label>
             <input
               value={form.nombre}
               onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="Ej: IVA 19%"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Valor (%)</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Valor (%)</label>
             <CurrencyInput
               value={form.valor}
               onChange={(e) => setForm((p) => ({ ...p, valor: e.target.value }))}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="Ej: 19.00"
             />
           </div>
@@ -908,16 +908,16 @@ function ImpuestoModal({ isOpen, onClose, onCreated, impuesto = null }) {
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-100"
+              className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70"
+              className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70 transition-all active:scale-95"
             >
-              {saving ? "Creando..." : "Crear"}
+              {saving ? (isEdit ? "Actualizando..." : "Creando...") : (isEdit ? "Actualizar" : "Crear")}
             </button>
           </div>
         </form>
@@ -929,9 +929,9 @@ function ImpuestoModal({ isOpen, onClose, onCreated, impuesto = null }) {
 /* ===================== MODAL: PRODUCTO GUARDADO ===================== */
 function Field({ label, value }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-      <p className="text-[11px] text-slate-500">{label}</p>
-      <p className="text-sm font-medium text-slate-900 break-words">{value}</p>
+    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
+      <p className="text-[11px] text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 break-words">{value}</p>
     </div>
   );
 }
@@ -942,11 +942,11 @@ function ProductSavedModal({ isOpen, product, onClose, onCloseAll }) {
   const da = product?.datos_adicionales || null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">Producto creado ✅</h2>
-          <button className="text-slate-400 hover:text-slate-600" onClick={onClose}>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-white/10 dark:border-slate-800">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Producto creado ✅</h2>
+          <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={onClose}>
             ✕
           </button>
         </div>
@@ -962,7 +962,7 @@ function ProductSavedModal({ isOpen, product, onClose, onCloseAll }) {
 
           <Card title="Datos adicionales">
             {!da ? (
-              <div className="text-xs text-slate-500">No se registraron datos adicionales.</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">No se registraron datos adicionales.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Field label="Referencia" value={da.referencia || "—"} />
@@ -981,7 +981,7 @@ function ProductSavedModal({ isOpen, product, onClose, onCloseAll }) {
 
           <div className="flex justify-end gap-2">
             <button
-              className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               onClick={() => {
                 onClose();
                 onCloseAll?.();

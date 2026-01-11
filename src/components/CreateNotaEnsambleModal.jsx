@@ -12,6 +12,13 @@ export default function CreateNotaEnsambleModal({
   mode = "create",
   notaId = null,
 }) {
+  const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
+  const num = (n) => nf.format(Number(n || 0));
+  const money = (v) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "—";
+    return `$${formatCurrency(n)}`;
+  };
   // catálogos
   const [productos, setProductos] = useState([]);
   const [bodegas, setBodegas] = useState([]);
@@ -337,14 +344,14 @@ export default function CreateNotaEnsambleModal({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto">
-        <div className="no-print px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+    <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm transition-all animate-fadeIn">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto border border-white/10 dark:border-slate-800">
+        <div className="no-print px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 transition-colors">
           <div>
-            <h1 className="text-sm font-semibold text-slate-900">
+            <h1 className="text-sm font-semibold text-slate-900 dark:text-slate-100 italic">
               {mode === "edit" ? "Editar Nota de Ensamble" : "Nueva Nota de Ensamble"}
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Cabecera + tallas/cantidades + insumos manuales (por unidad).
             </p>
           </div>
@@ -352,7 +359,7 @@ export default function CreateNotaEnsambleModal({
           <div className="flex gap-3">
             <button
               type="button"
-              className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
               onClick={onClose}
               disabled={saving}
             >
@@ -364,7 +371,7 @@ export default function CreateNotaEnsambleModal({
                 type="submit"
                 form="nota-ensamble-form"
                 disabled={saving}
-                className="px-5 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70"
+                className="px-5 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70 transition-all active:scale-95 shadow-blue-500/20"
               >
                 {saving ? "Guardando..." : "Guardar"}
               </button>
@@ -402,14 +409,16 @@ export default function CreateNotaEnsambleModal({
         ) : (
           <form id="nota-ensamble-form" onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
             {(error || success) && (
-              <div className="space-y-2">
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                 {error && (
-                  <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700 whitespace-pre-line">
+                  <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 px-4 py-3 text-xs text-red-700 dark:text-red-400 whitespace-pre-line flex items-start gap-2">
+                    <span className="flex-shrink-0">⚠️</span>
                     {error}
                   </div>
                 )}
                 {success && (
-                  <div className="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-3 text-xs text-emerald-700">
+                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 px-4 py-3 text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2">
+                    <span className="flex-shrink-0">✅</span>
                     {success}
                   </div>
                 )}
@@ -417,22 +426,27 @@ export default function CreateNotaEnsambleModal({
             )}
 
             {(loading || loadingNota) && (
-              <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+              <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-4 py-3 text-xs text-slate-600 dark:text-slate-400 animate-pulse">
                 Cargando…
               </div>
             )}
 
             {/* Producto */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-semibold text-slate-900">Producto</h2>
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Producto
+                </h2>
               </div>
 
-              <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Seleccionar producto</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                    Seleccionar producto
+                  </label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all disabled:bg-slate-50 dark:disabled:bg-slate-800/50"
                     value={productoId}
                     onChange={(e) => setProductoId(e.target.value)}
                     disabled={loading || loadingNota}
@@ -446,27 +460,27 @@ export default function CreateNotaEnsambleModal({
                   </select>
                 </div>
 
-                <div className="rounded-lg border border-slate-200 p-4">
-                  <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 p-4">
+                  <div className="grid grid-cols-2 gap-4 text-xs">
                     <div>
-                      <div className="text-[11px] text-slate-500">SKU</div>
-                      <div className="font-semibold">{productoSeleccionado?.codigo_sku || "—"}</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">SKU</div>
+                      <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{productoSeleccionado?.codigo_sku || "—"}</div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-slate-500">Referencia</div>
-                      <div className="font-semibold">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Referencia</div>
+                      <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
                         {productoSeleccionado?.datos_adicionales?.referencia ||
                           productoSeleccionado?.codigo_sku ||
                           "—"}
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <div className="text-[11px] text-slate-500">Nombre</div>
-                      <div className="font-semibold">{productoSeleccionado?.nombre || "—"}</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Nombre</div>
+                      <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{productoSeleccionado?.nombre || "—"}</div>
                     </div>
                     <div className="col-span-2">
-                      <div className="text-[11px] text-slate-500">Descripción</div>
-                      <div className="font-semibold">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Descripción</div>
+                      <div className="leading-relaxed text-slate-600 dark:text-slate-400 mt-0.5">
                         {productoSeleccionado?.datos_adicionales?.descripcion || "—"}
                       </div>
                     </div>
@@ -476,16 +490,21 @@ export default function CreateNotaEnsambleModal({
             </section>
 
             {/* Datos nota */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-semibold text-slate-900">Datos de la Nota</h2>
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  Datos de la Nota
+                </h2>
               </div>
 
-              <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Bodega</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                    Bodega
+                  </label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all disabled:bg-slate-50 dark:disabled:bg-slate-800/50"
                     value={bodegaDestinoId}
                     onChange={(e) => setBodegaDestinoId(e.target.value)}
                     disabled={loading || loadingNota}
@@ -500,10 +519,12 @@ export default function CreateNotaEnsambleModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Fecha</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                    Fecha
+                  </label>
                   <input
                     type="date"
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                     value={fechaElaboracion}
                     onChange={(e) => setFechaElaboracion(e.target.value)}
                     disabled={loading || loadingNota}
@@ -511,9 +532,11 @@ export default function CreateNotaEnsambleModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Tercero (opcional)</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                    Tercero (opcional)
+                  </label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                     value={terceroId}
                     onChange={(e) => setTerceroId(e.target.value)}
                     disabled={loading || loadingNota}
@@ -528,9 +551,11 @@ export default function CreateNotaEnsambleModal({
                 </div>
 
                 <div className="md:col-span-3">
-                  <label className="text-xs font-medium text-slate-700">Observaciones</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                    Observaciones
+                  </label>
                   <input
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
                     value={observaciones}
                     onChange={(e) => setObservaciones(e.target.value)}
                     placeholder="Opcional…"
@@ -541,13 +566,16 @@ export default function CreateNotaEnsambleModal({
             </section>
 
             {/* Detalles */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">Productos terminados (tallas)</h2>
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Productos terminados (tallas)
+                </h2>
                 <button
                   type="button"
                   onClick={addDetalleLine}
-                  className="px-3 py-2 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800"
+                  className="px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-white transition-all shadow-sm active:scale-95"
                   disabled={loading || loadingNota}
                 >
                   + Agregar talla
@@ -559,12 +587,12 @@ export default function CreateNotaEnsambleModal({
                   const talla = getTallaByNombre(l.talla_nombre);
 
                   return (
-                    <div key={l.id} className="rounded-lg border border-slate-200 p-3">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                    <div key={l.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-slate-50/30 dark:bg-slate-800/20 transition-all hover:border-slate-300 dark:hover:border-slate-700">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                         <div className="md:col-span-6">
-                          <label className="text-xs font-medium text-slate-700">Talla</label>
+                          <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Talla</label>
                           <select
-                            className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all"
                             value={l.talla_nombre}
                             onChange={(e) => updateDetalleLine(l.id, "talla_nombre", e.target.value)}
                             disabled={loading || loadingNota}
@@ -579,9 +607,9 @@ export default function CreateNotaEnsambleModal({
                         </div>
 
                         <div className="md:col-span-5">
-                          <label className="text-xs font-medium text-slate-700">Cantidad</label>
+                          <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider text-right">Cantidad</label>
                           <input
-                            className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right"
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-right font-medium tabular-nums"
                             value={l.cantidad}
                             onChange={(e) => updateDetalleLine(l.id, "cantidad", e.target.value)}
                             disabled={loading || loadingNota}
@@ -592,7 +620,7 @@ export default function CreateNotaEnsambleModal({
                           <button
                             type="button"
                             onClick={() => removeDetalleLine(l.id)}
-                            className="px-3 py-2 rounded-md border border-red-200 bg-red-50 text-xs text-red-700 hover:bg-red-100"
+                            className="w-9 h-9 flex items-center justify-center rounded-lg border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all"
                             disabled={detalleLines.length === 1}
                             title="Eliminar línea"
                           >
@@ -601,18 +629,18 @@ export default function CreateNotaEnsambleModal({
                         </div>
                       </div>
 
-                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-700">
-                        <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                          <div className="text-[11px] text-slate-500">Producto</div>
-                          <div className="font-semibold">
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div className="rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 shadow-sm">
+                          <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">Producto</div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-200 mt-1">
                             {productoSeleccionado?.codigo_sku
                               ? `${productoSeleccionado.codigo_sku} — ${productoSeleccionado.nombre || ""}`
                               : "—"}
                           </div>
                         </div>
 
-                        <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                          <div className="text-[11px] text-slate-500">Talla</div>
+                        <div className="rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 shadow-sm">
+                          <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">Talla</div>
                           <div className="font-semibold">{talla?.nombre || "—"}</div>
                         </div>
                       </div>
@@ -620,21 +648,24 @@ export default function CreateNotaEnsambleModal({
                   );
                 })}
 
-                <div className="text-xs text-slate-600">
+                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                   Total productos a ensamblar:{" "}
-                  <b className="text-slate-900">{num(totalCantidadProductos)}</b>
+                  <span className="text-slate-900 dark:text-slate-100 font-bold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded">{num(totalCantidadProductos)}</span>
                 </div>
               </div>
             </section>
 
             {/* Insumos manuales */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">Insumos manuales (por unidad)</h2>
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                  Insumos manuales (por unidad)
+                </h2>
                 <button
                   type="button"
                   onClick={addInsumoLine}
-                  className="px-3 py-2 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800"
+                  className="px-4 py-2 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-white transition-all shadow-sm active:scale-95"
                   disabled={loading || loadingNota}
                 >
                   + Agregar insumo
@@ -651,12 +682,12 @@ export default function CreateNotaEnsambleModal({
                   const totalCantidadNota = q * Number(totalCantidadProductos || 0);
 
                   return (
-                    <div key={l.id} className="rounded-lg border border-slate-200 p-3">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                    <div key={l.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-slate-50/30 dark:bg-slate-800/20 transition-all hover:border-slate-300 dark:hover:border-slate-700">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                         <div className="md:col-span-6">
-                          <label className="text-xs font-medium text-slate-700">Insumo</label>
+                          <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">Insumo</label>
                           <select
-                            className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
                             value={l.insumo_codigo}
                             onChange={(e) => updateInsumoLine(l.id, "insumo_codigo", e.target.value)}
                             disabled={loading || loadingNota}
@@ -664,25 +695,25 @@ export default function CreateNotaEnsambleModal({
                             <option value="">Seleccionar…</option>
                             {insumosAgrupados.map((i) => (
                               <option key={i.codigo} value={i.codigo}>
-                                {i.codigo} — {i.nombre} (Stock Global: {num(i.stock_global)})
+                                {i.codigo} — {i.nombre} (Stock: {num(i.stock_global)})
                               </option>
                             ))}
                           </select>
                         </div>
 
                         <div className="md:col-span-2">
-                          <label className="text-xs font-medium text-slate-700">Cant. Total Nota</label>
+                          <label className="block text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 mb-1 uppercase tracking-wider">Cant. Total Nota</label>
                           <input
-                            className="mt-1 w-full rounded-md border border-indigo-200 px-3 py-2 text-sm bg-indigo-50 font-bold text-indigo-700"
+                            className="w-full rounded-lg border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 text-sm font-bold text-indigo-700 dark:text-indigo-400 outline-none transition-all tabular-nums"
                             value={num(totalCantidadNota)}
                             readOnly
                           />
                         </div>
 
                         <div className="md:col-span-3">
-                          <label className="text-xs font-medium text-slate-700">Cant. requerida</label>
+                          <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider text-right">Cant. requerida</label>
                           <input
-                            className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right"
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-right font-medium tabular-nums"
                             value={l.cantidad_req}
                             onChange={(e) => updateInsumoLine(l.id, "cantidad_req", e.target.value)}
                             disabled={loading || loadingNota}
@@ -693,37 +724,37 @@ export default function CreateNotaEnsambleModal({
                           <button
                             type="button"
                             onClick={() => removeInsumoLine(l.id)}
-                            className="px-3 py-2 rounded-md border border-red-200 bg-red-50 text-xs text-red-700 hover:bg-red-100"
+                            className="w-9 h-9 flex items-center justify-center rounded-lg border border-red-200 dark:border-red-800/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all"
                             disabled={insumoLines.length === 1}
                             title="Eliminar insumo"
                           >
                             ✕
                           </button>
                         </div>
+                      </div>
 
-                        <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                          <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                            <div className="text-[11px] text-slate-500">Global Stock</div>
-                            <div className="font-semibold text-slate-900">
-                              {num(insGroup?.stock_global)} {insGroup?.unidad_medida || ""}
-                            </div>
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+                        <div className="rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 shadow-sm">
+                          <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">Stock Global</div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-200 mt-1">
+                            {num(insGroup?.stock_global)} {insGroup?.unidad_medida || ""}
                           </div>
+                        </div>
 
-                          <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                            <div className="text-[11px] text-slate-500">Referencia</div>
-                            <div className="font-semibold text-slate-900">{insGroup?.referencia || "—"}</div>
-                          </div>
+                        <div className="rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 shadow-sm">
+                          <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">Referencia</div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-200 mt-1">{insGroup?.referencia || "—"}</div>
+                        </div>
 
-                          <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                            <div className="text-[11px] text-slate-500">Costo unitario</div>
-                            <div className="font-semibold text-slate-900">{money(cu)}</div>
-                          </div>
+                        <div className="rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 shadow-sm">
+                          <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">Costo unitario</div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-200 mt-1">{money(cu)}</div>
+                        </div>
 
-                          <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                            <div className="text-[11px] text-slate-500">Total (por unidad / por nota)</div>
-                            <div className="font-semibold text-slate-900">
-                              {money(totalUnit)} / {money(totalAll)}
-                            </div>
+                        <div className="rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 shadow-sm">
+                          <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase">Total (unidad / nota)</div>
+                          <div className="font-semibold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
+                            {money(totalUnit)} / {money(totalAll)}
                           </div>
                         </div>
                       </div>
@@ -734,33 +765,36 @@ export default function CreateNotaEnsambleModal({
             </section>
 
             {/* Informe de costos */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-semibold text-slate-900">Informe de costos</h2>
-                <p className="text-xs text-slate-500 mt-1">
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                  Informe de costos
+                </h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 ml-4">
                   Basado en insumos manuales (por unidad) × total de productos terminados.
                 </p>
               </div>
 
-              <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                  <div className="text-[11px] text-slate-500">Total productos</div>
-                  <div className="text-lg font-semibold text-slate-900">{num(totalCantidadProductos)}</div>
+              <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4 shadow-sm">
+                  <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total productos</div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1 tabular-nums">{num(totalCantidadProductos)}</div>
                 </div>
 
-                <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                  <div className="text-[11px] text-slate-500">Costo insumos por unidad</div>
-                  <div className="text-lg font-semibold text-slate-900">{money(costoInsumosUnitario)}</div>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4 shadow-sm">
+                  <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Costo por unidad</div>
+                  <div className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-1 tabular-nums">{money(costoInsumosUnitario)}</div>
                 </div>
 
-                <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                  <div className="text-[11px] text-slate-500">Costo total insumos (nota)</div>
-                  <div className="text-lg font-semibold text-slate-900">{money(costoInsumosTotal)}</div>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4 shadow-sm">
+                  <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Costo total insumos</div>
+                  <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-1 tabular-nums">{money(costoInsumosTotal)}</div>
                 </div>
 
-                <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                  <div className="text-[11px] text-slate-500">Costo promedio por producto</div>
-                  <div className="text-lg font-semibold text-slate-900">{money(costoPromedioPorProducto)}</div>
+                <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4 shadow-sm">
+                  <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Costo promedio</div>
+                  <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">{money(costoPromedioPorProducto)}</div>
                 </div>
               </div>
             </section>

@@ -24,12 +24,12 @@ function formatMaybeNumber(s, unit) {
 
 function Card({ title, right, children }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-      <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md">
+      <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-white dark:bg-slate-900 rounded-t-xl">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h2>
         </div>
-        {right ? <div className="text-xs text-slate-500">{right}</div> : null}
+        {right ? <div className="text-xs text-slate-500 dark:text-slate-400">{right}</div> : null}
       </div>
       <div className="px-5 py-4">{children}</div>
     </div>
@@ -39,15 +39,15 @@ function Card({ title, right, children }) {
 function KpiGrid({ kpis }) {
   const entries = Object.entries(kpis || {});
   if (entries.length === 0) {
-    return <div className="text-sm text-slate-500">Sin KPIs para este reporte.</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400">Sin KPIs para este reporte.</div>;
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
       {entries.map(([k, v]) => (
-        <div key={k} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold">{k.replaceAll("_", " ")}</p>
-          <p className="mt-1 text-lg font-semibold text-slate-900">{String(v)}</p>
+        <div key={k} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-bold">{k.replaceAll("_", " ")}</p>
+          <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{String(v)}</p>
         </div>
       ))}
     </div>
@@ -68,9 +68,9 @@ function ChartPreview({ chart }) {
 
   if (labels.length === 0 || series.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-        <div className="font-semibold text-slate-800">{chart.title || chart.id}</div>
-        <div className="text-xs text-slate-500 mt-1">Sin datos para graficar.</div>
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3 text-sm text-slate-600 dark:text-slate-400">
+        <div className="font-semibold text-slate-800 dark:text-slate-200">{chart.title || chart.id}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-500 mt-1">Sin datos para graficar.</div>
       </div>
     );
   }
@@ -79,14 +79,14 @@ function ChartPreview({ chart }) {
   const max = Math.min(labels.length, 12);
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-100">
+    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <div className="text-sm font-semibold text-slate-900">{chart.title || chart.id}</div>
-            <div className="text-xs text-slate-500">
-              tipo: <span className="font-mono">{chart.type}</span> • unidad:{" "}
-              <span className="font-mono">{unit || "—"}</span>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">{chart.title || chart.id}</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              tipo: <span className="font-mono text-blue-600 dark:text-blue-400">{chart.type}</span> • unidad:{" "}
+              <span className="font-mono text-emerald-600 dark:text-emerald-400">{unit || "—"}</span>
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@ function ChartPreview({ chart }) {
 
       <div className="overflow-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600 text-xs">
+          <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-xs">
             <tr>
               <th className="text-left px-4 py-2.5 font-semibold">Periodo / Label</th>
               {series.map((s) => (
@@ -104,12 +104,12 @@ function ChartPreview({ chart }) {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {Array.from({ length: max }).map((_, idx) => (
-              <tr key={labels[idx]} className="hover:bg-slate-50">
-                <td className="px-4 py-2.5 text-slate-700 whitespace-nowrap">{labels[idx]}</td>
+              <tr key={labels[idx]} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">{labels[idx]}</td>
                 {series.map((s, sidx) => (
-                  <td key={`${labels[idx]}-${sidx}`} className="px-4 py-2.5 text-slate-700">
+                  <td key={`${labels[idx]}-${sidx}`} className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
                     {formatMaybeNumber(s?.data?.[idx], unit)}
                   </td>
                 ))}
@@ -120,7 +120,7 @@ function ChartPreview({ chart }) {
       </div>
 
       {labels.length > max && (
-        <div className="px-4 py-2 text-[11px] text-slate-400 border-t border-slate-100">
+        <div className="px-4 py-2 text-[11px] text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
           Mostrando {max} de {labels.length} puntos.
         </div>
       )}
@@ -129,12 +129,12 @@ function ChartPreview({ chart }) {
 }
 
 function RowsTable({ rows }) {
-  if (!rows) return <div className="text-sm text-slate-500">Sin filas.</div>;
+  if (!rows) return <div className="text-sm text-slate-500 dark:text-slate-400">Sin filas.</div>;
 
   // Caso especial: rows es objeto con secciones (stock por bodega)
   if (!Array.isArray(rows) && typeof rows === "object") {
     const keys = Object.keys(rows);
-    if (keys.length === 0) return <div className="text-sm text-slate-500">Sin filas.</div>;
+    if (keys.length === 0) return <div className="text-sm text-slate-500 dark:text-slate-400">Sin filas.</div>;
 
     return (
       <div className="space-y-4">
@@ -148,17 +148,17 @@ function RowsTable({ rows }) {
   }
 
   if (!Array.isArray(rows) || rows.length === 0) {
-    return <div className="text-sm text-slate-500">Sin filas (rows vacío).</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400">Sin filas (rows vacío).</div>;
   }
 
   const columns = Object.keys(rows[0] || {});
-  if (columns.length === 0) return <div className="text-sm text-slate-500">Sin columnas.</div>;
+  if (columns.length === 0) return <div className="text-sm text-slate-500 dark:text-slate-400">Sin columnas.</div>;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
       <div className="overflow-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600 text-xs">
+          <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-xs">
             <tr>
               {columns.map((c) => (
                 <th key={c} className="text-left px-4 py-2.5 font-semibold">
@@ -167,11 +167,11 @@ function RowsTable({ rows }) {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {rows.map((r, idx) => (
-              <tr key={idx} className="hover:bg-slate-50">
+              <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 {columns.map((c) => (
-                  <td key={c} className="px-4 py-2.5 text-slate-700 whitespace-nowrap">
+                  <td key={c} className="px-4 py-2.5 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
                     {String(r?.[c] ?? "—")}
                   </td>
                 ))}
@@ -292,20 +292,20 @@ export default function ReportesPage() {
   const rows = payload?.rows || [];
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+      <div className="flex-1 p-6 lg:p-8 overflow-auto">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">Reportes</h1>
-              <p className="text-sm text-slate-500">
-                KPIs, series y tablas basadas en <span className="font-mono">/api/reportes/</span>.
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Reportes</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                KPIs, series y tablas basadas en <span className="font-mono text-blue-600 dark:text-blue-400">/api/reportes/</span>.
               </p>
             </div>
           </div>
 
           {/* Tabs (mismo look que tu app) */}
-          <div className="bg-white border border-slate-200 rounded-xl p-2 flex flex-col md:flex-row gap-2">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 flex flex-col md:flex-row gap-2 shadow-sm">
             {tabs.map((t) => (
               <button
                 key={t.id}
@@ -315,7 +315,7 @@ export default function ReportesPage() {
                   setError("");
                   setPayload(null);
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t.id ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === t.id ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md shadow-slate-200/50 dark:shadow-none" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
                   }`}
               >
                 {t.label}
@@ -328,39 +328,39 @@ export default function ReportesPage() {
             title="Filtros"
             right={
               active.hint ? (
-                <span className="text-[11px] text-slate-400">{active.hint}</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">{active.hint}</span>
               ) : (
-                <span className="text-[11px] text-slate-400">{active.endpoint}</span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">{active.endpoint}</span>
               )
             }
           >
             <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <div>
-                <label className="text-xs font-medium text-slate-700">Desde</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Desde</label>
                 <input
                   type="date"
                   value={fechaDesde}
                   onChange={(e) => setFechaDesde(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700">Hasta</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Hasta</label>
                 <input
                   type="date"
                   value={fechaHasta}
                   onChange={(e) => setFechaHasta(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700">Bodega</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Bodega</label>
                 <select
                   value={bodegaId}
                   onChange={(e) => setBodegaId(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm bg-white"
+                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">Todas</option>
                   {bodegas.map((b) => (
@@ -372,11 +372,11 @@ export default function ReportesPage() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700">Tercero</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tercero</label>
                 <select
                   value={terceroId}
                   onChange={(e) => setTerceroId(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm bg-white"
+                  className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">Todos</option>
                   {terceros.map((t) => (
@@ -389,25 +389,25 @@ export default function ReportesPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Top</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Top</label>
                   <input
                     type="number"
                     min="1"
                     value={top}
                     onChange={(e) => setTop(e.target.value)}
                     disabled={!canUseTop}
-                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm ${canUseTop ? "border-slate-200" : "border-slate-100 bg-slate-50 text-slate-400"
+                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${canUseTop ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500" : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-600"
                       }`}
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Group by</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Group by</label>
                   <select
                     value={groupBy}
                     onChange={(e) => setGroupBy(e.target.value)}
                     disabled={!canUseGroupBy}
-                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm ${canUseGroupBy ? "border-slate-200 bg-white" : "border-slate-100 bg-slate-50 text-slate-400"
+                    className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${canUseGroupBy ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-500" : "border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 text-slate-400 dark:text-slate-600"
                       }`}
                   >
                     <option value="dia">dia</option>
@@ -417,9 +417,9 @@ export default function ReportesPage() {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div className="text-[11px] text-slate-400">
-                URL: <span className="font-mono">{active.endpoint}{query ? `?${query}` : ""}</span>
+            <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div className="text-[11px] text-slate-400 dark:text-slate-500">
+                URL: <span className="font-mono text-blue-600 dark:text-blue-400">{active.endpoint}{query ? `?${query}` : ""}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -433,18 +433,23 @@ export default function ReportesPage() {
                     setTop("10");
                     setGroupBy("dia");
                   }}
-                  className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all"
                 >
-                  Limpiar
+                  Limpiar Filtros
                 </button>
 
                 <button
                   type="button"
                   onClick={fetchReport}
                   disabled={loading}
-                  className="px-5 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70"
+                  className="px-6 py-2 rounded-xl bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-200 dark:shadow-none hover:bg-blue-700 dark:hover:bg-blue-600 transition-all disabled:opacity-70 active:scale-[0.98]"
                 >
-                  {loading ? "Cargando..." : "Aplicar filtros"}
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Cargando...</span>
+                    </div>
+                  ) : "Aplicar Filtros"}
                 </button>
               </div>
             </div>
@@ -454,12 +459,13 @@ export default function ReportesPage() {
           {(error || loading) && (
             <div className="space-y-2">
               {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 whitespace-pre-wrap">
+                <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-sm text-red-700 dark:text-red-400 whitespace-pre-wrap">
                   {error}
                 </div>
               )}
               {loading && (
-                <div className="rounded-md bg-slate-100 border border-slate-200 px-4 py-3 text-sm text-slate-600">
+                <div className="rounded-md bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm text-slate-600 dark:text-slate-400 flex items-center gap-3">
+                  <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
                   Cargando reporte…
                 </div>
               )}
@@ -475,7 +481,7 @@ export default function ReportesPage() {
 
               <Card title="Gráficos">
                 {charts.length === 0 ? (
-                  <div className="text-sm text-slate-500">Sin charts (charts vacío).</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400 italic">Sin charts (charts vacío).</div>
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                     {charts.map((c) => (

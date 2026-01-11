@@ -673,23 +673,23 @@ export default function WarehousesPage() {
   }
 
   return (
-    <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
+    <div className="flex-1 p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 overflow-auto">
       <section className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">Bodegas</h1>
-            <p className="text-xs text-slate-500 mt-1">Administra las bodegas donde se almacenan insumos y productos.</p>
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Bodegas</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Administra las bodegas donde se almacenan insumos y productos.</p>
           </div>
 
           <div className="flex flex-col md:flex-row gap-3 md:items-center">
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 shadow-sm">
               <span className="text-slate-400 text-sm">🔍</span>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por código, nombre o ubicación..."
-                className="bg-transparent outline-none text-xs text-slate-700 placeholder:text-slate-400 w-56 md:w-72"
+                className="bg-transparent outline-none text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 w-56 md:w-72"
               />
             </div>
 
@@ -706,9 +706,9 @@ export default function WarehousesPage() {
 
         {/* Paginación */}
         <div className="flex items-center justify-between gap-3 px-1">
-          <div className="text-xs text-slate-500">
-            Total: <b>{count}</b> • Página <b>{page}</b>
-            <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+            <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -716,7 +716,7 @@ export default function WarehousesPage() {
               type="button"
               disabled={!prevUrl || loading}
               onClick={() => loadBodegas(Math.max(1, page - 1))}
-              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+              className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
               ← Anterior
             </button>
@@ -724,22 +724,22 @@ export default function WarehousesPage() {
               type="button"
               disabled={!nextUrl || loading}
               onClick={() => loadBodegas(page + 1)}
-              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+              className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
               Siguiente →
             </button>
           </div>
         </div>
 
-        <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-          {loading && <div className="p-6 text-sm text-slate-500">Cargando bodegas...</div>}
-          {error && !loading && <div className="p-6 text-sm text-red-600">{error}</div>}
+        <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+          {loading && <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando bodegas...</div>}
+          {error && !loading && <div className="p-6 text-sm text-red-600 dark:text-red-400">{error}</div>}
 
           {!loading && !error && (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
+                  <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     <th className="px-4 py-3 text-left">Código</th>
                     <th className="px-4 py-3 text-left">Nombre</th>
                     <th className="px-4 py-3 text-left hidden md:table-cell">Ubicación</th>
@@ -762,12 +762,12 @@ export default function WarehousesPage() {
                   {bodegas.map((b) => {
                     const isActive = b.es_activo !== false;
                     return (
-                      <tr key={b.id} className={`border-b border-slate-100 transition-colors ${!isActive ? "bg-slate-50/70" : "hover:bg-slate-50/80"}`} >
-                        <td className="px-4 py-3 text-sm font-medium text-slate-800 font-mono">{b.codigo}</td>
-                        <td className={`px-4 py-3 text-sm font-medium ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"}`}>
+                      <tr key={b.id} className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${!isActive ? "bg-slate-50/70 dark:bg-slate-800/20" : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"}`} >
+                        <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-200 font-mono">{b.codigo}</td>
+                        <td className={`px-4 py-3 text-sm font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-700 dark:text-slate-200"}`}>
                           {b.nombre}
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-600 hidden md:table-cell">{b.ubicacion || "—"}</td>
+                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 hidden md:table-cell">{b.ubicacion || "—"}</td>
                         <td className="px-4 py-3 text-xs">
                           {isActive ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
@@ -781,21 +781,21 @@ export default function WarehousesPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-right text-slate-700">{b.insumos_count ?? 0}</td>
-                        <td className="px-4 py-3 text-sm text-right text-slate-700">{b.productos_count ?? 0}</td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700 dark:text-slate-300">{b.insumos_count ?? 0}</td>
+                        <td className="px-4 py-3 text-sm text-right text-slate-700 dark:text-slate-300">{b.productos_count ?? 0}</td>
                         <td className="px-4 py-3 text-xs text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button
                               type="button"
                               onClick={() => openDetails(b)}
-                              className="px-2 py-1 rounded border border-slate-200 text-[11px] hover:bg-slate-50 bg-white"
+                              className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700 text-[11px] hover:bg-slate-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-colors"
                             >
                               Ver
                             </button>
                             <button
                               type="button"
                               onClick={() => openEdit(b)}
-                              className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors bg-white"
+                              className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors bg-white dark:bg-slate-900"
                               title="Editar"
                             >
                               <Pencil size={14} />
@@ -803,9 +803,9 @@ export default function WarehousesPage() {
                             <button
                               type="button"
                               onClick={() => openActionModal(b)}
-                              className={`p-1.5 rounded-md border transition-colors bg-white ${isActive
-                                ? "border-red-100 text-red-600 hover:bg-red-50"
-                                : "border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+                              className={`p-1.5 rounded-md border transition-colors bg-white dark:bg-slate-900 ${isActive
+                                ? "border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                : "border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                                 }`}
                               title={isActive ? "Desactivar" : "Reactivar"}
                             >
@@ -847,56 +847,56 @@ export default function WarehousesPage() {
 
       {/* Modal crear/editar bodega */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-40">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-40">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-md border border-slate-200 dark:border-slate-800">
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <h2 className="text-sm font-semibold text-slate-900 mb-2">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">
                 {editingId ? "Editar bodega" : "Nueva bodega"}
               </h2>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-medium text-slate-600">Código</label>
+                <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Código</label>
                 <input
                   type="text"
                   name="codigo"
                   value={form.codigo}
                   onChange={handleChange}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-medium text-slate-600">Nombre</label>
+                <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Nombre</label>
                 <input
                   type="text"
                   name="nombre"
                   value={form.nombre}
                   onChange={handleChange}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-medium text-slate-600">Ubicación</label>
+                <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Ubicación</label>
                 <input
                   type="text"
                   name="ubicacion"
                   value={form.ubicacion}
                   onChange={handleChange}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-medium text-slate-600">Descripción</label>
+                <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Descripción</label>
                 <textarea
                   name="descripcion"
                   value={form.descripcion}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"
+                  className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                 />
               </div>
 
@@ -906,7 +906,7 @@ export default function WarehousesPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-3 py-2 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  className="px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   disabled={saving}
                 >
                   Cancelar
@@ -926,37 +926,37 @@ export default function WarehousesPage() {
 
       {/* Modal contenido bodega */}
       {isDetailsOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
-          <div className="w-full max-w-6xl bg-white rounded-2xl shadow-xl max-h-[85vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-6xl bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-h-[85vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Contenido de bodega</h2>
-                <p className="text-xs text-slate-500">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Contenido de bodega</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {selectedBodega ? `${selectedBodega.codigo} — ${selectedBodega.nombre}` : ""}
                 </p>
-                {detailsError && <p className="text-xs text-red-600 mt-1">{detailsError}</p>}
+                {detailsError && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{detailsError}</p>}
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={openHistoryModal}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] bg-white hover:bg-slate-50"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   Historial traslados
                 </button>
 
-                <button type="button" onClick={closeDetails} className="text-slate-400 hover:text-slate-600 text-xl">
+                <button type="button" onClick={closeDetails} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors text-xl">
                   ×
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 overflow-auto">
+            <div className="flex-1 grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800 overflow-auto">
               {/* Insumos */}
               <div className="flex flex-col">
-                <div className="px-5 py-3 bg-white border-b border-slate-100">
-                  <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                <div className="px-5 py-3 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                     Insumos ({details.insumos.length})
                   </h3>
                 </div>
@@ -968,7 +968,7 @@ export default function WarehousesPage() {
                     <p className="text-xs text-slate-400">No hay insumos en esta bodega.</p>
                   ) : (
                     <table className="w-full text-xs">
-                      <thead className="text-[10px] text-slate-500 uppercase border-b border-slate-100">
+                      <thead className="text-[10px] text-slate-500 dark:text-slate-400 uppercase border-b border-slate-100 dark:border-slate-800">
                         <tr>
                           <th className="py-2 pr-2 text-left">Código</th>
                           <th className="py-2 pr-2 text-left">Nombre</th>
@@ -979,12 +979,12 @@ export default function WarehousesPage() {
                       </thead>
                       <tbody>
                         {details.insumos.map((i) => (
-                          <tr key={i.codigo} className="border-b border-slate-100 hover:bg-slate-50/60">
-                            <td className="py-2 pr-2 text-slate-800">{i.codigo}</td>
-                            <td className="py-2 pr-2 text-slate-800">{i.nombre}</td>
-                            <td className="py-2 pr-2 text-right tabular-nums">{num(i.stock_actual)}</td>
-                            <td className="py-2 pr-2 text-right tabular-nums">{money(i.costo_unitario)}</td>
-                            <td className="py-2 text-right tabular-nums font-medium">{money(i.valor_total)}</td>
+                          <tr key={i.codigo} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="py-2 pr-2 text-slate-800 dark:text-slate-300">{i.codigo}</td>
+                            <td className="py-2 pr-2 text-slate-800 dark:text-slate-300">{i.nombre}</td>
+                            <td className="py-2 pr-2 text-right tabular-nums dark:text-slate-300">{num(i.stock_actual)}</td>
+                            <td className="py-2 pr-2 text-right tabular-nums dark:text-slate-300">{money(i.costo_unitario)}</td>
+                            <td className="py-2 text-right tabular-nums font-medium dark:text-slate-100">{money(i.valor_total)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -995,8 +995,8 @@ export default function WarehousesPage() {
 
               {/* Productos */}
               <div className="flex flex-col">
-                <div className="px-5 py-3 bg-white border-b border-slate-100">
-                  <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                <div className="px-5 py-3 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                     Productos ({details.productos.length})
                   </h3>
                 </div>
@@ -1008,7 +1008,7 @@ export default function WarehousesPage() {
                     <p className="text-xs text-slate-400">No hay productos producidos en esta bodega.</p>
                   ) : (
                     <table className="w-full text-xs">
-                      <thead className="text-[10px] text-slate-500 uppercase border-b border-slate-100">
+                      <thead className="text-[10px] text-slate-500 dark:text-slate-400 uppercase border-b border-slate-100 dark:border-slate-800">
                         <tr>
                           <th className="py-2 pr-2 text-left">Código</th>
                           <th className="py-2 pr-2 text-left">Nombre</th>
@@ -1020,16 +1020,16 @@ export default function WarehousesPage() {
                         {details.productos
                           .filter(p => (Number(p.total_producido) || 0) > 0)
                           .map((p, idx) => (
-                            <tr key={`${p.codigo}-${idx}`} className="border-b border-slate-100 hover:bg-slate-50/60">
-                              <td className="py-2 pr-2 text-slate-800">{p.codigo}</td>
-                              <td className="py-2 pr-2 text-slate-800">{p.nombre}</td>
-                              <td className="py-2 pr-2 text-right tabular-nums font-medium">{num(p.total_producido)} u</td>
+                            <tr key={`${p.codigo}-${idx}`} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                              <td className="py-2 pr-2 text-slate-800 dark:text-slate-300">{p.codigo}</td>
+                              <td className="py-2 pr-2 text-slate-800 dark:text-slate-300">{p.nombre}</td>
+                              <td className="py-2 pr-2 text-right tabular-nums font-medium dark:text-slate-100">{num(p.total_producido)} u</td>
                               <td className="py-2 text-right">
                                 <div className="inline-flex items-center gap-2">
                                   <button
                                     type="button"
                                     onClick={() => openStockPorTallas(p.codigo)}
-                                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                    className="inline-flex items-center justify-center w-8 h-8 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                                     title="Ver por tallas"
                                   >
                                     …
@@ -1061,25 +1061,25 @@ export default function WarehousesPage() {
 
       {/* Modal stock por tallas */}
       {isStockOpen && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-[85vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-3xl max-h-[85vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Stock por tallas</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  SKU: <b>{stockHeader?.codigo || stockSku || "—"}</b> • {stockHeader?.nombre || "—"}
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Stock por tallas</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  SKU: <b className="dark:text-slate-200">{stockHeader?.codigo || stockSku || "—"}</b> • {stockHeader?.nombre || "—"}
                 </p>
               </div>
-              <button className="text-slate-400 hover:text-slate-600" onClick={closeStockModal}>
+              <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={closeStockModal}>
                 ✕
               </button>
             </div>
 
             <div className="px-6 py-4">
-              {stockLoading && <div className="text-xs text-slate-500">Cargando...</div>}
+              {stockLoading && <div className="text-xs text-slate-500 dark:text-slate-400">Cargando...</div>}
 
               {stockError && !stockLoading && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+                <div className="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
                   {stockError}
                 </div>
               )}
@@ -1087,12 +1087,12 @@ export default function WarehousesPage() {
               {!stockLoading && !stockError && (
                 <>
                   {stockItems.length === 0 ? (
-                    <div className="text-xs text-slate-500">No hay tallas registradas para este producto.</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">No hay tallas registradas para este producto.</div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm">
-                        <thead className="bg-slate-50 border border-slate-200">
-                          <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        <thead className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800">
+                          <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                             <th className="px-3 py-2 text-left">Código</th>
                             <th className="px-3 py-2 text-left">Nombre</th>
                             <th className="px-3 py-2 text-left">Talla</th>
@@ -1101,11 +1101,11 @@ export default function WarehousesPage() {
                         </thead>
                         <tbody>
                           {stockItems.map((it, idx) => (
-                            <tr key={`${it.codigo}-${it.talla}-${idx}`} className="border-b border-slate-100">
-                              <td className="px-3 py-2 text-slate-800">{it.codigo}</td>
-                              <td className="px-3 py-2 text-slate-800">{it.nombre}</td>
-                              <td className="px-3 py-2 text-slate-700">{it.talla}</td>
-                              <td className="px-3 py-2 text-right tabular-nums text-slate-900 font-medium">
+                            <tr key={`${it.codigo}-${it.talla}-${idx}`} className="border-b border-slate-100 dark:border-slate-800">
+                              <td className="px-3 py-2 text-slate-800 dark:text-slate-300">{it.codigo}</td>
+                              <td className="px-3 py-2 text-slate-800 dark:text-slate-300">{it.nombre}</td>
+                              <td className="px-3 py-2 text-slate-700 dark:text-slate-400">{it.talla}</td>
+                              <td className="px-3 py-2 text-right tabular-nums text-slate-900 dark:text-slate-100 font-medium">
                                 {it.cantidad}
                               </td>
                             </tr>
@@ -1132,16 +1132,16 @@ export default function WarehousesPage() {
 
       {/* ✅ Modal Traslado (MASIVO) */}
       {isTransferOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between flex-shrink-0">
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between flex-shrink-0">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Traslado de Productos</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Origen: <b>{selectedBodega ? selectedBodega.nombre : ""}</b>
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Traslado de Productos</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Origen: <b className="dark:text-slate-300">{selectedBodega ? selectedBodega.nombre : ""}</b>
                 </p>
               </div>
-              <button className="text-slate-400 hover:text-slate-600" onClick={closeTransferModal}>
+              <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={closeTransferModal}>
                 ✕
               </button>
             </div>
@@ -1149,12 +1149,12 @@ export default function WarehousesPage() {
             <div className="flex-1 overflow-auto p-6 space-y-6">
               {/* Mensajes */}
               {transferError && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+                <div className="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
                   {transferError}
                 </div>
               )}
               {transferOk && (
-                <div className="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-3 text-xs text-emerald-700">
+                <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-900/50 px-4 py-3 text-xs text-emerald-700 dark:text-emerald-400">
                   {transferOk}
                 </div>
               )}
@@ -1162,11 +1162,11 @@ export default function WarehousesPage() {
               {/* 1. Cabecera */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-medium text-slate-600">Bodega destino</label>
+                  <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Bodega destino</label>
                   <select
                     value={transferHeader.bodega_destino_id}
                     onChange={e => setTransferHeader({ ...transferHeader, bodega_destino_id: e.target.value })}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                   >
                     <option value="">Selecciona destino…</option>
                     {bodegas
@@ -1180,11 +1180,11 @@ export default function WarehousesPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-medium text-slate-600">Tercero (quién traslada)</label>
+                  <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Tercero (quién traslada)</label>
                   <select
                     value={transferHeader.tercero_id}
                     onChange={e => setTransferHeader({ ...transferHeader, tercero_id: e.target.value })}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                   >
                     <option value="">Selecciona tercero…</option>
                     {terceros.map((t) => (
@@ -1196,18 +1196,18 @@ export default function WarehousesPage() {
                 </div>
               </div>
 
-              <div className="h-px bg-slate-100 my-2" />
+              <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
 
               {/* 2. Agregar Item */}
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <h4 className="text-xs font-semibold text-slate-700 mb-3 uppercase tracking-wide">Agregar item al traslado</h4>
+              <div className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-lg border border-slate-200 dark:border-slate-800">
+                <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 uppercase tracking-wide">Agregar item al traslado</h4>
                 <form onSubmit={addItem} className="flex flex-col md:flex-row gap-3 items-end">
                   <div className="flex-1 space-y-1 w-full md:w-auto">
-                    <label className="text-[11px] font-medium text-slate-600">Producto</label>
+                    <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Producto</label>
                     <select
                       value={itemForm.producto_id}
                       onChange={handleProductChange}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white"
+                      className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                     >
                       <option value="">Selecciona producto ({availableProducts.length})</option>
                       {availableProducts.map(p => (
@@ -1219,15 +1219,15 @@ export default function WarehousesPage() {
                   </div>
 
                   <div className="w-full md:w-48 space-y-1">
-                    <label className="text-[11px] font-medium text-slate-600">
+                    <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
                       Talla
-                      {itemStockLoading && <span className="text-indigo-500 ml-1">(Cargando...)</span>}
+                      {itemStockLoading && <span className="text-indigo-500 dark:text-indigo-400 ml-1">(Cargando...)</span>}
                     </label>
                     <select
                       value={itemForm.talla_id}
                       onChange={handleSizeChange}
                       disabled={!itemForm.producto_id}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white disabled:bg-slate-100 disabled:text-slate-400"
+                      className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 disabled:bg-slate-100 dark:disabled:bg-slate-800 dark:disabled:text-slate-600 disabled:text-slate-400"
                     >
                       <option value="">Selecciona talla...</option>
                       {availableSizes.map(s => (
@@ -1239,7 +1239,7 @@ export default function WarehousesPage() {
                   </div>
 
                   <div className="w-full md:w-32 space-y-1">
-                    <label className="text-[11px] font-medium text-slate-600">Cantidad</label>
+                    <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Cantidad</label>
                     <input
                       type="text"
                       placeholder="0"
@@ -1249,7 +1249,7 @@ export default function WarehousesPage() {
                         const val = e.target.value.replace(/[^0-9]/g, "");
                         setItemForm({ ...itemForm, cantidad: val });
                       }}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50"
+                      className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                     />
                   </div>
 
@@ -1264,32 +1264,32 @@ export default function WarehousesPage() {
 
                 {/* Feedback de error al agregar */}
                 {itemError && (
-                  <div className="mt-2 text-xs text-red-600 font-medium">
+                  <div className="mt-2 text-xs text-red-600 dark:text-red-400 font-medium">
                     ⚠️ {itemError}
                   </div>
                 )}
 
                 {/* Feedback de stock */}
                 {itemStockInfo && (
-                  <div className="mt-2 text-[11px] text-slate-500">
-                    Stock disponible de <b>{itemStockInfo.talla_nombre}</b>: <span className="font-medium text-slate-800">{num(itemStockInfo.disponible)}</span>
+                  <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    Stock disponible de <b className="dark:text-slate-200">{itemStockInfo.talla_nombre}</b>: <span className="font-medium text-slate-800 dark:text-slate-200">{num(itemStockInfo.disponible)}</span>
                   </div>
                 )}
               </div>
 
               {/* 3. Lista de Items */}
               <div>
-                <h4 className="text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wide">
+                <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
                   Items a trasladar ({transferItems.length})
                 </h4>
                 {transferItems.length === 0 ? (
-                  <div className="text-xs text-slate-400 italic py-4 border border-dashed border-slate-200 rounded-lg text-center">
+                  <div className="text-xs text-slate-400 dark:text-slate-500 italic py-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg text-center">
                     No has agregado items todavía.
                   </div>
                 ) : (
-                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
                     <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                      <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
                         <tr>
                           <th className="px-3 py-2">Producto</th>
                           <th className="px-3 py-2">Talla</th>
@@ -1297,19 +1297,19 @@ export default function WarehousesPage() {
                           <th className="px-3 py-2 w-10"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {transferItems.map(item => (
                           <tr key={item.tempId}>
                             <td className="px-3 py-2">
-                              <div className="font-medium text-slate-800">{item.producto_id}</div>
-                              <div className="text-slate-500 text-[10px]">{item.producto_nombre}</div>
+                              <div className="font-medium text-slate-800 dark:text-slate-200">{item.producto_id}</div>
+                              <div className="text-slate-500 dark:text-slate-400 text-[10px]">{item.producto_nombre}</div>
                             </td>
-                            <td className="px-3 py-2 text-slate-600">{item.talla_nombre}</td>
-                            <td className="px-3 py-2 text-right font-medium text-slate-800">{num(item.cantidad)}</td>
+                            <td className="px-3 py-2 text-slate-600 dark:text-slate-400">{item.talla_nombre}</td>
+                            <td className="px-3 py-2 text-right font-medium text-slate-800 dark:text-slate-100">{num(item.cantidad)}</td>
                             <td className="px-3 py-2 text-center">
                               <button
                                 onClick={() => removeItem(item.tempId)}
-                                className="text-red-400 hover:text-red-600"
+                                className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
                                 title="Quitar"
                               >×</button>
                             </td>
@@ -1322,11 +1322,11 @@ export default function WarehousesPage() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 flex-shrink-0">
+            <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3 flex-shrink-0">
               <button
                 type="button"
                 onClick={closeTransferModal}
-                className="px-4 py-2 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-white transition-colors"
+                className="px-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition-colors"
                 disabled={transferLoading}
               >
                 Cancelar
@@ -1345,17 +1345,17 @@ export default function WarehousesPage() {
 
       {/* ✅ Modal Historial */}
       {isHistoryOpen && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-5xl max-h-[85vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-800">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Historial de traslados</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {selectedBodega ? `${selectedBodega.codigo} — ${selectedBodega.nombre}` : ""}
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Historial de traslados</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {selectedBodega ? <span className="dark:text-slate-300">{selectedBodega.codigo} — {selectedBodega.nombre}</span> : ""}
                 </p>
-                {historyError && <p className="text-xs text-red-600 mt-1">{historyError}</p>}
+                {historyError && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{historyError}</p>}
               </div>
-              <button className="text-slate-400 hover:text-slate-600" onClick={closeHistoryModal}>
+              <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={closeHistoryModal}>
                 ✕
               </button>
             </div>
@@ -1363,8 +1363,8 @@ export default function WarehousesPage() {
             <div className="p-6 overflow-auto flex-1">
               {/* ✅ Barra paginación */}
               <div className="flex items-center justify-between gap-3 pb-3">
-                <div className="text-xs text-slate-500">
-                  Total: <b>{historyCount}</b> • Página <b>{historyPage}</b>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  Total: <b className="dark:text-slate-200">{historyCount}</b> • Página <b className="dark:text-slate-200">{historyPage}</b>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -1372,7 +1372,7 @@ export default function WarehousesPage() {
                     type="button"
                     disabled={!historyPrev || historyLoading}
                     onClick={() => loadHistory(Math.max(1, historyPage - 1))}
-                    className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+                    className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     ← Anterior
                   </button>
@@ -1381,7 +1381,7 @@ export default function WarehousesPage() {
                     type="button"
                     disabled={!historyNext || historyLoading}
                     onClick={() => loadHistory(historyPage + 1)}
-                    className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+                    className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     Siguiente →
                   </button>
@@ -1395,8 +1395,8 @@ export default function WarehousesPage() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 border border-slate-200">
-                      <tr className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                    <thead className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                      <tr className="text-xs font-semibold uppercase tracking-wide">
                         <th className="px-3 py-2 text-left">Fecha</th>
                         <th className="px-3 py-2 text-left">Tercero</th>
                         <th className="px-3 py-2 text-left">Origen</th>
@@ -1408,24 +1408,24 @@ export default function WarehousesPage() {
                     </thead>
                     <tbody>
                       {historyRows.map((r) => (
-                        <tr key={r.id} className="border-b border-slate-100">
-                          <td className="px-3 py-2 text-slate-700">
+                        <tr key={r.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors text-slate-700 dark:text-slate-300">
+                          <td className="px-3 py-2 text-xs">
                             {r.creado_en ? new Date(r.creado_en).toLocaleString("es-CO") : "—"}
                           </td>
-                          <td className="px-3 py-2 text-slate-800">
+                          <td className="px-3 py-2 text-slate-800 dark:text-slate-200">
                             {r.tercero ? `${r.tercero.codigo} — ${r.tercero.nombre}` : "—"}
                           </td>
-                          <td className="px-3 py-2 text-slate-700">
+                          <td className="px-3 py-2">
                             {r.bodega_origen ? `${r.bodega_origen.codigo} — ${r.bodega_origen.nombre}` : "—"}
                           </td>
-                          <td className="px-3 py-2 text-slate-700">
+                          <td className="px-3 py-2">
                             {r.bodega_destino ? `${r.bodega_destino.codigo} — ${r.bodega_destino.nombre}` : "—"}
                           </td>
-                          <td className="px-3 py-2 text-slate-800">
+                          <td className="px-3 py-2 text-slate-800 dark:text-slate-200">
                             {r.producto ? `${r.producto.codigo_sku} — ${r.producto.nombre}` : r.producto_id || "—"}
                           </td>
-                          <td className="px-3 py-2 text-slate-700">{r.talla?.nombre || "Sin talla"}</td>
-                          <td className="px-3 py-2 text-right tabular-nums font-medium text-slate-900">
+                          <td className="px-3 py-2">{r.talla?.nombre || "Sin talla"}</td>
+                          <td className="px-3 py-2 text-right tabular-nums font-medium text-slate-900 dark:text-slate-100">
                             {num(r.cantidad)}
                           </td>
                         </tr>

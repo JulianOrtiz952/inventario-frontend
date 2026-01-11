@@ -208,8 +208,8 @@ export default function TercerosPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900">Terceros</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Terceros</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Clientes / terceros asociados (código + nombre).
           </p>
         </div>
@@ -224,10 +224,10 @@ export default function TercerosPage() {
 
       {/* Search + reload */}
       <div className="flex items-center gap-3">
-        <div className="flex-1 flex items-center bg-white rounded-md border border-slate-200 px-3 py-2 text-sm">
+        <div className="flex-1 flex items-center bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm">
           <span className="mr-2 text-slate-400 text-sm">🔍</span>
           <input
-            className="w-full bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+            className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             placeholder="Buscar por código o nombre..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -236,7 +236,7 @@ export default function TercerosPage() {
 
         <button
           onClick={() => loadTerceros(page)}
-          className="px-3 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+          className="px-3 py-2 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           disabled={loading}
         >
           {loading ? "..." : "Recargar"}
@@ -245,12 +245,12 @@ export default function TercerosPage() {
 
       {/* Paginación */}
       <div className="flex items-center justify-between gap-3">
-        <div className="text-xs text-slate-500">
-          Total: <b>{count}</b> • Página <b>{page}</b>{" "}
-          <span className="ml-2 text-[11px] text-slate-400">
+        <div className="text-xs text-slate-500 dark:text-slate-400">
+          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>{" "}
+          <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">
             (mostrando {PAGE_SIZE} por página)
           </span>
-          <span className="ml-2 text-[11px] text-slate-400">
+          <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">
             *La búsqueda filtra solo la página actual.
           </span>
         </div>
@@ -260,7 +260,7 @@ export default function TercerosPage() {
             type="button"
             disabled={!prevUrl || loading}
             onClick={goPrev}
-            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             ← Anterior
           </button>
@@ -268,7 +268,7 @@ export default function TercerosPage() {
             type="button"
             disabled={!nextUrl || loading}
             onClick={goNext}
-            className="px-3 py-1.5 rounded-md border border-slate-200 text-xs disabled:opacity-50 hover:bg-slate-50"
+            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             Siguiente →
           </button>
@@ -282,17 +282,17 @@ export default function TercerosPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-900">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             Listado ({terceros.length})
           </h2>
         </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
+              <tr className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                 <th className="px-4 py-3 text-left">ID</th>
                 <th className="px-4 py-3 text-left">Código</th>
                 <th className="px-4 py-3 text-left">Nombre</th>
@@ -303,7 +303,7 @@ export default function TercerosPage() {
             <tbody>
               {loading && (
                 <tr>
-                  <td className="px-4 py-3 text-slate-500" colSpan={5}>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400" colSpan={5}>
                     Cargando...
                   </td>
                 </tr>
@@ -323,13 +323,13 @@ export default function TercerosPage() {
                   return (
                     <tr
                       key={t.id}
-                      className={`border-b border-slate-100 transition-colors ${!isActive ? "bg-slate-50/70" : "hover:bg-slate-50/80"}`}
+                      className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${!isActive ? "bg-slate-50/70 dark:bg-slate-800/20" : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"}`}
                     >
-                      <td className="px-4 py-3 text-slate-700">{t.id}</td>
-                      <td className="px-4 py-3 font-medium text-slate-800 font-mono">
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{t.id}</td>
+                      <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200 font-mono">
                         {t.codigo}
                       </td>
-                      <td className={`px-4 py-3 font-medium ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"}`}>
+                      <td className={`px-4 py-3 font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-700 dark:text-slate-200"}`}>
                         {t.nombre}
                       </td>
                       <td className="px-4 py-3 text-xs">
@@ -350,7 +350,7 @@ export default function TercerosPage() {
                           <button
                             type="button"
                             onClick={() => openEdit(t)}
-                            className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-colors bg-white"
+                            className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors bg-white dark:bg-slate-900"
                             title="Editar"
                           >
                             <Pencil size={14} />
@@ -358,9 +358,9 @@ export default function TercerosPage() {
                           <button
                             type="button"
                             onClick={() => openActionModal(t)}
-                            className={`p-1.5 rounded-md border transition-colors bg-white ${isActive
-                              ? "border-red-100 text-red-600 hover:bg-red-50"
-                              : "border-emerald-100 text-emerald-600 hover:bg-emerald-50"
+                            className={`p-1.5 rounded-md border transition-colors bg-white dark:bg-slate-900 ${isActive
+                              ? "border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              : "border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                               }`}
                             title={isActive ? "Desactivar" : "Reactivar"}
                           >
@@ -378,14 +378,14 @@ export default function TercerosPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-md border border-slate-200 dark:border-slate-800">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {editing ? "Editar tercero" : "Nuevo tercero"}
               </h2>
               <button
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                 onClick={closeModal}
                 disabled={saving}
               >
@@ -394,28 +394,28 @@ export default function TercerosPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="px-6 py-4 space-y-3">
-              {error && <div className="text-xs text-red-600">{error}</div>}
+              {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Código</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Código</label>
                 <input
                   type="text"
                   name="codigo"
                   value={form.codigo}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Nombre</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nombre</label>
                 <input
                   type="text"
                   name="nombre"
                   value={form.nombre}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
@@ -425,7 +425,7 @@ export default function TercerosPage() {
                   type="button"
                   onClick={closeModal}
                   disabled={saving}
-                  className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-100"
+                  className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancelar
                 </button>

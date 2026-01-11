@@ -94,39 +94,39 @@ function ImpuestoModal({ isOpen, onClose, onCreated, impuesto = null }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-900">{isEdit ? "Editar impuesto" : "Crear impuesto"}</h2>
-          <button className="text-slate-400 hover:text-slate-600" onClick={onClose} disabled={saving}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-md border border-white/10 dark:border-slate-800">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{isEdit ? "Editar impuesto" : "Crear impuesto"}</h2>
+          <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={onClose} disabled={saving}>
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-3">
           {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+            <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
               {error}
             </div>
           )}
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Nombre</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nombre</label>
             <input
               value={form.nombre}
               onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="Ej: IVA 19%"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700">Valor (%)</label>
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Valor (%)</label>
             <CurrencyInput
               value={form.valor}
               onChange={(e) => setForm((p) => ({ ...p, valor: e.target.value }))}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
               placeholder="Ej: 19.00"
             />
           </div>
@@ -136,16 +136,16 @@ function ImpuestoModal({ isOpen, onClose, onCreated, impuesto = null }) {
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-100"
+              className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70"
+              className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70 transition-all active:scale-95"
             >
-              {saving ? "Guardando..." : "Guardar"}
+              {saving ? (isEdit ? "Guardando..." : "Guardando...") : (isEdit ? "Guardar" : "Guardar")}
             </button>
           </div>
         </form>
@@ -589,65 +589,65 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-        <div className="bg-white rounded-xl shadow-lg w-full max-w-5xl max-h-[92vh] overflow-y-auto">
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-5xl max-h-[92vh] overflow-y-auto border border-white/10 dark:border-slate-800">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Editar producto</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                SKU: <b>{sku}</b>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Editar producto</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                SKU: <b className="text-slate-700 dark:text-slate-300">{sku}</b>
               </p>
             </div>
 
-            <button className="text-slate-400 hover:text-slate-600" onClick={onClose} disabled={saving}>
+            <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" onClick={onClose} disabled={saving}>
               ✕
             </button>
           </div>
 
           <div className="px-6 py-5 space-y-5">
             {error && (
-              <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+              <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
                 {error}
               </div>
             )}
 
             {!canRenderForm ? (
-              <div className="text-sm text-slate-500">
+              <div className="text-sm text-slate-500 dark:text-slate-400">
                 {loading ? "Cargando producto..." : "No se pudo cargar el formulario."}
               </div>
             ) : (
               <>
                 {/* RESUMEN IVA */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold text-slate-700 mb-3">Resumen de precios</p>
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 p-4">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3">Resumen de precios</p>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Precio base</p>
-                      <p className="text-sm font-semibold text-slate-900">{fmtMoney(bd?.precio_base)}</p>
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">Precio base</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{fmtMoney(bd?.precio_base)}</p>
                     </div>
 
-                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-slate-500">Total descuentos</p>
-                      <p className="text-sm font-semibold text-orange-700">
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">Total descuentos</p>
+                      <p className="text-sm font-semibold text-orange-700 dark:text-orange-400">
                         {bd?.total_descuentos ? `-${fmtMoney(bd.total_descuentos)}` : "—"}
                       </p>
                     </div>
 
-                    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                      <p className="text-[11px] text-slate-500">IVA</p>
-                      <p className="text-sm font-semibold text-slate-900">
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">IVA</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {bd?.valor_iva ? fmtMoney(bd.valor_iva) : "—"}{" "}
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500">
                           {bd?.porcentaje_impuestos ? `(${fmtPct(bd.porcentaje_impuestos)})` : ""}
                         </span>
                       </p>
                     </div>
 
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-                      <p className="text-[11px] text-emerald-700">Total con IVA</p>
-                      <p className="text-sm font-bold text-emerald-800">{fmtMoney(bd?.total)}</p>
+                    <div className="rounded-lg border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2">
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400">Total con IVA</p>
+                      <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">{fmtMoney(bd?.total)}</p>
                     </div>
                   </div>
                 </div>
@@ -656,21 +656,21 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                   {/* Básico */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-1 md:col-span-2">
-                      <label className="text-xs font-medium text-slate-700">Nombre</label>
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nombre</label>
                       <input
                         value={form.nombre}
                         onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
-                        className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                         required
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-slate-700">Unidad de medida</label>
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Unidad de medida</label>
                       <select
                         value={form.unidad_medida}
                         onChange={(e) => setForm((p) => ({ ...p, unidad_medida: e.target.value }))}
-                        className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                         required
                       >
                         {DIAN_UOM.map((u) => (
@@ -680,22 +680,22 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                     </div>
 
                     <div className="space-y-1 md:col-span-2">
-                      <label className="text-xs font-medium text-slate-700">Código de barras (opcional)</label>
+                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Código de barras (opcional)</label>
                       <input
                         value={form.codigo_barras}
                         onChange={(e) => setForm((p) => ({ ...p, codigo_barras: e.target.value }))}
-                        className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       />
                     </div>
                   </div>
 
                   {/* Tercero */}
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-700">Tercero</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tercero</label>
                     <select
                       value={form.tercero_id}
                       onChange={(e) => setForm((p) => ({ ...p, tercero_id: e.target.value }))}
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     >
                       <option value="">— Sin tercero —</option>
                       {tercerosOptions.map((t) => (
@@ -707,14 +707,14 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                   </div>
 
                   {/* Impuestos */}
-                  <div className="rounded-xl border border-slate-200 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                      <h3 className="text-xs font-semibold text-slate-700">Impuestos</h3>
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+                      <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300">Impuestos</h3>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => setShowInactiveTaxes(!showInactiveTaxes)}
-                          className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${showInactiveTaxes ? "bg-slate-100 border-slate-300 text-slate-700" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`}
+                          className={`px-3 py-2 rounded-md text-xs font-medium border transition-colors ${showInactiveTaxes ? "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
                         >
                           {showInactiveTaxes ? "Ocultar inactivos" : "Mostrar inactivos"}
                         </button>
@@ -724,7 +724,7 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                             setEditingImpuesto(null);
                             setIsImpuestoModalOpen(true);
                           }}
-                          className="px-3 py-2 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800"
+                          className="px-3 py-2 rounded-md bg-slate-900 dark:bg-slate-800 text-white text-xs font-medium hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
                         >
                           + Crear impuesto
                         </button>
@@ -733,7 +733,7 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
 
                     <div className="p-4">
                       {impuestosOptions.length === 0 ? (
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                           {showInactiveTaxes ? "No hay impuestos registrados." : "No hay impuestos activos."}
                         </div>
                       ) : (
@@ -743,7 +743,7 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                             return (
                               <div
                                 key={imp.id}
-                                className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs transition-colors ${!imp.es_activo ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-200 text-slate-700 hover:border-slate-300"}`}
+                                className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs transition-colors ${!imp.es_activo ? "bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"}`}
                               >
                                 <label className="flex items-center gap-2 cursor-pointer flex-1 py-1">
                                   <input
@@ -762,7 +762,7 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                                       setEditingImpuesto(imp.original);
                                       setIsImpuestoModalOpen(true);
                                     }}
-                                    className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
+                                    className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
                                     title="Editar"
                                   >
                                     ✏️
@@ -770,7 +770,7 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                                   <button
                                     type="button"
                                     onClick={() => handleToggleImpuestoActive(imp)}
-                                    className={`p-1.5 rounded-md transition-colors ${imp.es_activo ? "text-red-400 hover:bg-red-50" : "text-emerald-500 hover:bg-emerald-50"}`}
+                                    className={`p-1.5 rounded-md transition-colors ${imp.es_activo ? "text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" : "text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"}`}
                                     title={imp.es_activo ? "Desactivar" : "Reactivar"}
                                   >
                                     {imp.es_activo ? "🗑️" : "🔄"}
@@ -782,16 +782,16 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                         </div>
                       )}
 
-                      <p className="mt-3 text-[11px] text-slate-400">
+                      <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500">
                         Puedes dejarlo vacío si el producto no aplica impuestos.
                       </p>
                     </div>
                   </div>
 
                   {/* Precios */}
-                  <div className="rounded-xl border border-slate-200 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                      <h3 className="text-xs font-semibold text-slate-700">Precios</h3>
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+                      <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300">Precios</h3>
                       <button
                         type="button"
                         onClick={addPrecio}
@@ -803,33 +803,33 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
 
                     <div className="p-4 space-y-3">
                       {form.precios.length === 0 && (
-                        <div className="text-xs text-slate-500">No hay precios. Agrega uno.</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">No hay precios. Agrega uno.</div>
                       )}
 
                       {form.precios.map((p, i) => (
                         <div key={p.id ?? i} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
                           <div className="md:col-span-5 space-y-1">
-                            <label className="text-[11px] text-slate-500">Nombre</label>
+                            <label className="text-[11px] text-slate-500 dark:text-slate-400">Nombre</label>
                             <input
                               value={p.nombre || ""}
                               onChange={(e) => updatePrecio(i, { nombre: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                               placeholder="Ej: Precio base"
                             />
                           </div>
 
                           <div className="md:col-span-4 space-y-1">
-                            <label className="text-[11px] text-slate-500">Valor</label>
+                            <label className="text-[11px] text-slate-500 dark:text-slate-400">Valor</label>
                             <CurrencyInput
                               value={p.valor ?? ""}
                               onChange={(e) => updatePrecio(i, { valor: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                               placeholder="Ej: 60.000"
                             />
                           </div>
 
                           <div className="md:col-span-2">
-                            <label className="flex items-center gap-2 text-xs text-slate-700">
+                            <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
                               <input
                                 type="checkbox"
                                 checked={!!p.es_descuento}
@@ -843,7 +843,7 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                             <button
                               type="button"
                               onClick={() => removePrecio(i)}
-                              className="px-3 py-2 rounded-md text-xs font-medium text-red-600 hover:bg-red-50"
+                              className="px-3 py-2 rounded-md text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                               title="Eliminar"
                             >
                               🗑️
@@ -855,9 +855,9 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                   </div>
 
                   {/* Datos adicionales */}
-                  <div className="rounded-xl border border-slate-200 overflow-hidden">
-                    <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                      <h3 className="text-xs font-semibold text-slate-700">Datos adicionales</h3>
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+                      <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300">Datos adicionales</h3>
 
                       {form.datos_adicionales ? (
                         <button
@@ -880,24 +880,24 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
 
                     <div className="p-4">
                       {!form.datos_adicionales ? (
-                        <div className="text-xs text-slate-500">No hay datos adicionales.</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">No hay datos adicionales.</div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-700">Referencia</label>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Referencia</label>
                             <input
                               value={form.datos_adicionales.referencia || ""}
                               onChange={(e) => updateDA({ referencia: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-700">Unidad</label>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Unidad</label>
                             <select
                               value={form.datos_adicionales.unidad || form.unidad_medida || "UN"}
                               onChange={(e) => updateDA({ unidad: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             >
                               {DIAN_UOM.map((u) => (
                                 <option key={u} value={u}>{u}</option>
@@ -906,60 +906,60 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-700">Stock</label>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stock</label>
                             <input
                               type="number"
                               step="0.01"
                               value={form.datos_adicionales.stock ?? "0"}
                               onChange={(e) => updateDA({ stock: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-700">Stock mínimo</label>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stock mínimo</label>
                             <input
                               type="number"
                               step="0.01"
                               value={form.datos_adicionales.stock_minimo ?? "0"}
                               onChange={(e) => updateDA({ stock_minimo: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                           </div>
 
                           <div className="space-y-1 md:col-span-3">
-                            <label className="text-xs font-medium text-slate-700">Descripción</label>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Descripción</label>
                             <input
                               value={form.datos_adicionales.descripcion || ""}
                               onChange={(e) => updateDA({ descripcion: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-700">Marca</label>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Marca</label>
                             <input
                               value={form.datos_adicionales.marca || ""}
                               onChange={(e) => updateDA({ marca: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-700">Modelo</label>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Modelo</label>
                             <input
                               value={form.datos_adicionales.modelo || ""}
                               onChange={(e) => updateDA({ modelo: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-700">Código arancelario</label>
+                            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Código arancelario</label>
                             <input
                               value={form.datos_adicionales.codigo_arancelario || ""}
                               onChange={(e) => updateDA({ codigo_arancelario: e.target.value })}
-                              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                           </div>
                         </div>
@@ -973,14 +973,14 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
                       type="button"
                       onClick={onClose}
                       disabled={saving}
-                      className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 hover:bg-slate-100"
+                      className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={saving}
-                      className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70"
+                      className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70 transition-all active:scale-95"
                     >
                       {saving ? "Guardando..." : "Guardar cambios"}
                     </button>

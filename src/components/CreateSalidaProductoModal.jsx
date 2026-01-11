@@ -6,6 +6,23 @@ import SalidaProductoDocumento from "./SalidaProductoDocumento";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+const nfNum = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
+const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
+const num = (n) => nfNum.format(Number(n || 0));
+const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
+
+function FieldRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="text-[11px] text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="text-xs font-semibold text-slate-900 dark:text-white text-right whitespace-pre-line">
+        {value ?? "—"}
+      </div>
+    </div>
+  );
+}
+
+
 export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) {
   // catálogos
   const [bodegas, setBodegas] = useState([]);
@@ -255,12 +272,12 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+    <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto border border-white/10 dark:border-slate-800">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <h1 className="text-sm font-semibold text-slate-900">Nueva Nota de Salida</h1>
-            <p className="text-xs text-slate-500">
+            <h1 className="text-sm font-semibold text-slate-900 dark:text-white">Nueva Nota de Salida</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Registra la salida de producto terminado (Ventas, traslados externos, etc).
             </p>
           </div>
@@ -268,7 +285,7 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
           <div className="flex gap-3">
             <button
               type="button"
-              className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
               onClick={onClose}
               disabled={saving}
             >
@@ -303,23 +320,23 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
         ) : (
           <form id="salida-form" onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
             {error && (
-              <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700 whitespace-pre-line">
+              <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400 whitespace-pre-line">
                 {error}
               </div>
             )}
 
             {/* 1. Cabecera */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="text-sm font-semibold text-slate-900">Datos Generales</h2>
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Datos Generales</h2>
               </div>
 
               <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Fecha</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Fecha</label>
                   <input
                     type="date"
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={fecha}
                     onChange={(e) => setFecha(e.target.value)}
                     disabled={loadingCatalogs}
@@ -327,9 +344,9 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Bodega de Origen</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Bodega de Origen</label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={bodegaId}
                     onChange={(e) => setBodegaId(e.target.value)}
                     disabled={loadingCatalogs}
@@ -344,9 +361,9 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Tercero / Cliente</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tercero / Cliente</label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={terceroId}
                     onChange={(e) => setTerceroId(e.target.value)}
                     disabled={loadingCatalogs}
@@ -361,9 +378,9 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                 </div>
 
                 <div className="md:col-span-3">
-                  <label className="text-xs font-medium text-slate-700">Observación</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Observación</label>
                   <input
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={observacion}
                     onChange={(e) => setObservacion(e.target.value)}
                     placeholder="Ej: Salida por venta mostrador, despacho a tienda, etc..."
@@ -373,18 +390,18 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
             </section>
 
             {/* 2. Selección de Producto */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="text-sm font-semibold text-slate-900">Producto y Stock</h2>
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Producto y Stock</h2>
               </div>
 
               <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-xs font-medium text-slate-700">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     Seleccionar producto (disponible en bodega)
                   </label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    className="mt-1 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={productoId}
                     onChange={handleProductChange}
                     disabled={!bodegaId || loadingStock}
@@ -401,9 +418,9 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                   )}
                 </div>
 
-                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                  <div className="text-xs font-semibold text-slate-900 mb-3 uppercase tracking-wider">Resumen Selección</div>
-                  <div className="space-y-2">
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                  <div className="text-xs font-semibold text-slate-900 dark:text-white mb-3 uppercase tracking-wider">Resumen Selección</div>
+                  <div className="space-y-2 text-slate-700 dark:text-slate-300">
                     <FieldRow label="SKU" value={productoId || "—"} />
                     <FieldRow label="Nombre" value={productoNombre || "—"} />
                   </div>
@@ -412,17 +429,17 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
 
               {productoId && (
                 <div className="px-6 pb-6">
-                  <div className="rounded-lg border border-slate-200 overflow-hidden">
-                    <div className="bg-slate-100/50 border-b border-slate-200 px-4 py-2 text-[10px] font-bold text-slate-500 uppercase grid grid-cols-12 gap-2">
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="bg-slate-100/50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800 px-4 py-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase grid grid-cols-12 gap-2">
                       <div className="col-span-8">Talla</div>
                       <div className="col-span-4 text-right">Disponible</div>
                     </div>
 
-                    <div className="divide-y divide-slate-100 bg-white">
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                       {tallasDisponiblesProducto.map((t) => (
-                        <div key={t.talla_nombre} className="px-4 py-2 text-xs grid grid-cols-12 gap-2 hover:bg-slate-50 transition-colors">
-                          <div className="col-span-8 font-medium text-slate-900">{t.talla_nombre}</div>
-                          <div className="col-span-4 text-right text-slate-700 font-mono italic">{num(t.cantidad)}</div>
+                        <div key={t.talla_nombre} className="px-4 py-2 text-xs grid grid-cols-12 gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                          <div className="col-span-8 font-medium text-slate-900 dark:text-slate-100">{t.talla_nombre}</div>
+                          <div className="col-span-4 text-right text-slate-700 dark:text-slate-400 font-mono italic">{num(t.cantidad)}</div>
                         </div>
                       ))}
 
@@ -438,9 +455,9 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
             </section>
 
             {/* 3. Detalle de Salida */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <h2 className="text-sm font-semibold text-slate-900">Tallas y Cantidades</h2>
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Tallas y Cantidades</h2>
                 <button
                   type="button"
                   onClick={addLine}
@@ -460,12 +477,12 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                   <>
                     <div className="space-y-3">
                       {detalleLines.map((l) => (
-                        <div key={l.id} className="group relative bg-slate-50/30 rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:bg-blue-50/10 transition-all">
+                        <div key={l.id} className="group relative bg-slate-50/30 dark:bg-slate-800/30 rounded-xl border border-slate-200 dark:border-slate-700 p-4 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50/10 dark:hover:bg-blue-900/10 transition-all">
                           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                             <div className="md:col-span-5">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-1 block">Talla</label>
+                              <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase ml-1 mb-1 block">Talla</label>
                               <select
-                                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                                className="w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                                 value={l.talla_nombre}
                                 onChange={(e) => updateLine(l.id, "talla_nombre", e.target.value)}
                               >
@@ -479,9 +496,9 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                             </div>
 
                             <div className="md:col-span-2">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-1 block">Cantidad</label>
+                              <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase ml-1 mb-1 block">Cantidad</label>
                               <input
-                                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                                className="w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-right focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                                 value={l.cantidad}
                                 onChange={(e) => updateLine(l.id, "cantidad", e.target.value)}
                                 placeholder="0"
@@ -489,9 +506,9 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                             </div>
 
                             <div className="md:col-span-2">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-1 block">Costo unit.</label>
+                              <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase ml-1 mb-1 block">Costo unit.</label>
                               <input
-                                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                                className="w-full rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-right focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                                 value={l.costo_unitario}
                                 onChange={(e) => updateLine(l.id, "costo_unitario", e.target.value)}
                                 placeholder="0"
@@ -499,8 +516,8 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                             </div>
 
                             <div className="md:col-span-2 text-right">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase mr-1 mb-1 block">Subtotal</label>
-                              <div className="py-2 text-xs font-bold text-blue-600">
+                              <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mr-1 mb-1 block">Subtotal</label>
+                              <div className="py-2 text-xs font-bold text-blue-600 dark:text-blue-400">
                                 {money(Number(l.cantidad || 0) * Number(l.costo_unitario || 0))}
                               </div>
                             </div>
@@ -509,7 +526,7 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                               <button
                                 type="button"
                                 onClick={() => removeLine(l.id)}
-                                className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                                className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all"
                                 disabled={detalleLines.length === 1}
                                 title="Eliminar línea"
                               >
@@ -521,12 +538,12 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between px-2 pt-2 border-t border-slate-100">
-                      <div className="text-xs text-slate-500">
-                        Total unidades: <span className="font-bold text-slate-900">{num(totalCantidad)}</span>
+                    <div className="flex items-center justify-between px-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        Total unidades: <span className="font-bold text-slate-900 dark:text-white">{num(totalCantidad)}</span>
                       </div>
-                      <div className="text-right text-sm">
-                        Total Nota: <span className="font-bold text-blue-700 text-lg ml-2">
+                      <div className="text-right text-sm text-slate-700 dark:text-slate-300">
+                        Total Nota: <span className="font-bold text-blue-700 dark:text-blue-400 text-lg ml-2">
                           {money(detalleLines.reduce((acc, l) => acc + (Number(l.cantidad || 0) * Number(l.costo_unitario || 0)), 0))}
                         </span>
                       </div>
