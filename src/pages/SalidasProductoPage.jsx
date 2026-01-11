@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import CreateSalidaProductoModal from "../components/CreateSalidaProductoModal";
+import EditSalidaProductoModal from "../components/EditSalidaProductoModal";
+import ViewSalidaProductoModal from "../components/ViewSalidaProductoModal";
+import ConfirmActionModal from "../components/ConfirmActionModal";
 import { API_BASE } from "../config/api";
 import { asRows, buildQueryParams } from "../utils/api";
+import { Trash2 } from "lucide-react";
 
 const PAGE_SIZE = 30;
 
 const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
+const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
 const num = (n) => nf.format(Number(n || 0));
-
-
+const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
 
 export default function SalidasProductoPage() {
   const [salidas, setSalidas] = useState([]);
@@ -25,31 +29,39 @@ export default function SalidasProductoPage() {
 
   // modales
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  // filtros (sobre lo cargado en la página actual)
+  // filtros (backend)
   const [q, setQ] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [bodegaId, setBodegaId] = useState("");
+  const [terceroId, setTerceroId] = useState("");
+
+  // catálogos para filtros
+  const [bodegas, setBodegas] = useState([]);
+  const [terceros, setTerceros] = useState([]);
 
   // detalle seleccionado
-  const [selectedId, setSelectedId] = useState(null);
   const [selectedSalida, setSelectedSalida] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+
+  // deletion
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // ------------------ helpers ------------------
   const getBodegaLabel = (s) => {
     const b = s?.bodega;
-    if (b?.codigo) return `${b.codigo} — ${b.nombre}`;
-    if (b?.nombre) return b.nombre;
-    if (s?.bodega_id) return String(s.bodega_id);
-    return "—";
+    return b?.nombre || s?.bodega_id || "—";
   };
 
   const getTerceroLabel = (s) => {
     const t = s?.tercero;
-    if (t?.codigo) return `${t.codigo} — ${t.nombre}`;
-    if (t?.nombre) return t.nombre;
-    if (s?.tercero_id) return String(s.tercero_id);
-    return "—";
+    return t?.nombre || s?.tercero_id || "—";
   };
 
   const getProductosResumen = (s) => {
@@ -58,9 +70,8 @@ export default function SalidasProductoPage() {
 
     const uniq = [];
     const seen = new Set();
-
     for (const d of det) {
-      const sku = d?.producto?.codigo_sku || d?.producto_id || d?.producto || "";
+      const sku = d?.producto?.codigo_sku || d?.producto_id || "";
       const name = d?.producto?.nombre || "";
       const key = `${sku}::${name}`;
       if (!seen.has(key)) {
@@ -70,8 +81,8 @@ export default function SalidasProductoPage() {
     }
 
     if (uniq.length === 0) return "—";
-    if (uniq.length === 1) return `${uniq[0].sku}${uniq[0].name ? ` — ${uniq[0].name}` : ""}`;
-    return `${uniq[0].sku}${uniq[0].name ? ` — ${uniq[0].name}` : ""} (+${uniq.length - 1})`;
+    if (uniq.length === 1) return uniq[0].name || uniq[0].sku;
+    return `${uniq[0].name || uniq[0].sku} (+${uniq.length - 1})`;
   };
 
   const getTotalCantidad = (s) => {
@@ -79,11 +90,9 @@ export default function SalidasProductoPage() {
     return det.reduce((acc, d) => acc + Number(d?.cantidad || 0), 0);
   };
 
-  const getFecha = (s) => s?.fecha || s?.fecha_salida || s?.created_at || "";
-
-  const openPDF = (id) => {
-    if (!id) return;
-    window.open(`${API_BASE}/salidas-producto/${id}/pdf/`, "_blank", "noopener,noreferrer");
+  const getTotalPrecio = (s) => {
+    const det = Array.isArray(s?.detalles) ? s.detalles : [];
+    return det.reduce((acc, d) => acc + (Number(d?.cantidad || 0) * Number(d?.costo_unitario || 0)), 0);
   };
 
   // ------------------ loaders ------------------
@@ -96,6 +105,11 @@ export default function SalidasProductoPage() {
       const query = buildQueryParams({
         page: targetPage,
         page_size: PAGE_SIZE,
+        search: q,
+        fecha_inicio: fromDate,
+        fecha_fin: toDate,
+        bodega: bodegaId,
+        tercero: terceroId,
       });
       const r = await fetch(`${API_BASE}/salidas-producto/${query}`);
       if (!r.ok) throw new Error("Error cargando salidas de producto.");
@@ -118,23 +132,38 @@ export default function SalidasProductoPage() {
     }
   };
 
+  const loadCatalogs = async () => {
+    try {
+      const [bData, tData] = await Promise.all([
+        fetch(`${API_BASE}/bodegas/?page_size=200`).then(r => r.json()),
+        fetch(`${API_BASE}/terceros/?page_size=200`).then(r => r.json()),
+      ]);
+      setBodegas(asRows(bData));
+      setTerceros(asRows(tData));
+    } catch (e) {
+      console.error("Error cargando catálogos:", e);
+    }
+  };
+
+  useEffect(() => {
+    loadCatalogs();
+  }, []);
+
   useEffect(() => {
     loadSalidas(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [q, fromDate, toDate, bodegaId, terceroId]);
 
   const loadDetalle = async (id) => {
     setError("");
     setSuccess("");
-    setSelectedId(id);
-    setSelectedSalida(null);
-
     try {
       setLoadingDetalle(true);
       const r = await fetch(`${API_BASE}/salidas-producto/${id}/`);
       if (!r.ok) throw new Error("No se pudo cargar el detalle de la salida.");
       const d = await r.json();
       setSelectedSalida(d);
+      setIsViewOpen(true);
     } catch (e) {
       console.error(e);
       setError(e.message || "Error cargando detalle.");
@@ -143,26 +172,27 @@ export default function SalidasProductoPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    setError("");
-    setSuccess("");
+  const handleEditClick = (id) => {
+    setEditingId(id);
+    setIsEditOpen(true);
+  };
 
-    const ok = window.confirm("¿Eliminar esta salida de producto?\n(Si tu backend revierte stock, se aplicará allí).");
-    if (!ok) return;
+  const confirmDelete = async () => {
+    setDeleteError("");
+    setDeleteLoading(true);
 
     try {
+      const id = deletingId;
       const r = await fetch(`${API_BASE}/salidas-producto/${id}/`, { method: "DELETE" });
+
       if (!r.ok) {
         const data = await r.json().catch(() => null);
-        throw new Error(data?.detail || "No se pudo eliminar la salida.");
+        throw new Error(data?.detail || "No se pudo eliminar la nota de salida.");
       }
 
-      setSuccess("Salida eliminada.");
-
-      if (selectedId === id) {
-        setSelectedId(null);
-        setSelectedSalida(null);
-      }
+      setSuccess("Nota de salida eliminada correctamente.");
+      setIsDeleteOpen(false);
+      setDeletingId(null);
 
       const newCount = Math.max(0, count - 1);
       const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
@@ -172,31 +202,17 @@ export default function SalidasProductoPage() {
       setCount(newCount);
     } catch (e) {
       console.error(e);
-      setError(e.message || "Error eliminando salida.");
+      setDeleteError(e.message || "Error eliminando nota.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
-  // ------------------ filtros (página actual) ------------------
-  const salidasFiltradas = useMemo(() => {
-    const text = q.trim().toLowerCase();
-
-    return salidas.filter((s) => {
-      const prod = getProductosResumen(s).toLowerCase();
-      const bod = getBodegaLabel(s).toLowerCase();
-      const ter = getTerceroLabel(s).toLowerCase();
-      const idText = String(s.id || "");
-
-      const matchText =
-        !text || prod.includes(text) || bod.includes(text) || ter.includes(text) || idText.includes(text);
-
-      const fe = String(getFecha(s) || "");
-      const afterFrom = !fromDate || (fe && fe >= fromDate);
-      const beforeTo = !toDate || (fe && fe <= toDate);
-
-      return matchText && afterFrom && beforeTo;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [salidas, q, fromDate, toDate]);
+  const handleDeleteClick = (id) => {
+    setDeletingId(id);
+    setIsDeleteOpen(true);
+    setDeleteError("");
+  };
 
   // ------------------ paginación UI ------------------
   const goPrev = async () => {
@@ -215,9 +231,9 @@ export default function SalidasProductoPage() {
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">Notas de Salida (Producto terminado)</h1>
+              <h1 className="text-2xl font-semibold text-slate-900">Notas de Salida</h1>
               <p className="text-sm text-slate-500">
-                Crear descuenta stock automáticamente (FIFO por fecha_elaboracion e id, según backend).
+                Despachos de producto terminado. Descuenta stock por FIFO.
               </p>
             </div>
 
@@ -260,40 +276,64 @@ export default function SalidasProductoPage() {
             <div className="px-5 py-4 border-b border-slate-100">
               <h2 className="text-sm font-semibold text-slate-900">Filtros</h2>
             </div>
-
-            <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="md:col-span-2">
-                <label className="text-xs font-medium text-slate-700">
-                  Buscar (producto, bodega, tercero, id)
+            <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="md:col-span-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Buscador Global
                 </label>
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Ej: CAM-005, Unicentro, 12…"
-                  className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="Producto, ID..."
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
-                <p className="mt-1 text-[11px] text-slate-400">
-                  *Por ahora filtra solo lo cargado en la página actual.
-                </p>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700">Desde</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Bodega</label>
+                <select
+                  value={bodegaId}
+                  onChange={(e) => setBodegaId(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                >
+                  <option value="">Todas</option>
+                  {bodegas.map(b => (
+                    <option key={b.id} value={b.id}>{b.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tercero</label>
+                <select
+                  value={terceroId}
+                  onChange={(e) => setTerceroId(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                >
+                  <option value="">Todos</option>
+                  {terceros.map(t => (
+                    <option key={t.id} value={t.id}>{t.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Desde</label>
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700">Hasta</label>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Hasta</label>
                 <input
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
             </div>
@@ -325,198 +365,86 @@ export default function SalidasProductoPage() {
             </div>
           </div>
 
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* LISTADO */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Listado ({salidasFiltradas.length})
-                </h2>
-                <p className="text-[11px] text-slate-500">Ver / PDF / Eliminar</p>
-              </div>
-
-              <div className="overflow-auto">
-                {salidasFiltradas.length === 0 ? (
-                  <div className="p-5 text-sm text-slate-500">
-                    {loading ? "Cargando…" : "No hay salidas en esta página."}
-                  </div>
-                ) : (
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-100">
-                      <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                        <th className="px-3 py-2 text-left">ID</th>
-                        <th className="px-3 py-2 text-left">Fecha</th>
-                        <th className="px-3 py-2 text-left">Productos</th>
-                        <th className="px-3 py-2 text-left">Bodega</th>
-                        <th className="px-3 py-2 text-left">Tercero</th>
-                        <th className="px-3 py-2 text-right">Líneas</th>
-                        <th className="px-3 py-2 text-right">Cant. total</th>
-                        <th className="px-3 py-2 text-center">Acciones</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {salidasFiltradas.map((s) => {
-                        const active = selectedId === s.id;
-                        const detCount = Array.isArray(s.detalles) ? s.detalles.length : 0;
-                        const totalCant = getTotalCantidad(s);
-
-                        return (
-                          <tr
-                            key={s.id}
-                            className={`border-b border-slate-100 hover:bg-slate-50/80 ${active ? "bg-blue-50/50" : ""
-                              }`}
-                          >
-                            <td className="px-3 py-2 text-slate-700 font-medium">{s.id}</td>
-                            <td className="px-3 py-2 text-slate-600">{getFecha(s) || "—"}</td>
-                            <td className="px-3 py-2 text-slate-700">{getProductosResumen(s)}</td>
-                            <td className="px-3 py-2 text-slate-700">{getBodegaLabel(s)}</td>
-                            <td className="px-3 py-2 text-slate-700">{getTerceroLabel(s)}</td>
-                            <td className="px-3 py-2 text-right text-slate-700">{detCount}</td>
-                            <td className="px-3 py-2 text-right text-slate-700">{num(totalCant)}</td>
-                            <td className="px-3 py-2 text-center">
-                              <div className="flex justify-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => loadDetalle(s.id)}
-                                  className="px-2 py-1 rounded-md border border-slate-200 bg-white text-[11px] text-slate-700 hover:bg-slate-50"
-                                >
-                                  Ver
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => openPDF(s.id)}
-                                  className="px-2 py-1 rounded-md border border-blue-200 bg-blue-50 text-[11px] text-blue-700 hover:bg-blue-100"
-                                >
-                                  PDF
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(s.id)}
-                                  className="px-2 py-1 rounded-md border border-red-200 bg-red-50 text-[11px] text-red-700 hover:bg-red-100"
-                                >
-                                  Eliminar
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+          <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Listado de Salidas ({salidas.length})
+              </h2>
+              <p className="text-[11px] text-slate-500 italic">Haz clic en "Ver" para ver el detalle completo.</p>
             </div>
 
-            {/* DETALLE */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">Detalle</h2>
-                {selectedId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedId(null);
-                      setSelectedSalida(null);
-                    }}
-                    className="text-xs text-slate-500 hover:text-slate-700"
-                  >
-                    Limpiar
-                  </button>
-                )}
-              </div>
+            <div className="overflow-x-auto">
+              {salidas.length === 0 ? (
+                <div className="p-10 text-center text-sm text-slate-500">
+                  {loading ? "Cargando…" : "No se encontraron notas de salida."}
+                </div>
+              ) : (
+                <table className="min-w-full text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-100">
+                    <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                      <th className="px-4 py-3 text-left">Número / ID</th>
+                      <th className="px-4 py-3 text-left">Fecha</th>
+                      <th className="px-4 py-3 text-left">Productos</th>
+                      <th className="px-4 py-3 text-left">Bodega</th>
+                      <th className="px-4 py-3 text-left">Tercero / Cliente</th>
+                      <th className="px-4 py-3 text-right">Cant. total</th>
+                      <th className="px-4 py-3 text-right">Total ($)</th>
+                      <th className="px-4 py-3 text-center">Acciones</th>
+                    </tr>
+                  </thead>
 
-              <div className="px-5 py-4">
-                {!selectedId ? (
-                  <div className="text-xs text-slate-500">Selecciona una salida y presiona Ver.</div>
-                ) : loadingDetalle ? (
-                  <div className="text-xs text-slate-500">Cargando detalle…</div>
-                ) : !selectedSalida ? (
-                  <div className="text-xs text-slate-500">No hay detalle para mostrar.</div>
-                ) : (
-                  <div className="space-y-3 text-xs">
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">ID</span>
-                        <span className="font-semibold text-slate-900">{selectedSalida.id}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Fecha</span>
-                        <span className="text-slate-800">{getFecha(selectedSalida) || "—"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Bodega</span>
-                        <span className="text-slate-800">{getBodegaLabel(selectedSalida)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Tercero</span>
-                        <span className="text-slate-800">{getTerceroLabel(selectedSalida)}</span>
-                      </div>
-                    </div>
+                  <tbody className="divide-y divide-slate-100">
+                    {salidas.map((s) => {
+                      const totalCant = getTotalCantidad(s);
 
-                    <div>
-                      <p className="text-[11px] font-semibold text-slate-600 mb-1">Observación</p>
-                      <div className="rounded-md border border-slate-200 p-3 text-xs text-slate-700">
-                        {selectedSalida.observacion?.trim() ? selectedSalida.observacion : "—"}
-                      </div>
-                    </div>
+                      return (
+                        <tr
+                          key={s.id}
+                          className="hover:bg-slate-50/80 transition-colors"
+                        >
+                          <td className="px-4 py-3 text-slate-700 font-bold">
+                            {s.numero || `#${s.id}`}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600 font-medium">{s.fecha || "—"}</td>
+                          <td className="px-4 py-3 text-slate-700 font-medium">{getProductosResumen(s)}</td>
+                          <td className="px-4 py-3 text-slate-700">{getBodegaLabel(s)}</td>
+                          <td className="px-4 py-3 text-slate-700">{getTerceroLabel(s)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-slate-900">{num(totalCant)}</td>
+                          <td className="px-4 py-3 text-right font-bold text-blue-700">{money(getTotalPrecio(s))}</td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => loadDetalle(s.id)}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm flex items-center gap-1.5 transition-all"
+                              >
+                                Ver
+                              </button>
 
-                    <div>
-                      <p className="text-[11px] font-semibold text-slate-600 mb-1">Detalles</p>
+                              <button
+                                type="button"
+                                onClick={() => handleEditClick(s.id)}
+                                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-sm flex items-center gap-1.5 transition-all"
+                              >
+                                Editar
+                              </button>
 
-                      <div className="rounded-md border border-slate-200 overflow-hidden">
-                        <div className="bg-slate-50 border-b border-slate-100 px-3 py-2 text-[11px] font-semibold text-slate-500 uppercase grid grid-cols-12 gap-2">
-                          <div className="col-span-7">Producto</div>
-                          <div className="col-span-3">Talla</div>
-                          <div className="col-span-2 text-right">Cantidad</div>
-                        </div>
-
-                        <div className="divide-y divide-slate-100">
-                          {(Array.isArray(selectedSalida.detalles) ? selectedSalida.detalles : []).map((d, idx) => (
-                            <div key={d.id || idx} className="px-3 py-2 grid grid-cols-12 gap-2 text-xs">
-                              <div className="col-span-7 font-medium text-slate-900">
-                                {d?.producto?.codigo_sku
-                                  ? `${d.producto.codigo_sku} — ${d.producto.nombre || ""}`
-                                  : String(d?.producto_id || d?.producto || "—")}
-                              </div>
-                              <div className="col-span-3 text-slate-700">
-                                {d?.talla?.nombre || d?.talla || "—"}
-                              </div>
-                              <div className="col-span-2 text-right font-semibold">
-                                {num(d?.cantidad || 0)}
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteClick(s.id)}
+                                className="p-1.5 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 transition-all"
+                                title="Eliminar"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
-                          ))}
-
-                          {(!selectedSalida.detalles || selectedSalida.detalles.length === 0) && (
-                            <div className="px-3 py-3 text-xs text-slate-500">—</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openPDF(selectedSalida.id)}
-                        className="w-full px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
-                      >
-                        Abrir PDF
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(selectedSalida.id)}
-                        className="w-full px-4 py-2 rounded-md bg-red-600 text-white text-xs font-medium hover:bg-red-700"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </section>
         </div>
@@ -530,6 +458,43 @@ export default function SalidasProductoPage() {
           await loadSalidas(page);
           setSuccess("Salida creada correctamente.");
         }}
+      />
+
+      <EditSalidaProductoModal
+        isOpen={isEditOpen}
+        salidaId={editingId}
+        onClose={() => {
+          setIsEditOpen(false);
+          setEditingId(null);
+        }}
+        onSaved={async () => {
+          setIsEditOpen(false);
+          setEditingId(null);
+          await loadSalidas(page);
+          setSuccess("Salida actualizada correctamente.");
+        }}
+      />
+
+      <ViewSalidaProductoModal
+        isOpen={isViewOpen}
+        salida={selectedSalida}
+        onClose={() => {
+          setIsViewOpen(false);
+          setSelectedSalida(null);
+        }}
+      />
+
+      <ConfirmActionModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={confirmDelete}
+        loading={deleteLoading}
+        error={deleteError}
+        title="Eliminar Nota de Salida"
+        message="¿Estás seguro que deseas eliminar esta nota de salida?"
+        description="Esta acción intentará revertir el stock deducido (si el backend lo permite)."
+        confirmText="Sí, eliminar"
+        isDestructive={true}
       />
     </div>
   );

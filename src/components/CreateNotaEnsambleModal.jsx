@@ -400,7 +400,7 @@ export default function CreateNotaEnsambleModal({
   const [observaciones, setObservaciones] = useState("");
 
   // detalles
-  const [detalleLines, setDetalleLines] = useState([{ id: Date.now(), talla_id: "", cantidad: "1" }]);
+  const [detalleLines, setDetalleLines] = useState([{ id: Date.now(), talla_nombre: "", cantidad: "1" }]);
 
   // insumos manuales
   const [insumoLines, setInsumoLines] = useState([
@@ -420,7 +420,7 @@ export default function CreateNotaEnsambleModal({
   const getProductoBySku = (sku) =>
     productos.find((p) => String(p.codigo_sku) === String(sku)) || null;
 
-  const getTallaById = (id) => tallas.find((t) => String(t.id) === String(id)) || null;
+  const getTallaByNombre = (nombre) => tallas.find((t) => String(t.nombre) === String(nombre)) || null;
 
   const getInsumoByCodigo = (codigo) =>
     insumos.find((i) => String(i.codigo) === String(codigo)) || null;
@@ -519,7 +519,7 @@ export default function CreateNotaEnsambleModal({
       setTerceroId("");
       setFechaElaboracion(todayISO());
       setObservaciones("");
-      setDetalleLines([{ id: Date.now(), talla_id: "", cantidad: "1" }]);
+      setDetalleLines([{ id: Date.now(), talla_nombre: "", cantidad: "1" }]);
       setInsumoLines([{ id: Date.now() + 1, insumo_codigo: "", cantidad_req: "0" }]);
       return;
     }
@@ -551,12 +551,12 @@ export default function CreateNotaEnsambleModal({
             setDetalleLines(
               det.map((d) => ({
                 id: d.id || Date.now() + Math.random(),
-                talla_id: String(d?.talla?.id || d?.talla_id || ""),
+                talla_nombre: String(d?.talla?.nombre || d?.talla || ""),
                 cantidad: String(d?.cantidad ?? "1"),
               }))
             );
           } else {
-            setDetalleLines([{ id: Date.now(), talla_id: "", cantidad: "1" }]);
+            setDetalleLines([{ id: Date.now(), talla_nombre: "", cantidad: "1" }]);
           }
 
           const ins = Array.isArray(n?.insumos) ? n.insumos : [];
@@ -587,7 +587,7 @@ export default function CreateNotaEnsambleModal({
   const addDetalleLine = () => {
     setDetalleLines((prev) => [
       ...prev,
-      { id: Date.now() + Math.random(), talla_id: "", cantidad: "1" },
+      { id: Date.now() + Math.random(), talla_nombre: "", cantidad: "1" },
     ]);
   };
   const removeDetalleLine = (id) => setDetalleLines((prev) => prev.filter((x) => x.id !== id));
@@ -618,7 +618,7 @@ export default function CreateNotaEnsambleModal({
 
     const detallesValidos = detalleLines
       .map((l) => ({
-        talla_id: l.talla_id ? Number(l.talla_id) : null,
+        talla_nombre: l.talla_nombre ? String(l.talla_nombre).trim() : null,
         cantidad: String(l.cantidad ?? "").trim(),
       }))
       .filter((d) => Number(d.cantidad || 0) > 0);
@@ -640,7 +640,7 @@ export default function CreateNotaEnsambleModal({
       observaciones: observaciones || "",
       detalles_input: detallesValidos.map((d) => ({
         producto_id: String(productoId),
-        talla_id: d.talla_id,
+        talla_id: d.talla_nombre,
         cantidad: d.cantidad,
       })),
       insumos_input: insumosValidos,
@@ -765,7 +765,7 @@ export default function CreateNotaEnsambleModal({
                 setTerceroId("");
                 setFechaElaboracion(todayISO());
                 setObservaciones("");
-                setDetalleLines([{ id: Date.now(), talla_id: "", cantidad: "1" }]);
+                setDetalleLines([{ id: Date.now(), talla_nombre: "", cantidad: "1" }]);
                 setInsumoLines([{ id: Date.now() + 1, insumo_codigo: "", cantidad_req: "0" }]);
               }}
             />
@@ -927,7 +927,7 @@ export default function CreateNotaEnsambleModal({
 
               <div className="px-6 py-4 space-y-3">
                 {detalleLines.map((l) => {
-                  const talla = getTallaById(l.talla_id);
+                  const talla = getTallaByNombre(l.talla_nombre);
 
                   return (
                     <div key={l.id} className="rounded-lg border border-slate-200 p-3">
@@ -936,13 +936,13 @@ export default function CreateNotaEnsambleModal({
                           <label className="text-xs font-medium text-slate-700">Talla</label>
                           <select
                             className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
-                            value={l.talla_id}
-                            onChange={(e) => updateDetalleLine(l.id, "talla_id", e.target.value)}
+                            value={l.talla_nombre}
+                            onChange={(e) => updateDetalleLine(l.id, "talla_nombre", e.target.value)}
                             disabled={loading || loadingNota}
                           >
                             <option value="">—</option>
                             {tallas.map((t) => (
-                              <option key={t.id} value={t.id}>
+                              <option key={t.nombre} value={t.nombre}>
                                 {t.nombre}
                               </option>
                             ))}

@@ -101,7 +101,8 @@ export default function TallasPage() {
   }
 
   function handleChange(e) {
-    setForm({ nombre: e.target.value });
+    const valet = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    setForm({ nombre: valet });
   }
 
   async function handleSubmit(e) {
@@ -116,8 +117,8 @@ export default function TallasPage() {
     try {
       setSaving(true);
 
-      const isEdit = !!editing?.id;
-      const url = isEdit ? `${API_BASE}/tallas/${editing.id}/` : `${API_BASE}/tallas/`;
+      const isEdit = !!editing;
+      const url = isEdit ? `${API_BASE}/tallas/${editing.nombre}/` : `${API_BASE}/tallas/`;
       const method = isEdit ? "PATCH" : "POST";
 
       const res = await fetch(url, {
@@ -169,10 +170,10 @@ export default function TallasPage() {
       let res;
       if (isActive) {
         // Desactivar (Soft Delete)
-        res = await fetch(`${API_BASE}/tallas/${item.id}/`, { method: "DELETE" });
+        res = await fetch(`${API_BASE}/tallas/${item.nombre}/`, { method: "DELETE" });
       } else {
         // Reactivar (Patch)
-        res = await fetch(`${API_BASE}/tallas/${item.id}/`, {
+        res = await fetch(`${API_BASE}/tallas/${item.nombre}/`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ es_activo: true }),
@@ -287,7 +288,6 @@ export default function TallasPage() {
           <table className="min-w-full text-xs">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                <th className="px-4 py-3 text-left">ID</th>
                 <th className="px-4 py-3 text-left">Nombre</th>
                 <th className="px-4 py-3 text-left">Estado</th>
                 <th className="px-4 py-3 text-center">Acciones</th>
@@ -315,10 +315,9 @@ export default function TallasPage() {
                   const isActive = t.es_activo !== false;
                   return (
                     <tr
-                      key={t.id}
+                      key={t.nombre}
                       className={`border-b border-slate-100 transition-colors ${!isActive ? "bg-slate-50/70" : "hover:bg-slate-50/80"}`}
                     >
-                      <td className="px-4 py-3 text-slate-700">{t.id}</td>
                       <td className={`px-4 py-3 font-medium ${!isActive ? "text-slate-400 line-through decoration-slate-300" : "text-slate-800"}`}>
                         {t.nombre}
                       </td>

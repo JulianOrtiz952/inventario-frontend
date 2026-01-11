@@ -1,13 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { API_BASE } from "../config/api";
 import { asRows, safeJson, fetchAllPages } from "../utils/api";
+import { Trash2 } from "lucide-react";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+// Formato Colombia
 const nfNum = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
+const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
 const num = (n) => nfNum.format(Number(n || 0));
+const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
 
-
+// ✅ Logo temporal
+const TEMP_LOGO_URL =
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/640px-Placeholder_view_vector.svg.png";
 
 function FieldRow({ label, value }) {
   return (
@@ -20,14 +28,13 @@ function FieldRow({ label, value }) {
   );
 }
 
-/** Vista de “documento” post-guardado */
-function SalidaDocumento({ salida, onClose }) {
-  const abrirPDF = () => {
-    if (!salida?.id) return;
-    window.open(`${API_BASE}/salidas-producto/${salida.id}/pdf/`, "_blank", "noopener,noreferrer");
-  };
 
-  const imprimir = () => window.print();
+/** Vista de “documento” post-guardado (Mismo diseño que Nota Ensamble) */
+function SalidaDocumento({ salida, onClose, onCreateAnother }) {
+  const printAreaRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const docCode = salida?.numero || `SP-${salida?.id ?? "—"}`;
 
   const getBodegaLabel = () => {
     const b = salida?.bodega;
@@ -44,7 +51,46 @@ function SalidaDocumento({ salida, onClose }) {
     return "—";
   };
 
-  const numero = salida?.numero || `SP-${salida?.id ?? "—"}`;
+  const totalUnidades = (Array.isArray(salida?.detalles) ? salida.detalles : []).reduce(
+    (acc, d) => acc + Number(d?.cantidad || 0),
+    0
+  );
+
+  const imprimir = () => window.print();
+
+  const descargarPDF = async () => {
+    const el = printAreaRef.current;
+    if (!el) return;
+    try {
+      setDownloading(true);
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        scrollX: 0,
+        scrollY: -window.scrollY,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+      const renderW = imgWidth * ratio;
+      const renderH = imgHeight * ratio;
+      const marginX = (pageWidth - renderW) / 2;
+      const marginY = (pageHeight - renderH) / 2;
+
+      pdf.addImage(imgData, "PNG", marginX, marginY, renderW, renderH);
+      pdf.save(`Nota_Salida_${docCode}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo generar el PDF.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -62,18 +108,19 @@ function SalidaDocumento({ salida, onClose }) {
       <div className="no-print flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-slate-900">
-            Salida creada: <span className="text-blue-700">{numero}</span>
+            Salida registrada: <span className="text-blue-700">{docCode}</span>
           </h2>
-          <p className="text-xs text-slate-500">Lista para PDF (backend) o imprimir.</p>
+          <p className="text-xs text-slate-500">Vista tipo documento (lista para imprimir o descargar).</p>
         </div>
 
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={abrirPDF}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+            onClick={descargarPDF}
+            disabled={downloading}
+            className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70"
           >
-            Abrir PDF
+            {downloading ? "Generando…" : "Descargar PDF"}
           </button>
           <button
             type="button"
@@ -89,25 +136,49 @@ function SalidaDocumento({ salida, onClose }) {
           >
             Cerrar
           </button>
+          <button
+            type="button"
+            onClick={onCreateAnother}
+            className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Crear otra
+          </button>
         </div>
       </div>
 
-      <div className="print-area rounded-xl border border-slate-200 shadow-sm bg-white overflow-hidden">
+      <div
+        ref={printAreaRef}
+        className="print-area rounded-xl border border-slate-200 shadow-sm bg-white overflow-hidden"
+      >
         <div className="px-6 py-5 border-b border-slate-200 bg-slate-50">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <div>
-              <div className="text-xs font-semibold text-slate-900">CALA</div>
-              <div className="text-[11px] text-slate-500">Nota de salida</div>
+            <div className="flex items-center gap-3">
+              <img
+                src={TEMP_LOGO_URL}
+                alt="Logo"
+                className="h-14 w-auto object-contain rounded-md bg-white border border-slate-200 p-2"
+              />
+              <div className="hidden md:block">
+                <div className="text-xs font-semibold text-slate-900">CALA BOUTIQUE</div>
+                <div className="text-[11px] text-slate-500">Nota de Salida de Producto</div>
+              </div>
             </div>
 
             <div className="text-[11px] text-slate-600 md:text-center">
-              <div className="font-semibold text-slate-900">Salida de producto terminado</div>
-              <div>{numero}</div>
+              <div className="font-semibold text-slate-900">GRUPO CALA SAS</div>
+              <div>NIT: 901.367.797-5</div>
+              <div>Cúcuta — Colombia</div>
             </div>
 
-            <div className="md:text-right">
-              <div className="text-xs font-semibold text-slate-900">{salida?.fecha || "—"}</div>
-              <div className="text-[11px] text-slate-500">{getBodegaLabel()}</div>
+            <div className="md:flex md:justify-end">
+              <div className="w-full md:w-auto rounded-lg border border-slate-200 bg-white px-4 py-3">
+                <div className="text-[11px] uppercase font-semibold text-slate-500 text-center">
+                  Documento No.
+                </div>
+                <div className="mt-1 text-sm font-bold text-slate-900 text-center">
+                  {docCode}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -115,74 +186,70 @@ function SalidaDocumento({ salida, onClose }) {
         <div className="p-6 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-lg border border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-900 mb-3">Tercero</div>
+              <div className="text-xs font-semibold text-slate-900 mb-3">Tercero / Cliente</div>
               <div className="space-y-2">
-                <FieldRow label="Tercero" value={getTerceroLabel()} />
+                <FieldRow label="Nombre" value={getTerceroLabel()} />
               </div>
             </div>
 
             <div className="rounded-lg border border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-900 mb-3">Bodega</div>
+              <div className="text-xs font-semibold text-slate-900 mb-3">Origen</div>
               <div className="space-y-2">
                 <FieldRow label="Bodega" value={getBodegaLabel()} />
               </div>
             </div>
 
             <div className="rounded-lg border border-slate-200 p-4">
-              <div className="text-xs font-semibold text-slate-900 mb-3">Observación</div>
-              <div className="text-xs text-slate-700 whitespace-pre-line">
-                {salida?.observacion?.trim() ? salida.observacion : "—"}
+              <div className="text-xs font-semibold text-slate-900 mb-3">Fecha</div>
+              <div className="space-y-2">
+                <FieldRow label="Fecha" value={salida?.fecha || "—"} />
+                <FieldRow label="Total unidades" value={num(totalUnidades)} />
               </div>
             </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
-              <div className="text-xs font-semibold text-slate-900">Detalle</div>
+              <div className="text-xs font-semibold text-slate-900">Detalle de Productos</div>
             </div>
-
             <div className="overflow-auto">
               <table className="min-w-full text-xs">
-                <thead className="bg-white border-b border-slate-200">
-                  <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                <thead className="bg-white border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase">
+                  <tr>
                     <th className="px-3 py-2 text-left">SKU</th>
                     <th className="px-3 py-2 text-left">Producto</th>
                     <th className="px-3 py-2 text-left">Talla</th>
                     <th className="px-3 py-2 text-right">Cantidad</th>
-                    <th className="px-3 py-2 text-right">Costo unit.</th>
+                    <th className="px-3 py-2 text-right">Precio Unit.</th>
                     <th className="px-3 py-2 text-right">Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {(Array.isArray(salida?.detalles) ? salida.detalles : []).map((d, idx) => (
                     <tr key={d.id || idx}>
-                      <td className="px-3 py-2 font-medium text-slate-900">
-                        {d?.producto?.codigo_sku || "—"}
-                      </td>
+                      <td className="px-3 py-2 font-medium text-slate-900">{d?.producto?.codigo_sku || "—"}</td>
                       <td className="px-3 py-2 text-slate-700">{d?.producto?.nombre || "—"}</td>
-                      <td className="px-3 py-2 text-slate-700">
-                        {d?.talla?.nombre || d?.talla || "—"}
-                      </td>
-                      <td className="px-3 py-2 text-right font-semibold text-slate-900">
-                        {num(d?.cantidad || 0)}
-                      </td>
-                      <td className="px-3 py-2 text-right text-slate-700">
-                        {d?.costo_unitario != null ? num(d.costo_unitario) : "—"}
-                      </td>
-                      <td className="px-3 py-2 text-right text-slate-700">
-                        {d?.total != null ? num(d.total) : "—"}
-                      </td>
+                      <td className="px-3 py-2 text-slate-700">{d?.talla?.nombre || d?.talla || "—"}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-slate-900">{num(d.cantidad)}</td>
+                      <td className="px-3 py-2 text-right text-slate-700">{money(d.costo_unitario)}</td>
+                      <td className="px-3 py-2 text-right font-bold text-slate-900">{money(Number(d.cantidad) * Number(d.costo_unitario))}</td>
                     </tr>
                   ))}
-                  {(!salida?.detalles || salida.detalles.length === 0) && (
-                    <tr>
-                      <td colSpan={6} className="px-3 py-3 text-xs text-slate-500">
-                        — No hay detalles —
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
+            </div>
+            <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-6 items-center">
+              <div className="text-[11px] text-slate-500 uppercase font-bold">Total Documento:</div>
+              <div className="text-sm font-bold text-blue-700">
+                {money((Array.isArray(salida?.detalles) ? salida.detalles : []).reduce((acc, d) => acc + (Number(d.cantidad) * Number(d.costo_unitario)), 0))}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 p-4">
+            <div className="text-xs font-semibold text-slate-900 mb-2">Observaciones</div>
+            <div className="text-xs text-slate-700 whitespace-pre-line">
+              {salida?.observacion?.trim() ? salida.observacion : "—"}
             </div>
           </div>
 
@@ -216,7 +283,7 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
 
   // líneas
   const [detalleLines, setDetalleLines] = useState([
-    { id: Date.now(), tallaId: "", cantidad: "1", costo_unitario: "" },
+    { id: Date.now(), talla_nombre: "", cantidad: "1", costo_unitario: "" },
   ]);
 
   // ui
@@ -258,9 +325,7 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
         setBodegaId(String(activeBodegas?.[0]?.id || ""));
         setTerceroId(String(activeTerceros?.[0]?.id || ""));
         setObservacion("");
-        setProductoId("");
-        setStock([]);
-        setDetalleLines([{ id: Date.now(), tallaId: "", cantidad: "1", costo_unitario: "" }]);
+        setDetalleLines([{ id: Date.now(), talla_nombre: "", cantidad: "1", costo_unitario: "" }]);
       } catch (e) {
         console.error(e);
         setError(e.message || "Error cargando catálogos.");
@@ -292,7 +357,7 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
 
         // reset al cambiar bodega
         setProductoId("");
-        setDetalleLines([{ id: Date.now(), tallaId: "", cantidad: "1", costo_unitario: "" }]);
+        setDetalleLines([{ id: Date.now(), talla_nombre: "", cantidad: "1", costo_unitario: "" }]);
       } catch (e) {
         console.error(e);
         setError(e.message || "Error cargando stock.");
@@ -306,15 +371,6 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
   }, [isOpen, bodegaId]);
 
   // ---------- maps de tallas ----------
-  const tallaNombreById = useMemo(() => {
-    const m = new Map();
-    for (const t of tallasCatalog) {
-      if (t?.id == null) continue;
-      m.set(Number(t.id), t?.nombre ?? `Talla #${t.id}`);
-    }
-    return m;
-  }, [tallasCatalog]);
-
   // ----------------- productos disponibles en bodega (desde stock) -----------------
   const productosEnBodega = useMemo(() => {
     const map = new Map();
@@ -333,6 +389,11 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
     );
   }, [stock]);
 
+  const handleProductChange = (e) => {
+    setProductoId(e.target.value);
+    setDetalleLines([{ id: Date.now(), talla_nombre: "", cantidad: "1", costo_unitario: "" }]);
+  };
+
   const productoNombre = useMemo(() => {
     if (!productoId) return "";
     return (
@@ -341,27 +402,22 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
     );
   }, [productosEnBodega, productoId]);
 
-  // ----------------- tallas disponibles para el producto (desde stock) -----------------
   const tallasDisponiblesProducto = useMemo(() => {
     if (!productoId) return [];
     return stock
       .filter((r) => String(r?.producto_id) === String(productoId))
-      .map((r) => {
-        const talla_id = Number(r?.talla); // 👈 stock-terminado devuelve ID
-        return {
-          talla_id,
-          talla_nombre: tallaNombreById.get(talla_id) || `Talla #${talla_id}`,
-          cantidad: r?.cantidad,
-        };
-      })
+      .map((r) => ({
+        talla_nombre: r?.talla || "—",
+        cantidad: r?.cantidad,
+      }))
       .sort((a, b) => String(a.talla_nombre).localeCompare(String(b.talla_nombre)));
-  }, [stock, productoId, tallaNombreById]);
+  }, [stock, productoId]);
 
   // helpers líneas
   const addLine = () => {
     setDetalleLines((prev) => [
       ...prev,
-      { id: Date.now() + Math.random(), tallaId: "", cantidad: "1", costo_unitario: "" },
+      { id: Date.now() + Math.random(), talla_nombre: "", cantidad: "1", costo_unitario: "" },
     ]);
   };
 
@@ -390,13 +446,18 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
     const detalles = detalleLines
       .map((l) => ({
         producto_id: String(productoId),
-        talla_id: Number(l.tallaId),
+        talla: String(l.talla_nombre || "").trim(),
         cantidad: String(l.cantidad || "").trim(),
         costo_unitario: String(l.costo_unitario || "").trim(),
       }))
-      .filter((d) => d.talla_id && Number(d.cantidad || 0) > 0);
+      .filter((d) => d.talla && Number(d.cantidad || 0) > 0);
 
     if (detalles.length === 0) return setError("Agrega al menos una talla con cantidad > 0.");
+
+    // Validar que todas tengan precio
+    if (detalles.some(d => !d.costo_unitario || Number(d.costo_unitario) <= 0)) {
+      return setError("Todas las líneas deben tener un precio unitario mayor a 0.");
+    }
 
     const payload = {
       fecha,
@@ -406,8 +467,7 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
       detalles_input: detalles.map((d) => {
         const item = {
           producto_id: d.producto_id,
-          // 👇 backend espera FK: por eso enviamos el ID numérico
-          talla: d.talla_id,
+          talla: d.talla,
           cantidad: d.cantidad,
         };
         if (d.costo_unitario) item.costo_unitario = d.costo_unitario;
@@ -458,11 +518,11 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
           <div>
             <h1 className="text-sm font-semibold text-slate-900">Nueva Nota de Salida</h1>
             <p className="text-xs text-slate-500">
-              Elige bodega → producto → tallas (según stock). Enviamos talla_id (FK) al backend.
+              Registra la salida de producto terminado (Ventas, traslados externos, etc).
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
               type="button"
               className="px-4 py-2 rounded-md border border-slate-200 bg-white text-xs font-medium text-slate-700 hover:bg-slate-50"
@@ -477,7 +537,7 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                 type="submit"
                 form="salida-form"
                 disabled={saving}
-                className="px-5 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-70"
+                className="px-5 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70"
               >
                 {saving ? "Guardando..." : "Guardar"}
               </button>
@@ -487,7 +547,15 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
 
         {savedSalida ? (
           <div className="px-6 py-5">
-            <SalidaDocumento salida={savedSalida} onClose={onClose} />
+            <SalidaDocumento
+              salida={savedSalida}
+              onClose={onClose}
+              onCreateAnother={() => {
+                setSavedSalida(null);
+                setProductoId("");
+                setDetalleLines([{ id: Date.now(), talla_nombre: "", cantidad: "1", costo_unitario: "" }]);
+              }}
+            />
           </div>
         ) : (
           <form id="salida-form" onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
@@ -497,18 +565,18 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
               </div>
             )}
 
-            {/* Cabecera */}
+            {/* 1. Cabecera */}
             <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-semibold text-slate-900">Datos de la salida</h2>
+              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-sm font-semibold text-slate-900">Datos Generales</h2>
               </div>
 
-              <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="text-xs font-medium text-slate-700">Fecha</label>
                   <input
                     type="date"
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={fecha}
                     onChange={(e) => setFecha(e.target.value)}
                     disabled={loadingCatalogs}
@@ -516,9 +584,9 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Bodega</label>
+                  <label className="text-xs font-medium text-slate-700">Bodega de Origen</label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={bodegaId}
                     onChange={(e) => setBodegaId(e.target.value)}
                     disabled={loadingCatalogs}
@@ -530,15 +598,12 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    {loadingStock ? "Cargando stock-terminado…" : `Items stock-terminado: ${stock.length}`}
-                  </p>
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Tercero</label>
+                  <label className="text-xs font-medium text-slate-700">Tercero / Cliente</label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={terceroId}
                     onChange={(e) => setTerceroId(e.target.value)}
                     disabled={loadingCatalogs}
@@ -552,33 +617,33 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                   </select>
                 </div>
 
-                <div className="md:col-span-4">
+                <div className="md:col-span-3">
                   <label className="text-xs font-medium text-slate-700">Observación</label>
                   <input
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={observacion}
                     onChange={(e) => setObservacion(e.target.value)}
-                    placeholder="Ej: Salida por venta mostrador…"
+                    placeholder="Ej: Salida por venta mostrador, despacho a tienda, etc..."
                   />
                 </div>
               </div>
             </section>
 
-            {/* Producto desde stock de bodega */}
+            {/* 2. Selección de Producto */}
             <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100">
-                <h2 className="text-sm font-semibold text-slate-900">Producto (según bodega)</h2>
+              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-sm font-semibold text-slate-900">Producto y Stock</h2>
               </div>
 
-              <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs font-medium text-slate-700">
-                    Seleccionar producto en esta bodega
+                    Seleccionar producto (disponible en bodega)
                   </label>
                   <select
-                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                     value={productoId}
-                    onChange={(e) => setProductoId(e.target.value)}
+                    onChange={handleProductChange}
                     disabled={!bodegaId || loadingStock}
                   >
                     <option value="">Seleccionar…</option>
@@ -588,37 +653,40 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    *Esta lista sale de <code>/bodegas/{`{id}`}/stock-terminado/</code>
-                  </p>
+                  {loadingStock && (
+                    <p className="mt-1 text-[11px] text-blue-500 animate-pulse">Cargando stock de la bodega…</p>
+                  )}
                 </div>
 
-                <div className="rounded-lg border border-slate-200 p-4 space-y-2">
-                  <div className="text-xs font-semibold text-slate-900">Resumen</div>
-                  <FieldRow label="SKU" value={productoId || "—"} />
-                  <FieldRow label="Nombre" value={productoNombre || "—"} />
-                  <FieldRow label="Tallas disponibles" value={productoId ? tallasDisponiblesProducto.length : "—"} />
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <div className="text-xs font-semibold text-slate-900 mb-3 uppercase tracking-wider">Resumen Selección</div>
+                  <div className="space-y-2">
+                    <FieldRow label="SKU" value={productoId || "—"} />
+                    <FieldRow label="Nombre" value={productoNombre || "—"} />
+                  </div>
                 </div>
               </div>
 
               {productoId && (
-                <div className="px-6 pb-4">
-                  <div className="rounded-md border border-slate-200 overflow-hidden">
-                    <div className="bg-slate-50 border-b border-slate-100 px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase grid grid-cols-12 gap-2">
-                      <div className="col-span-6">Talla</div>
-                      <div className="col-span-6 text-right">Stock disponible</div>
+                <div className="px-6 pb-6">
+                  <div className="rounded-lg border border-slate-200 overflow-hidden">
+                    <div className="bg-slate-100/50 border-b border-slate-200 px-4 py-2 text-[10px] font-bold text-slate-500 uppercase grid grid-cols-12 gap-2">
+                      <div className="col-span-8">Talla</div>
+                      <div className="col-span-4 text-right">Disponible</div>
                     </div>
 
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-slate-100 bg-white">
                       {tallasDisponiblesProducto.map((t) => (
-                        <div key={t.talla_id} className="px-4 py-2 text-xs grid grid-cols-12 gap-2">
-                          <div className="col-span-6 font-medium text-slate-900">{t.talla_nombre}</div>
-                          <div className="col-span-6 text-right text-slate-700">{num(t.cantidad)}</div>
+                        <div key={t.talla_nombre} className="px-4 py-2 text-xs grid grid-cols-12 gap-2 hover:bg-slate-50 transition-colors">
+                          <div className="col-span-8 font-medium text-slate-900">{t.talla_nombre}</div>
+                          <div className="col-span-4 text-right text-slate-700 font-mono italic">{num(t.cantidad)}</div>
                         </div>
                       ))}
 
                       {tallasDisponiblesProducto.length === 0 && (
-                        <div className="px-4 py-3 text-xs text-slate-500">— Sin tallas —</div>
+                        <div className="px-4 py-4 text-xs text-slate-500 italic text-center text-red-500">
+                          ⚠️ No hay stock registrado para este producto en esta bodega.
+                        </div>
                       )}
                     </div>
                   </div>
@@ -626,80 +694,99 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
               )}
             </section>
 
-            {/* Detalle */}
+            {/* 3. Detalle de Salida */}
             <section className="bg-white rounded-xl shadow-sm border border-slate-200">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">Detalle (tallas a descontar)</h2>
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h2 className="text-sm font-semibold text-slate-900">Tallas y Cantidades</h2>
                 <button
                   type="button"
                   onClick={addLine}
-                  className="px-3 py-2 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 disabled:opacity-60"
-                  disabled={!productoId}
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-blue-700 disabled:opacity-50 transition-all shadow-sm"
+                  disabled={!productoId || loadingStock}
                 >
-                  + Agregar talla
+                  ＋ Agregar Talla
                 </button>
               </div>
 
-              <div className="px-6 py-4 space-y-3">
+              <div className="px-6 py-6 space-y-4">
                 {!productoId ? (
-                  <div className="text-xs text-slate-500">Selecciona primero un producto.</div>
+                  <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-xl">
+                    <p className="text-xs text-slate-400">Seleccione un producto para configurar las cantidades de salida.</p>
+                  </div>
                 ) : (
                   <>
-                    {detalleLines.map((l) => (
-                      <div key={l.id} className="rounded-lg border border-slate-200 p-3">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                          <div className="md:col-span-5">
-                            <label className="text-xs font-medium text-slate-700">Talla</label>
-                            <select
-                              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
-                              value={l.tallaId}
-                              onChange={(e) => updateLine(l.id, "tallaId", e.target.value)}
-                            >
-                              <option value="">Seleccionar…</option>
-                              {tallasDisponiblesProducto.map((t) => (
-                                <option key={t.talla_id} value={t.talla_id}>
-                                  {t.talla_nombre} (stock: {num(t.cantidad)})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+                    <div className="space-y-3">
+                      {detalleLines.map((l) => (
+                        <div key={l.id} className="group relative bg-slate-50/30 rounded-xl border border-slate-200 p-4 hover:border-blue-200 hover:bg-blue-50/10 transition-all">
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                            <div className="md:col-span-5">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-1 block">Talla</label>
+                              <select
+                                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                                value={l.talla_nombre}
+                                onChange={(e) => updateLine(l.id, "talla_nombre", e.target.value)}
+                              >
+                                <option value="">Seleccionar talla…</option>
+                                {tallasDisponiblesProducto.map((t) => (
+                                  <option key={t.talla_nombre} value={t.talla_nombre}>
+                                    {t.talla_nombre} (Disponible: {num(t.cantidad)})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
 
-                          <div className="md:col-span-3">
-                            <label className="text-xs font-medium text-slate-700">Cantidad</label>
-                            <input
-                              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right"
-                              value={l.cantidad}
-                              onChange={(e) => updateLine(l.id, "cantidad", e.target.value)}
-                            />
-                          </div>
+                            <div className="md:col-span-2">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-1 block">Cantidad</label>
+                              <input
+                                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                                value={l.cantidad}
+                                onChange={(e) => updateLine(l.id, "cantidad", e.target.value)}
+                                placeholder="0"
+                              />
+                            </div>
 
-                          <div className="md:col-span-3">
-                            <label className="text-xs font-medium text-slate-700">Costo unitario (opcional)</label>
-                            <input
-                              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right"
-                              value={l.costo_unitario}
-                              onChange={(e) => updateLine(l.id, "costo_unitario", e.target.value)}
-                              placeholder="Ej: 45000.00"
-                            />
-                          </div>
+                            <div className="md:col-span-2">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 mb-1 block">Costo unit.</label>
+                              <input
+                                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-right focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                                value={l.costo_unitario}
+                                onChange={(e) => updateLine(l.id, "costo_unitario", e.target.value)}
+                                placeholder="0"
+                              />
+                            </div>
 
-                          <div className="md:col-span-1 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => removeLine(l.id)}
-                              className="px-3 py-2 rounded-md border border-red-200 bg-red-50 text-xs text-red-700 hover:bg-red-100 disabled:opacity-60"
-                              disabled={detalleLines.length === 1}
-                              title="Eliminar línea"
-                            >
-                              ✕
-                            </button>
+                            <div className="md:col-span-2 text-right">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase mr-1 mb-1 block">Subtotal</label>
+                              <div className="py-2 text-xs font-bold text-blue-600">
+                                {money(Number(l.cantidad || 0) * Number(l.costo_unitario || 0))}
+                              </div>
+                            </div>
+
+                            <div className="md:col-span-1 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => removeLine(l.id)}
+                                className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                                disabled={detalleLines.length === 1}
+                                title="Eliminar línea"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
 
-                    <div className="text-xs text-slate-600">
-                      Total unidades a sacar: <b className="text-slate-900">{num(totalCantidad)}</b>
+                    <div className="flex items-center justify-between px-2 pt-2 border-t border-slate-100">
+                      <div className="text-xs text-slate-500">
+                        Total unidades: <span className="font-bold text-slate-900">{num(totalCantidad)}</span>
+                      </div>
+                      <div className="text-right text-sm">
+                        Total Nota: <span className="font-bold text-blue-700 text-lg ml-2">
+                          {money(detalleLines.reduce((acc, l) => acc + (Number(l.cantidad || 0) * Number(l.costo_unitario || 0)), 0))}
+                        </span>
+                      </div>
                     </div>
                   </>
                 )}

@@ -581,7 +581,7 @@ export default function WarehousesPage() {
         bodega_destino_id: Number(transferHeader.bodega_destino_id),
         items: transferItems.map(i => ({
           producto_id: i.producto_id,
-          talla_id: i.talla_id ? Number(i.talla_id) : null,
+          talla_id: i.talla_id ? String(i.talla_id) : null,
           cantidad: String(i.cantidad)
         }))
       };
