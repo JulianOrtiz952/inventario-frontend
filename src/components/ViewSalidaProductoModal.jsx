@@ -1,6 +1,10 @@
-import { X, Package, ClipboardList, Info, Truck } from "lucide-react";
+import { X, Package, ClipboardList, Info, Truck, FileText } from "lucide-react";
+import { useState } from "react";
+import SalidaProductoDocumento from "./SalidaProductoDocumento";
 
 export default function ViewSalidaProductoModal({ isOpen, salida, onClose }) {
+    const [viewDocument, setViewDocument] = useState(false);
+
     if (!isOpen || !salida) return null;
 
     const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
@@ -23,6 +27,22 @@ export default function ViewSalidaProductoModal({ isOpen, salida, onClose }) {
         return "—";
     };
 
+    if (viewDocument) {
+        return (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all animate-fadeIn">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto p-6 relative">
+                    <button
+                        onClick={() => setViewDocument(false)}
+                        className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all z-10 no-print"
+                    >
+                        <X size={20} />
+                    </button>
+                    <SalidaProductoDocumento salida={salida} onClose={() => setViewDocument(false)} />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all animate-fadeIn px-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden border border-slate-100 flex flex-col">
@@ -41,12 +61,22 @@ export default function ViewSalidaProductoModal({ isOpen, salida, onClose }) {
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
-                    >
-                        <X size={20} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setViewDocument(true)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-sm"
+                            title="Ver formato de impresión / PDF"
+                        >
+                            <FileText size={16} />
+                            <span>PDF / Imprimir</span>
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* CONTENT */}

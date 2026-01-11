@@ -1,7 +1,11 @@
-import { X, Package, ClipboardList, Info, ArrowDownRight, Truck } from "lucide-react";
+import { X, Package, ClipboardList, Info, ArrowDownRight, Truck, FileText } from "lucide-react";
 import { formatCurrency } from "../utils/format";
+import { useState } from "react";
+import NotaEnsambleDocumento from "./NotaEnsambleDocumento";
 
 export default function ViewNotaEnsambleModal({ isOpen, nota, onClose }) {
+    const [viewDocument, setViewDocument] = useState(false);
+
     if (!isOpen || !nota) return null;
 
     const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
@@ -9,6 +13,22 @@ export default function ViewNotaEnsambleModal({ isOpen, nota, onClose }) {
 
     const totalProductos = (nota.detalles || []).reduce((acc, d) => acc + Number(d.cantidad || 0), 0);
     const totalCosto = nota.costo_total || "0";
+
+    if (viewDocument) {
+        return (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all animate-fadeIn">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto p-6 relative">
+                    <button
+                        onClick={() => setViewDocument(false)}
+                        className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all z-10 no-print"
+                    >
+                        <X size={20} />
+                    </button>
+                    <NotaEnsambleDocumento nota={nota} onClose={() => setViewDocument(false)} />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all animate-fadeIn">
@@ -28,12 +48,22 @@ export default function ViewNotaEnsambleModal({ isOpen, nota, onClose }) {
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
-                    >
-                        <X size={20} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setViewDocument(true)}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow-sm"
+                            title="Ver formato de impresión / PDF"
+                        >
+                            <FileText size={16} />
+                            <span>PDF / Imprimir</span>
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* CONTENT */}
