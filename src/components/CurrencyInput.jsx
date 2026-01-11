@@ -9,15 +9,18 @@ export default function CurrencyInput({
     name,
 }) {
     const [displayValue, setDisplayValue] = useState("");
+    const [isFocused, setIsFocused] = useState(false);
 
     useEffect(() => {
-        // Cuando el valor externo cambia (y no es lo que ya estamos mostrando parseado), actualizar
-        if (value !== undefined && value !== null) {
-            setDisplayValue(formatCurrency(value));
-        } else {
-            setDisplayValue("");
+        // Solo actualizar desde afuera si NO tiene el foco
+        if (!isFocused) {
+            if (value !== undefined && value !== null && value !== "") {
+                setDisplayValue(formatCurrency(value));
+            } else {
+                setDisplayValue("");
+            }
         }
-    }, [value]);
+    }, [value, isFocused]);
 
     const handleChange = (e) => {
         const inputValue = e.target.value;
@@ -29,30 +32,48 @@ export default function CurrencyInput({
             return;
         }
 
-        // Validar solo caracteres permitidos: digitos, puntos, comas, comillas (para permitir edición)
-        // Pero para simplificar, extraemos solo números y punto
+        // Extraer solo dígitos, punto, y apóstrofe (para que el usuario pueda escribir o borrar)
+        // Pero al pasar al padre lo mandamos limpio (parseado)
         const rawValue = inputValue.replace(/[^\d.]/g, "");
-
-        // Evitar múltiples puntos decimales
         const parts = rawValue.split('.');
         if (parts.length > 2) return;
 
-        // Guardamos el valor crudo en el estado padre
+        // Actualizamos el estado interno para lo que ve el usuario
+        // Aplicamos el formato de miles al vuelo PERO sin forzar decimales si no los hay
+        let formatted = "";
+        const integerPart = parts[0];
+        const decimalPart = parts[1];
+
+        // Reutilizamos la lógica de formateo de miles pero básica
+        const reversed = integerPart.split("").reverse();
+        let intFormatted = "";
+        for (let i = 0; i < reversed.length; i++) {
+            if (i > 0 && i % 3 === 0) intFormatted += "'";
+            intFormatted += reversed[i];
+        }
+        formatted = intFormatted.split("").reverse().join("");
+
+        if (decimalPart !== undefined) {
+            formatted += "." + decimalPart.slice(0, 2);
+        } else if (inputValue.endsWith(".")) {
+            formatted += ".";
+        }
+
+        setDisplayValue(formatted);
+
+        // El valor real que mandamos al padre es el raw numérico
         onChange({ target: { name, value: rawValue } });
+    };
 
-        // No formateamos INMEDIATAMENTE mientras escribe para no volver loco el cursor, 
-        // pero si lo hacemos, debemos gestionar el cursor. 
-        // Para simplificar: formateamos "onBlur" o aceptamos un comportamiento híbrido.
-        // El usuario pidió "incluso cuando esté escribiendo".
-        // Intentemos formatear en tiempo real pero cuidando de no bloquear la escritura de decimales.
+    const handleFocus = () => {
+        setIsFocused(true);
+    };
 
-        // CASO ESPECIAL: Si el usuario escribe un punto, no lo borramos
-        if (inputValue.endsWith(".")) {
-            setDisplayValue(formatCurrency(rawValue) + ".");
-        } else if (inputValue.endsWith(".0")) {
-            setDisplayValue(formatCurrency(rawValue) + ".0");
-        } else {
-            setDisplayValue(formatCurrency(rawValue));
+    const handleBlur = () => {
+        setIsFocused(false);
+        // Al salir, forzamos el formato completo (incluyendo .00 si no los tiene)
+        if (value !== undefined && value !== null && value !== "") {
+            setDisplayValue(formatCurrency(value));
         }
     };
 
@@ -64,6 +85,8 @@ export default function CurrencyInput({
             placeholder={placeholder}
             value={displayValue}
             onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             autoComplete="off"
         />
     );

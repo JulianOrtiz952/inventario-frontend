@@ -1,15 +1,17 @@
-import { X, Package, ClipboardList, Info, ArrowDownRight, Truck, FileText } from "lucide-react";
+import { X, Package, ClipboardList, Info, Truck, FileText } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import { useState } from "react";
 import NotaEnsambleDocumento from "./NotaEnsambleDocumento";
+import { API_BASE } from "../config/api";
+import { fetchAllPages } from "../utils/api";
 
 export default function ViewNotaEnsambleModal({ isOpen, nota, onClose }) {
     const [viewDocument, setViewDocument] = useState(false);
 
     if (!isOpen || !nota) return null;
 
-    const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-    const num = (n) => nf.format(Number(n || 0));
+    const num = (n) => formatCurrency(n);
+    const money = (n) => `$${formatCurrency(n)}`;
 
     const totalProductos = (nota.detalles || []).reduce((acc, d) => acc + Number(d.cantidad || 0), 0);
     const totalCosto = nota.costo_total || "0";

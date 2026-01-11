@@ -163,11 +163,11 @@ export default function ProductDetailsModal({ isOpen, onClose, product, title = 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Field label="Referencia" value={da.referencia || "—"} />
                     <Field label="Unidad" value={da.unidad || "—"} />
-                    <Field label="Stock mínimo" value={da.stock_minimo ?? "—"} />
+                    <Field label="Stock mínimo" value={formatCurrency(da.stock_minimo ?? 0)} />
                     <Field label="Marca" value={da.marca || "—"} />
                     <Field label="Modelo" value={da.modelo || "—"} />
                     <Field label="Código arancelario" value={da.codigo_arancelario || "—"} />
-                    <Field label="Stock" value={da.stock ?? "—"} />
+                    <Field label="Stock" value={formatCurrency(da.stock ?? 0)} />
                     <div className="md:col-span-3">
                       <Field label="Descripción" value={da.descripcion || "—"} />
                     </div>

@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import CreateNotaEnsambleModal from "../components/CreateNotaEnsambleModal";
 import { API_BASE } from "../config/api";
-import { asRows, buildQueryParams } from "../utils/api";
+import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api";
 import { Trash2 } from "lucide-react";
 import ViewNotaEnsambleModal from "../components/ViewNotaEnsambleModal";
 import ConfirmActionModal from "../components/ConfirmActionModal";
+import { formatCurrency } from "../utils/format";
 
 const PAGE_SIZE = 30;
 
-const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-const num = (n) => nf.format(Number(n || 0));
-
+const num = (v) => formatCurrency(v);
+const money = (v) => `$${formatCurrency(v)}`;
 
 
 export default function NotasEnsamblePage() {

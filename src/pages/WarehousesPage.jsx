@@ -3,12 +3,12 @@ import { API_BASE } from "../config/api";
 import { RotateCcw, Trash2, Pencil } from "lucide-react";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 
+import { formatCurrency } from "../utils/format";
+
 const PAGE_SIZE = 30;
 
-const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
-const num = (v) => nf.format(Number(v || 0));
-const money = (v) => `$${nfMoney.format(Number(v || 0))}`;
+const num = (n) => formatCurrency(n);
+const money = (n) => `$${formatCurrency(n)}`;
 
 async function safeJson(res) {
   const text = await res.text().catch(() => "");

@@ -4,10 +4,10 @@ import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api"
 
 
 
-const nfNum = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
-const num = (n) => nfNum.format(Number(n || 0));
-const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
+import { formatCurrency } from "../utils/format";
+
+const num = (n) => formatCurrency(n);
+const money = (n) => `$${formatCurrency(n)}`;
 
 function looksMoneyUnit(unit) {
   return unit === "valor" || unit === "costo";

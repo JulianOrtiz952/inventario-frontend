@@ -2,15 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { API_BASE } from "../config/api";
-import { asRows, safeJson, fetchAllPages } from "../utils/api";
-import { Trash2 } from "lucide-react";
+import { safeJson, fetchAllPages } from "../utils/api";
+import { formatCurrency } from "../utils/format";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-const nfNum = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
-const num = (n) => nfNum.format(Number(n || 0));
-const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
+const num = (n) => formatCurrency(n);
+const money = (n) => `$${formatCurrency(n)}`;
 
 const TEMP_LOGO_URL =
     "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/640px-Placeholder_view_vector.svg.png";

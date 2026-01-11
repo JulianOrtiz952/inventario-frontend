@@ -4,15 +4,14 @@ import EditSalidaProductoModal from "../components/EditSalidaProductoModal";
 import ViewSalidaProductoModal from "../components/ViewSalidaProductoModal";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import { API_BASE } from "../config/api";
-import { asRows, buildQueryParams } from "../utils/api";
+import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api";
+import { formatCurrency } from "../utils/format";
 import { Trash2 } from "lucide-react";
 
 const PAGE_SIZE = 30;
 
-const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
-const num = (n) => nf.format(Number(n || 0));
-const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
+const num = (v) => formatCurrency(v);
+const money = (v) => `$${formatCurrency(v)}`;
 
 export default function SalidasProductoPage() {
   const [salidas, setSalidas] = useState([]);

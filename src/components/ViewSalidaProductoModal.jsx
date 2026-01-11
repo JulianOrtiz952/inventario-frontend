@@ -1,16 +1,16 @@
 import { X, Package, ClipboardList, Info, Truck, FileText } from "lucide-react";
 import { useState } from "react";
 import SalidaProductoDocumento from "./SalidaProductoDocumento";
+import { API_BASE } from "../config/api";
+import { formatCurrency } from "../utils/format";
 
 export default function ViewSalidaProductoModal({ isOpen, salida, onClose }) {
     const [viewDocument, setViewDocument] = useState(false);
 
     if (!isOpen || !salida) return null;
 
-    const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-    const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
-    const num = (n) => nf.format(Number(n || 0));
-    const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
+    const num = (n) => formatCurrency(n);
+    const money = (n) => `$${formatCurrency(n)}`;
 
     const totalProductos = (salida.detalles || []).reduce((acc, d) => acc + Number(d.cantidad || 0), 0);
     const totalVenta = (salida.detalles || []).reduce((acc, d) => acc + (Number(d.cantidad || 0) * Number(d.costo_unitario || 0)), 0);

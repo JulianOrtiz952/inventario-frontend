@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { safeJson, fetchAllPages } from "../utils/api";
+import { formatCurrency } from "../utils/format";
 import { Trash2 } from "lucide-react";
 import SalidaProductoDocumento from "./SalidaProductoDocumento";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-const nfNum = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
-const num = (n) => nfNum.format(Number(n || 0));
-const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
+const num = (n) => formatCurrency(n);
+const money = (n) => `$${formatCurrency(n)}`;
 
 function FieldRow({ label, value }) {
   return (

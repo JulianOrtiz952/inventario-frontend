@@ -2,11 +2,10 @@ import { useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-// Formato Colombia
-const nfNum = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-const nfMoney = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 });
-const num = (n) => nfNum.format(Number(n || 0));
-const money = (n) => `$${nfMoney.format(Number(n || 0))}`;
+import { formatCurrency } from "../utils/format";
+
+const num = (n) => formatCurrency(n);
+const money = (n) => `$${formatCurrency(n)}`;
 
 const TEMP_LOGO_URL =
     "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/640px-Placeholder_view_vector.svg.png";

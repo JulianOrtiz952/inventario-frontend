@@ -177,7 +177,7 @@ function MovementModal({
                     {/* Insumo seleccionado preview */}
                     <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-lg ${isEntrada ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"}`}>
-                        {isEntrada ? "⬇" : "⬆"}
+                        {isEntrada ? <ArrowDownCircle size={20} /> : <ArrowUpCircle size={20} />}
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Insumo seleccionado</p>
@@ -1016,14 +1016,14 @@ export default function InventoryPage() {
             className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400 text-sm font-semibold shadow-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition-all font-sans"
             onClick={() => openMovementModal("entrada")}
           >
-            <span className="text-lg leading-none">⬇</span>
+            <ArrowDownCircle size={18} />
             Registrar Entrada
           </button>
           <button
             className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-rose-600 dark:text-rose-400 text-sm font-semibold shadow-sm hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-300 dark:hover:border-rose-700 transition-all"
             onClick={() => openMovementModal("salida")}
           >
-            <span className="text-lg leading-none">⬆</span>
+            <ArrowUpCircle size={18} />
             Registrar Salida
           </button>
         </div>
@@ -1044,7 +1044,7 @@ export default function InventoryPage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700"
             onClick={openCreateModal}
           >
-            <span className="text-lg leading-none">＋</span>
+            <Plus size={18} />
             Nuevo Insumo
           </button>
         </div>

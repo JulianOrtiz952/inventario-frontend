@@ -67,6 +67,12 @@ export default function ProductsPage() {
     return Number.isFinite(n) ? n : null;
   };
 
+  const num = (v) => {
+    const n = toNumber(v);
+    if (n === null) return "—";
+    return formatCurrency(n);
+  };
+
   const money = (v) => {
     const n = toNumber(v);
     if (n === null) return "—";
@@ -434,20 +440,20 @@ export default function ProductsPage() {
 
                         <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 tabular-nums">
                           <div className="flex items-center gap-2">
-                            {(() => {
-                              const stock = Number(p?.datos_adicionales?.stock ?? 0);
-                              const min = Number(p?.datos_adicionales?.stock_minimo ?? 0);
-                              const isLow = isActive && min > 0 && stock < min;
-
-                              return (
-                                <span className={`flex items-center gap-1.5 font-medium ${!isActive ? "text-slate-400 dark:text-slate-600" : isLow ? "text-red-600 dark:text-red-400" : ""}`}>
-                                  {p?.datos_adicionales?.stock ?? <span className="text-slate-400 dark:text-slate-600">—</span>}
-                                  {isLow && (
-                                    <AlertCircle size={14} className="text-red-500 dark:text-red-400" title={`Bajo mínimo (Min: ${min})`} />
-                                  )}
-                                </span>
-                              );
-                            })()}
+                            <span className={`flex items-center gap-1.5 font-medium ${!isActive ? "text-slate-400 dark:text-slate-600" : ""}`}>
+                              {num(p?.datos_adicionales?.stock ?? 0)}
+                              <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                {p.unidad_medida || "u"}
+                              </span>
+                              {(() => {
+                                const stock = Number(p?.datos_adicionales?.stock ?? 0);
+                                const min = Number(p?.datos_adicionales?.stock_minimo ?? 0);
+                                const isLow = isActive && min > 0 && stock < min;
+                                return isLow && (
+                                  <AlertCircle size={14} className="text-red-500 dark:text-red-400" title={`Bajo mínimo (Min: ${min})`} />
+                                );
+                              })()}
+                            </span>
 
                             <button
                               type="button"

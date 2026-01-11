@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { safeJson, fetchAllPages } from "../utils/api";
 import NotaEnsambleDocumento from "./NotaEnsambleDocumento";
+import { formatCurrency } from "../utils/format";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -12,8 +13,7 @@ export default function CreateNotaEnsambleModal({
   mode = "create",
   notaId = null,
 }) {
-  const nf = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 3 });
-  const num = (n) => nf.format(Number(n || 0));
+  const num = (n) => formatCurrency(n);
   const money = (v) => {
     const n = Number(v);
     if (!Number.isFinite(n)) return "—";
@@ -261,6 +261,10 @@ export default function CreateNotaEnsambleModal({
 
     if (detallesValidos.length === 0)
       return setError("Debes agregar al menos una talla con cantidad > 0.");
+
+    if (detallesValidos.some(d => Number(d.cantidad) % 1 !== 0)) {
+      return setError("La cantidad de productos ensamblados debe ser un número entero (sin decimales).");
+    }
 
     const insumosValidos = insumoLines
       .map((l) => ({
@@ -607,8 +611,15 @@ export default function CreateNotaEnsambleModal({
                         </div>
 
                         <div className="md:col-span-5">
-                          <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider text-right">Cantidad</label>
+                          <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider text-right">Cantidad (Entero)</label>
                           <input
+                            type="number"
+                            step="1"
+                            onKeyDown={(e) => {
+                              if (e.key === "." || e.key === "," || e.key === "e" || e.key === "E") {
+                                e.preventDefault();
+                              }
+                            }}
                             className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-right font-medium tabular-nums"
                             value={l.cantidad}
                             onChange={(e) => updateDetalleLine(l.id, "cantidad", e.target.value)}
