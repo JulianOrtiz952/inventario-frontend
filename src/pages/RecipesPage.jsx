@@ -52,11 +52,11 @@ export default function NewRecipePage() {
           fetchAllPages(`${API_BASE}/bodegas/?page_size=200`),
         ]);
 
-        setProductos(pData);
-        setInsumos(iData);
+        setProductos(pData.filter((x) => x.es_activo !== false));
+        setInsumos(iData.filter((x) => x.es_activo !== false));
         setRecetas(rData);
         setHistorial(hData);
-        setBodegas(bData);
+        setBodegas(bData.filter((x) => x.es_activo !== false));
       } catch (err) {
         console.error(err);
         setError("Error cargando información inicial.");

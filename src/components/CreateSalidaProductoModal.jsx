@@ -245,14 +245,18 @@ export default function CreateSalidaProductoModal({ isOpen, onClose, onSaved }) 
           fetchAllPages(`${API_BASE}/tallas/?page_size=200`),
         ]);
 
-        setBodegas(bodegasArr);
-        setTerceros(tercerosArr);
-        setTallasCatalog(tallasArr);
+        const activeBodegas = bodegasArr.filter((x) => x.es_activo !== false);
+        const activeTerceros = tercerosArr.filter((x) => x.es_activo !== false);
+        const activeTallas = tallasArr.filter((x) => x.es_activo !== false);
+
+        setBodegas(activeBodegas);
+        setTerceros(activeTerceros);
+        setTallasCatalog(activeTallas);
 
         // defaults
         setFecha(todayISO());
-        setBodegaId(String(bodegasArr?.[0]?.id || ""));
-        setTerceroId(String(tercerosArr?.[0]?.id || ""));
+        setBodegaId(String(activeBodegas?.[0]?.id || ""));
+        setTerceroId(String(activeTerceros?.[0]?.id || ""));
         setObservacion("");
         setProductoId("");
         setStock([]);

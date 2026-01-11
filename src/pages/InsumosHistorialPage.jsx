@@ -98,9 +98,9 @@ export default function InsumosHistorialPage() {
       fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
     ]);
 
-    setInsumos(insAll);
-    setBodegas(bodAll);
-    setTerceros(terAll);
+    setInsumos(insAll.filter((x) => x.es_activo !== false));
+    setBodegas(bodAll.filter((x) => x.es_activo !== false));
+    setTerceros(terAll.filter((x) => x.es_activo !== false));
   }
 
   async function loadMovimientos(targetPage = 1, overrideFilters = null) {

@@ -518,9 +518,9 @@ export default function InventoryPage() {
       fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
     ]);
 
-    setProveedores(provAll);
-    setBodegas(bodAll);
-    setTerceros(terAll);
+    setProveedores(provAll.filter((x) => x.es_activo !== false));
+    setBodegas(bodAll.filter((x) => x.es_activo !== false));
+    setTerceros(terAll.filter((x) => x.es_activo !== false));
   }
 
   // Carga inicial de catálogos

@@ -430,6 +430,25 @@ export default function CreateNotaEnsambleModal({
     [productoId, productos]
   );
 
+  // ✅ Insumos agrupados por código para mostrar stock global
+  const insumosAgrupados = useMemo(() => {
+    const map = new Map();
+    for (const i of insumos) {
+      if (!map.has(i.codigo)) {
+        map.set(i.codigo, {
+          ...i,
+          stock_global: 0,
+        });
+      }
+      const existing = map.get(i.codigo);
+      existing.stock_global += Number(i.cantidad || 0);
+    }
+    return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  }, [insumos]);
+
+  const getInsumoAgrupadoByCodigo = (codigo) =>
+    insumosAgrupados.find((i) => String(i.codigo) === String(codigo)) || null;
+
   const totalCantidadProductos = useMemo(() => {
     return detalleLines.reduce((acc, l) => acc + Number(l.cantidad || 0), 0);
   }, [detalleLines]);
@@ -474,11 +493,11 @@ export default function CreateNotaEnsambleModal({
           fetchAllPages(`${API_BASE}/insumos/?page_size=200`),
         ]);
 
-        setProductos(dProd);
-        setBodegas(dBod);
-        setTallas(dTal);
-        setTerceros(dTer);
-        setInsumos(dIns);
+        setProductos(dProd.filter((x) => x.es_activo !== false));
+        setBodegas(dBod.filter((x) => x.es_activo !== false));
+        setTallas(dTal.filter((x) => x.es_activo !== false));
+        setTerceros(dTer.filter((x) => x.es_activo !== false));
+        setInsumos(dIns.filter((x) => x.es_activo !== false));
       } catch (e) {
         console.error(e);
         setError(e.message || "Error cargando catálogos.");
@@ -995,12 +1014,12 @@ export default function CreateNotaEnsambleModal({
 
               <div className="px-6 py-4 space-y-3">
                 {insumoLines.map((l) => {
-                  const ins = getInsumoByCodigo(l.insumo_codigo);
-                  const bRef = ins?.bodega?.nombre || (ins?.bodega_id ? String(ins.bodega_id) : "—");
-                  const cu = Number(ins?.costo_unitario || 0);
+                  const insGroup = getInsumoAgrupadoByCodigo(l.insumo_codigo);
+                  const cu = Number(insGroup?.costo_unitario || 0);
                   const q = Number(l.cantidad_req || 0);
                   const totalUnit = cu * q;
                   const totalAll = totalUnit * Number(totalCantidadProductos || 0);
+                  const totalCantidadNota = q * Number(totalCantidadProductos || 0);
 
                   return (
                     <div key={l.id} className="rounded-lg border border-slate-200 p-3">
@@ -1014,19 +1033,19 @@ export default function CreateNotaEnsambleModal({
                             disabled={loading || loadingNota}
                           >
                             <option value="">Seleccionar…</option>
-                            {insumos.map((i) => (
+                            {insumosAgrupados.map((i) => (
                               <option key={i.codigo} value={i.codigo}>
-                                {i.codigo} — {i.nombre}
+                                {i.codigo} — {i.nombre} (Stock Global: {num(i.stock_global)})
                               </option>
                             ))}
                           </select>
                         </div>
 
                         <div className="md:col-span-2">
-                          <label className="text-xs font-medium text-slate-700">Bodega ref.</label>
+                          <label className="text-xs font-medium text-slate-700">Cant. Total Nota</label>
                           <input
-                            className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm bg-slate-50"
-                            value={bRef}
+                            className="mt-1 w-full rounded-md border border-indigo-200 px-3 py-2 text-sm bg-indigo-50 font-bold text-indigo-700"
+                            value={num(totalCantidadNota)}
                             readOnly
                           />
                         </div>
@@ -1055,13 +1074,15 @@ export default function CreateNotaEnsambleModal({
 
                         <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                           <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
-                            <div className="text-[11px] text-slate-500">Descripción</div>
-                            <div className="font-semibold text-slate-900">{ins?.descripcion || "—"}</div>
+                            <div className="text-[11px] text-slate-500">Global Stock</div>
+                            <div className="font-semibold text-slate-900">
+                              {num(insGroup?.stock_global)} {insGroup?.unidad_medida || ""}
+                            </div>
                           </div>
 
                           <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
                             <div className="text-[11px] text-slate-500">Referencia</div>
-                            <div className="font-semibold text-slate-900">{ins?.referencia || "—"}</div>
+                            <div className="font-semibold text-slate-900">{insGroup?.referencia || "—"}</div>
                           </div>
 
                           <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
