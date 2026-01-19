@@ -68,6 +68,7 @@ export default function NotasEnsamblePage() {
   };
 
   const getProductosResumen = (nota) => {
+    if (nota?.productos_resumen) return nota.productos_resumen;
     const det = Array.isArray(nota?.detalles) ? nota.detalles : [];
     if (det.length === 0) return "—";
 
@@ -89,6 +90,9 @@ export default function NotasEnsamblePage() {
   };
 
   const getTotalCantidad = (nota) => {
+    if (nota?.total_cantidad !== undefined && nota?.total_cantidad !== null) {
+      return Number(nota.total_cantidad);
+    }
     const det = Array.isArray(nota?.detalles) ? nota.detalles : [];
     return det.reduce((acc, d) => acc + Number(d?.cantidad || 0), 0);
   };

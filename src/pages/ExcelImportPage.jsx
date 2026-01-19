@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { API_BASE } from "../config/api";
+import { useInventory } from "../context/InventoryContext"; // ✅ Contexto
 
 function safeJsonText(text) {
   if (!text) return null;
@@ -85,6 +86,9 @@ function ResultCard({ result }) {
   const movimientos = Array.isArray(result.movimientos_ids) ? result.movimientos_ids : [];
   const notas = Array.isArray(result.notas_creadas) ? result.notas_creadas : [];
 
+  const showMovs = movimientos.length > 0 || result.creados !== undefined;
+  const showNotas = notas.length > 0 || result.actualizados !== undefined;
+
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4 shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -107,15 +111,27 @@ function ResultCard({ result }) {
           <p className="text-lg font-semibold text-slate-900 dark:text-white">{Number(result.procesadas_ok || 0)}</p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Movimientos creados</p>
-          <p className="text-lg font-semibold text-slate-900 dark:text-white">{movimientos.length}</p>
-        </div>
+        {showMovs && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">
+              {result.creados !== undefined ? "Creados" : "Movimientos creados"}
+            </p>
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+              {result.creados !== undefined ? result.creados : movimientos.length}
+            </p>
+          </div>
+        )}
 
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Notas creadas</p>
-          <p className="text-lg font-semibold text-slate-900 dark:text-white">{notas.length}</p>
-        </div>
+        {showNotas && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">
+              {result.actualizados !== undefined ? "Actualizados" : "Notas creadas"}
+            </p>
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+              {result.actualizados !== undefined ? result.actualizados : notas.length}
+            </p>
+          </div>
+        )}
       </div>
 
       {(movimientos.length > 0 || notas.length > 0) && (
@@ -139,15 +155,47 @@ function ResultCard({ result }) {
 }
 
 function HelpBox({ mode }) {
-  const isInsumos = mode === "insumos";
-
-  const colsReq = isInsumos
-    ? ["Codigo Producto", "Descripción", "Stock Actual (o Entradas)"]
-    : ["fecha", "bodega_id", "tercero_id", "producto_sku", "cantidad"];
-
-  const colsOpt = isInsumos
-    ? ["Marca (Proveedor)", "Color", "# FACTURA", "Costo Unitario", "Bodega*", "Tercero*"]
-    : ["talla", "costo_unitario", "observacion"];
+  /* Ayuda dinámica según tab */
+  const helpInfo = useMemo(() => {
+    switch (mode) {
+      case "insumos":
+        return {
+          req: ["Codigo Producto", "Referencia", "Descripción", "Cantidad Entrada (Stock)"],
+          opt: ["Marca (Proveedor)", "Color", "# FACTURA", "Costo Unitario", "Bodega*", "Tercero*", "Unidad Medida"],
+          notes: [
+            <>La fecha puede venir como <span className="font-mono text-blue-600 dark:text-blue-400">2025-12-27</span> o <span className="font-mono text-blue-600 dark:text-blue-400">27/12/2025</span>.</>,
+            <>* <b>Bodega</b> y <b>Tercero</b> en el Excel tienen prioridad sobre la selección global.</>,
+            "Si dejas 'Referencia' vacía, tomará el 'Código' por defecto."
+          ]
+        };
+      case "proveedores":
+        return {
+          req: ["Nombre"],
+          opt: [],
+          notes: ["Se convertirá a MAYÚSCULAS automáticamente.", "Si ya existe (por nombre), no se duplica."]
+        };
+      case "terceros":
+        return {
+          req: ["Codigo", "Nombre"],
+          opt: [],
+          notes: ["Se valida duplicados por Código.", "Si el código existe, se actualiza el nombre."]
+        };
+      case "bodegas":
+        return {
+          req: ["Codigo", "Nombre"],
+          opt: [],
+          notes: ["Se valida duplicados por Código.", "Si el código existe, se actualiza el nombre."]
+        };
+      case "tallas":
+        return {
+          req: ["Nombre"],
+          opt: [],
+          notes: ["Se valida duplicados por Nombre."]
+        };
+      default:
+        return { req: [], opt: [], notes: [] };
+    }
+  }, [mode]);
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
@@ -157,7 +205,7 @@ function HelpBox({ mode }) {
         <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
           <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Columnas requeridas</p>
           <ul className="mt-2 text-xs text-slate-700 dark:text-slate-400 space-y-1 list-disc ml-5 font-medium">
-            {colsReq.map((c) => (
+            {helpInfo.req.map((c) => (
               <li key={c} className="font-mono text-slate-600 dark:text-slate-300">
                 {c}
               </li>
@@ -165,33 +213,31 @@ function HelpBox({ mode }) {
           </ul>
         </div>
 
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Columnas opcionales</p>
-          <ul className="mt-2 text-xs text-slate-700 dark:text-slate-400 space-y-1 list-disc ml-5 font-medium">
-            {colsOpt.map((c) => (
-              <li key={c} className="font-mono text-slate-600 dark:text-slate-300">
-                {c}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {helpInfo.opt.length > 0 && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">Columnas opcionales</p>
+            <ul className="mt-2 text-xs text-slate-700 dark:text-slate-400 space-y-1 list-disc ml-5 font-medium">
+              {helpInfo.opt.map((c) => (
+                <li key={c} className="font-mono text-slate-600 dark:text-slate-300">
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3">
         <p className="font-semibold text-slate-700 dark:text-slate-300 mb-1">Notas:</p>
         <ul className="space-y-1.5 list-disc ml-5">
-          <li>La fecha puede venir como <span className="font-mono text-blue-600 dark:text-blue-400">2025-12-27</span> o <span className="font-mono text-blue-600 dark:text-blue-400">27/12/2025</span>.</li>
-          <li>* <b>Bodega</b> y <b>Tercero</b> en el Excel tienen prioridad sobre la selección global. Puedes usar Nombre o ID.</li>
-          <li>Si el backend responde con error, se mostrará en el panel.</li>
+          {helpInfo.notes.map((n, i) => <li key={i}>{n}</li>)}
         </ul>
       </div>
     </div>
   );
 }
 
-import { useInventory } from "../context/InventoryContext"; // ✅ Contexto
 
-// ...
 
 export default function ExcelImportPage() {
   const tabs = useMemo(
@@ -204,11 +250,32 @@ export default function ExcelImportPage() {
         importUrl: `${API_BASE}/excel/importar-insumos/`,
       },
       {
-        id: "terminado",
-        label: "Ingreso Producto Terminado",
-        templateUrl: `${API_BASE}/excel/plantilla-terminado/`,
-        templateName: "plantilla_producto_terminado.xlsx",
-        importUrl: `${API_BASE}/excel/importar-terminado/`,
+        id: "proveedores",
+        label: "Proveedores",
+        templateUrl: `${API_BASE}/excel/plantilla-proveedores/`,
+        templateName: "plantilla_proveedores.xlsx",
+        importUrl: `${API_BASE}/excel/importar-proveedores/`,
+      },
+      {
+        id: "terceros",
+        label: "Terceros",
+        templateUrl: `${API_BASE}/excel/plantilla-terceros/`,
+        templateName: "plantilla_terceros.xlsx",
+        importUrl: `${API_BASE}/excel/importar-terceros/`,
+      },
+      {
+        id: "bodegas",
+        label: "Bodegas",
+        templateUrl: `${API_BASE}/excel/plantilla-bodegas/`,
+        templateName: "plantilla_bodegas.xlsx",
+        importUrl: `${API_BASE}/excel/importar-bodegas/`,
+      },
+      {
+        id: "tallas",
+        label: "Tallas",
+        templateUrl: `${API_BASE}/excel/plantilla-tallas/`,
+        templateName: "plantilla_tallas.xlsx",
+        importUrl: `${API_BASE}/excel/importar-tallas/`,
       },
     ],
     []
@@ -282,9 +349,11 @@ export default function ExcelImportPage() {
       // ✅ contrato: key EXACTA file
       fd.append("file", file);
 
-      // Enviar defaults
-      if (globalBodegaId) fd.append("bodega_id", globalBodegaId);
-      if (globalTerceroId) fd.append("tercero_id", globalTerceroId);
+      // Enviar defaults Solo para insumos
+      if (tab === "insumos") {
+        if (globalBodegaId) fd.append("bodega_id", globalBodegaId);
+        if (globalTerceroId) fd.append("tercero_id", globalTerceroId);
+      }
 
       const res = await fetch(active.importUrl, {
         method: "POST",
@@ -324,7 +393,7 @@ export default function ExcelImportPage() {
           </div>
 
           {/* Tabs */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 flex flex-col md:flex-row gap-2 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 flex flex-col md:flex-row gap-2 shadow-sm whitespace-nowrap overflow-x-auto">
             {tabs.map((t) => (
               <button
                 key={t.id}
@@ -378,50 +447,52 @@ export default function ExcelImportPage() {
                 </div>
 
                 <form onSubmit={onImport} className="mt-6 space-y-6">
-                  {/* Selectores de Bodega/Tercero si el tab es 'insumos' (o 'terminado') */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                        Bodega Predeterminada <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={globalBodegaId}
-                        onChange={(e) => setGlobalBodegaId(e.target.value)}
-                        className="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm focus:ring-blue-500 max-h-40"
-                      >
-                        <option value="">-- Seleccionar Bodega --</option>
-                        {bodegas.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.codigo} - {b.nombre}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                        Se usará si la columna en Excel está vacía.
-                      </p>
-                    </div>
+                  {/* Selectores de Bodega/Tercero si el tab es 'insumos' */}
+                  {tab === "insumos" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Bodega Predeterminada <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={globalBodegaId}
+                          onChange={(e) => setGlobalBodegaId(e.target.value)}
+                          className="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm focus:ring-blue-500 max-h-40"
+                        >
+                          <option value="">-- Seleccionar Bodega --</option>
+                          {bodegas.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.codigo} - {b.nombre}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                          Se usará si la columna en Excel está vacía.
+                        </p>
+                      </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                        Tercero Predeterminado <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={globalTerceroId}
-                        onChange={(e) => setGlobalTerceroId(e.target.value)}
-                        className="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm focus:ring-blue-500 max-h-40"
-                      >
-                        <option value="">-- Seleccionar Tercero --</option>
-                        {terceros.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.codigo} - {t.nombre}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                        Se usará si la columna en Excel está vacía.
-                      </p>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                          Tercero Predeterminado <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={globalTerceroId}
+                          onChange={(e) => setGlobalTerceroId(e.target.value)}
+                          className="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm focus:ring-blue-500 max-h-40"
+                        >
+                          <option value="">-- Seleccionar Tercero --</option>
+                          {terceros.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.codigo} - {t.nombre}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                          Se usará si la columna en Excel está vacía.
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-5">
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Archivo Excel (.xlsx)</label>

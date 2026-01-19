@@ -64,6 +64,7 @@ export default function SalidasProductoPage() {
   };
 
   const getProductosResumen = (s) => {
+    if (s?.productos_resumen) return s.productos_resumen;
     const det = Array.isArray(s?.detalles) ? s.detalles : [];
     if (det.length === 0) return "—";
 
@@ -85,11 +86,17 @@ export default function SalidasProductoPage() {
   };
 
   const getTotalCantidad = (s) => {
+    if (s?.total_cantidad !== undefined && s?.total_cantidad !== null) {
+      return Number(s.total_cantidad);
+    }
     const det = Array.isArray(s?.detalles) ? s.detalles : [];
     return det.reduce((acc, d) => acc + Number(d?.cantidad || 0), 0);
   };
 
   const getTotalPrecio = (s) => {
+    if (s?.total_valor !== undefined && s?.total_valor !== null) {
+      return Number(s.total_valor);
+    }
     const det = Array.isArray(s?.detalles) ? s.detalles : [];
     return det.reduce((acc, d) => acc + (Number(d?.cantidad || 0) * Number(d?.costo_unitario || 0)), 0);
   };
