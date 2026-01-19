@@ -7,6 +7,7 @@ import { API_BASE } from "../config/api";
 import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api";
 import { formatCurrency } from "../utils/format";
 import { Trash2 } from "lucide-react";
+import { useInventory } from "../context/InventoryContext";
 
 const PAGE_SIZE = 30;
 
@@ -40,8 +41,7 @@ export default function SalidasProductoPage() {
   const [terceroId, setTerceroId] = useState("");
 
   // catálogos para filtros
-  const [bodegas, setBodegas] = useState([]);
-  const [terceros, setTerceros] = useState([]);
+  const { bodegas, terceros } = useInventory();
 
   // detalle seleccionado
   const [selectedSalida, setSelectedSalida] = useState(null);
@@ -131,22 +131,8 @@ export default function SalidasProductoPage() {
     }
   };
 
-  const loadCatalogs = async () => {
-    try {
-      const [bData, tData] = await Promise.all([
-        fetch(`${API_BASE}/bodegas/?page_size=200`).then(r => r.json()),
-        fetch(`${API_BASE}/terceros/?page_size=200`).then(r => r.json()),
-      ]);
-      setBodegas(asRows(bData));
-      setTerceros(asRows(tData));
-    } catch (e) {
-      console.error("Error cargando catálogos:", e);
-    }
-  };
-
-  useEffect(() => {
-    loadCatalogs();
-  }, []);
+  // const loadCatalogs = async ... (REMOVIDO)
+  // useEffect(() => { loadCatalogs(); }, []); (REMOVIDO)
 
   useEffect(() => {
     loadSalidas(1);

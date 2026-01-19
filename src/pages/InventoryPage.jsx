@@ -311,6 +311,10 @@ function getInsumoPk(insumo) {
 
 
 
+import { useInventory } from "../context/InventoryContext"; // ✅ Contexto
+
+// ... (imports anteriores se mantienen igual, solo agregué useInventory)
+
 export default function InventoryPage() {
   // INSUMOS PAGINADOS
   const [insumos, setInsumos] = useState([]);
@@ -319,10 +323,8 @@ export default function InventoryPage() {
   const [insumosNext, setInsumosNext] = useState(null);
   const [insumosPrev, setInsumosPrev] = useState(null);
 
-  // Catálogos
-  const [proveedores, setProveedores] = useState([]);
-  const [terceros, setTerceros] = useState([]);
-  const [bodegas, setBodegas] = useState([]);
+  // ✅ Contexto Global (ya no usamos state local para catálogos)
+  const { bodegas, terceros, proveedores } = useInventory();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -510,34 +512,6 @@ export default function InventoryPage() {
     },
     [search, proveedorFiltro, terceroFiltro, bodegaFiltro, precioMin, precioMax]
   );
-
-  async function loadCatalogs() {
-    const [provAll, bodAll, terAll] = await Promise.all([
-      fetchAllPages(`${API_BASE}/proveedores/?page_size=200`),
-      fetchAllPages(`${API_BASE}/bodegas/?page_size=200`),
-      fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
-    ]);
-
-    setProveedores(provAll.filter((x) => x.es_activo !== false));
-    setBodegas(bodAll.filter((x) => x.es_activo !== false));
-    setTerceros(terAll.filter((x) => x.es_activo !== false));
-  }
-
-  // Carga inicial de catálogos
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        setError("");
-        await loadCatalogs();
-      } catch (err) {
-        console.error(err);
-        setError(err.message || "Error cargando catálogos.");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
 
   // Recarga insumos cuando cambian filtros (con debounce)
   useEffect(() => {
@@ -1159,6 +1133,7 @@ export default function InventoryPage() {
                 <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                   <th className="px-4 py-3 text-left">Código</th>
                   <th className="px-4 py-3 text-left">Nombre</th>
+                  <th className="px-4 py-3 text-left">Unidad</th>
                   <th className="px-4 py-3 text-left">Proveedor</th>
                   <th className="px-4 py-3 text-left">Bodega / Tercero</th>
                   <th className="px-4 py-3 text-left">Estado</th>
@@ -1202,6 +1177,12 @@ export default function InventoryPage() {
                           <p className="text-[10px] text-slate-400">Ref: {i.referencia}</p>
                         )}
                         {isInactive && <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-medium">Inactivo</span>}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
+                          {i.unidad_medida || "UN"}
+                        </span>
                       </td>
 
                       <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">

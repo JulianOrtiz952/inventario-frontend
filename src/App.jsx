@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import TopBar from "./components/TopBar";
 import SideNav from "./components/SideNav";
 import { ThemeProvider } from "./context/ThemeContext";
+import { InventoryProvider } from "./context/InventoryContext";
 
 // Tus páginas
 import InventoryPage from "./pages/InventoryPage";
@@ -21,41 +22,43 @@ import ReportesPage from "./pages/ReportesPage";
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950 transition-colors duration-300">
-          {/* TOP BAR */}
-          <TopBar />
+      <InventoryProvider>
+        <BrowserRouter>
+          <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950 transition-colors duration-300">
+            {/* TOP BAR */}
+            <TopBar />
 
-          <div className="flex flex-1">
-            {/* SIDE NAV */}
-            <SideNav />
+            <div className="flex flex-1">
+              {/* SIDE NAV */}
+              <SideNav />
 
-            {/* MAIN CONTENT */}
-            <main className="flex-1 p-6">
-              <Routes>
-                <Route path="/" element={<InventoryPage />} />
-                <Route path="/bodegas" element={<WarehousesPage />} />
-                <Route path="/productos" element={<ProductsPage />} />
-                <Route path="/nota_ensamble" element={<NotasEnsamblePage />} />
-                <Route path="/terceros" element={<TercerosPage />} />
-                <Route path="/tallas" element={<TallasPage />} />
-                <Route path="/proveedores" element={<ProvidersPage />} />
-                <Route path="/salidas-producto" element={<SalidasProductoPage />} />
-                <Route path="/insumos-historial" element={<InsumosHistorialPage />} />
-                <Route path="/importar-excel" element={<ExcelImportPage />} />
-                <Route path="/reportes" element={<ReportesPage />} />
-                <Route
-                  path="/simulacion"
-                  element={<ProductionSimulationPage />}
-                />
+              {/* MAIN CONTENT */}
+              <main className="flex-1 p-6">
+                <Routes>
+                  <Route path="/" element={<InventoryPage />} />
+                  <Route path="/bodegas" element={<WarehousesPage />} />
+                  <Route path="/productos" element={<ProductsPage />} />
+                  <Route path="/nota_ensamble" element={<NotasEnsamblePage />} />
+                  <Route path="/terceros" element={<TercerosPage />} />
+                  <Route path="/tallas" element={<TallasPage />} />
+                  <Route path="/proveedores" element={<ProvidersPage />} />
+                  <Route path="/salidas-producto" element={<SalidasProductoPage />} />
+                  <Route path="/insumos-historial" element={<InsumosHistorialPage />} />
+                  <Route path="/importar-excel" element={<ExcelImportPage />} />
+                  <Route path="/reportes" element={<ReportesPage />} />
+                  <Route
+                    path="/simulacion"
+                    element={<ProductionSimulationPage />}
+                  />
 
-                {/* fallback */}
-                <Route path="*" element={<InventoryPage />} />
-              </Routes>
-            </main>
+                  {/* fallback */}
+                  <Route path="*" element={<InventoryPage />} />
+                </Routes>
+              </main>
+            </div>
           </div>
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </InventoryProvider>
     </ThemeProvider>
   );
 }

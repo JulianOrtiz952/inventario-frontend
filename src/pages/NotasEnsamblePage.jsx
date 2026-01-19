@@ -13,12 +13,17 @@ const num = (v) => formatCurrency(v);
 const money = (v) => `$${formatCurrency(v)}`;
 
 
+import { useInventory } from "../context/InventoryContext"; // ✅ Contexto
+
 export default function NotasEnsamblePage() {
   const [notas, setNotas] = useState([]);
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
   const [nextUrl, setNextUrl] = useState(null);
   const [prevUrl, setPrevUrl] = useState(null);
+
+  // ✅ Usar Contexto
+  const { bodegas, terceros } = useInventory();
 
   const [loading, setLoading] = useState(false);
   const [loadingDetalle, setLoadingDetalle] = useState(false);
@@ -39,8 +44,9 @@ export default function NotasEnsamblePage() {
   const [terceroId, setTerceroId] = useState("");
 
   // catálogos para filtros
-  const [bodegas, setBodegas] = useState([]);
-  const [terceros, setTerceros] = useState([]);
+  // NOTA: removemos la carga manual de bodegas/terceros
+  // const [bodegas, setBodegas] = useState([]);
+  // const [terceros, setTerceros] = useState([]);
 
   // detalle seleccionado
   const [selectedNotaId, setSelectedNotaId] = useState(null);
@@ -124,22 +130,8 @@ export default function NotasEnsamblePage() {
     }
   };
 
-  const loadCatalogs = async () => {
-    try {
-      const [bData, tData] = await Promise.all([
-        fetch(`${API_BASE}/bodegas/?page_size=200`).then(r => r.json()),
-        fetch(`${API_BASE}/terceros/?page_size=200`).then(r => r.json()),
-      ]);
-      setBodegas(asRows(bData));
-      setTerceros(asRows(tData));
-    } catch (e) {
-      console.error("Error cargando catálogos:", e);
-    }
-  };
-
-  useEffect(() => {
-    loadCatalogs();
-  }, []);
+  // const loadCatalogs = async () => { ... } // REMOVIDO
+  // useEffect(() => { loadCatalogs(); }, []); // REMOVIDO
 
   useEffect(() => {
     loadNotas(1);

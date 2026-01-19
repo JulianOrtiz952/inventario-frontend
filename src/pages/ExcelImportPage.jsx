@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { API_BASE } from "../config/api";
 
 function safeJsonText(text) {
@@ -142,11 +142,11 @@ function HelpBox({ mode }) {
   const isInsumos = mode === "insumos";
 
   const colsReq = isInsumos
-    ? ["codigo", "nombre", "bodega_id", "cantidad_entrada", "costo_unitario", "tercero_id"]
+    ? ["Codigo Producto", "Descripción", "Stock Actual (o Entradas)"]
     : ["fecha", "bodega_id", "tercero_id", "producto_sku", "cantidad"];
 
   const colsOpt = isInsumos
-    ? ["referencia", "factura", "unidad_medida", "color", "stock_minimo", "observacion"]
+    ? ["Marca (Proveedor)", "Color", "# FACTURA", "Costo Unitario", "Bodega*", "Tercero*"]
     : ["talla", "costo_unitario", "observacion"];
 
   return (
@@ -181,13 +181,17 @@ function HelpBox({ mode }) {
         <p className="font-semibold text-slate-700 dark:text-slate-300 mb-1">Notas:</p>
         <ul className="space-y-1.5 list-disc ml-5">
           <li>La fecha puede venir como <span className="font-mono text-blue-600 dark:text-blue-400">2025-12-27</span> o <span className="font-mono text-blue-600 dark:text-blue-400">27/12/2025</span>.</li>
-          <li>El front solo sube el archivo; el backend valida todo.</li>
+          <li>* <b>Bodega</b> y <b>Tercero</b> en el Excel tienen prioridad sobre la selección global. Puedes usar Nombre o ID.</li>
           <li>Si el backend responde con error, se mostrará en el panel.</li>
         </ul>
       </div>
     </div>
   );
 }
+
+import { useInventory } from "../context/InventoryContext"; // ✅ Contexto
+
+// ...
 
 export default function ExcelImportPage() {
   const tabs = useMemo(
@@ -215,11 +219,35 @@ export default function ExcelImportPage() {
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [inputKey, setInputKey] = useState(0); // Para limpiar input
 
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
 
   const errores = Array.isArray(result?.errores) ? result.errores : [];
+
+  // =========================================
+  //  Selectores Globales (Contexto)
+  // =========================================
+  const { bodegas, terceros } = useInventory(); // ✅ Usamos el contexto
+
+  // Valores seleccionados en UI para usar como default
+  const [globalBodegaId, setGlobalBodegaId] = useState("");
+  const [globalTerceroId, setGlobalTerceroId] = useState("");
+
+  // Preseleccionar primera opción cuando carguen los catálogos
+  useEffect(() => {
+    if (!globalBodegaId && bodegas.length > 0) {
+      setGlobalBodegaId(bodegas[0].id);
+    }
+  }, [bodegas, globalBodegaId]);
+
+  useEffect(() => {
+    if (!globalTerceroId && terceros.length > 0) {
+      setGlobalTerceroId(terceros[0].id);
+    }
+  }, [terceros, globalTerceroId]);
+
 
   const onPick = (e) => {
     setError("");
@@ -254,6 +282,10 @@ export default function ExcelImportPage() {
       // ✅ contrato: key EXACTA file
       fd.append("file", file);
 
+      // Enviar defaults
+      if (globalBodegaId) fd.append("bodega_id", globalBodegaId);
+      if (globalTerceroId) fd.append("tercero_id", globalTerceroId);
+
       const res = await fetch(active.importUrl, {
         method: "POST",
         body: fd,
@@ -271,6 +303,10 @@ export default function ExcelImportPage() {
       setError(e2.message || "Error importando Excel.");
     } finally {
       setLoading(false);
+      // Forzar limpieza del input para evitar "Failed to fetch" si el usuario reintenta
+      // con el mismo objeto File que el navegador ya invalidó por seguridad o cambio.
+      setFile(null);
+      setInputKey(prev => prev + 1);
     }
   };
 
@@ -296,6 +332,7 @@ export default function ExcelImportPage() {
                 onClick={() => {
                   setTab(t.id);
                   setFile(null);
+                  setInputKey(prev => prev + 1);
                   setError("");
                   setResult(null);
                 }}
@@ -341,9 +378,55 @@ export default function ExcelImportPage() {
                 </div>
 
                 <form onSubmit={onImport} className="mt-6 space-y-6">
+                  {/* Selectores de Bodega/Tercero si el tab es 'insumos' (o 'terminado') */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        Bodega Predeterminada <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={globalBodegaId}
+                        onChange={(e) => setGlobalBodegaId(e.target.value)}
+                        className="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm focus:ring-blue-500 max-h-40"
+                      >
+                        <option value="">-- Seleccionar Bodega --</option>
+                        {bodegas.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.codigo} - {b.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                        Se usará si la columna en Excel está vacía.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                        Tercero Predeterminado <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={globalTerceroId}
+                        onChange={(e) => setGlobalTerceroId(e.target.value)}
+                        className="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm focus:ring-blue-500 max-h-40"
+                      >
+                        <option value="">-- Seleccionar Tercero --</option>
+                        {terceros.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.codigo} - {t.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                        Se usará si la columna en Excel está vacía.
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-5">
                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Archivo Excel (.xlsx)</label>
                     <input
+                      key={inputKey} // ✅ Reset input on key change
                       type="file"
                       accept=".xlsx"
                       onChange={onPick}
