@@ -135,6 +135,23 @@ const IconChart = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
+const IconFactory = ({ className = "w-5 h-5" }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path
+      d="M2 20V9l4 2 4-2 4 2 4-2 4 2v11H2z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M17 13h.01M17 17h.01M12 13h.01M12 17h.01M7 13h.01M7 17h.01"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 const navItems = [
   { id: "inventario", label: "Inventario de insumos", icon: IconBox, path: "/" },
 
@@ -142,6 +159,7 @@ const navItems = [
   { id: "kardex_insumos", label: "Historial insumos (Kardex)", icon: IconHistory, path: "/insumos-historial" },
 
   { id: "proveedores", label: "Proveedores", icon: IconHandshake, path: "/proveedores" },
+  { id: "operadores", label: "Operadores", icon: IconFactory, path: "/operadores" },
   { id: "bodegas", label: "Bodegas", icon: IconWarehouse, path: "/bodegas" },
   { id: "productos", label: "Productos y recetas", icon: IconTag, path: "/productos" },
   { id: "nota_ensamble", label: "Notas de ensamble", icon: IconClipboard, path: "/nota_ensamble" },

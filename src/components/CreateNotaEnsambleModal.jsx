@@ -25,6 +25,7 @@ export default function CreateNotaEnsambleModal({
   const [tallas, setTallas] = useState([]);
   const [terceros, setTerceros] = useState([]);
   const [insumos, setInsumos] = useState([]);
+  const [operadores, setOperadores] = useState([]);
 
   // producto cabecera
   const [productoId, setProductoId] = useState("");
@@ -34,6 +35,8 @@ export default function CreateNotaEnsambleModal({
   const [terceroId, setTerceroId] = useState("");
   const [fechaElaboracion, setFechaElaboracion] = useState(todayISO());
   const [observaciones, setObservaciones] = useState("");
+  const [operadorId, setOperadorId] = useState("");
+  const [costoServicio, setCostoServicio] = useState("");
 
   // detalles
   const [detalleLines, setDetalleLines] = useState([{ id: Date.now(), talla_nombre: "", cantidad: "1" }]);
@@ -121,12 +124,13 @@ export default function CreateNotaEnsambleModal({
       try {
         setLoading(true);
 
-        const [dProd, dBod, dTal, dTer, dIns] = await Promise.all([
+        const [dProd, dBod, dTal, dTer, dIns, dOpe] = await Promise.all([
           fetchAllPages(`${API_BASE}/productos/?page_size=200`),
           fetchAllPages(`${API_BASE}/bodegas/?page_size=200`),
           fetchAllPages(`${API_BASE}/tallas/?page_size=200`),
           fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
           fetchAllPages(`${API_BASE}/insumos/?page_size=200`),
+          fetchAllPages(`${API_BASE}/operadores/?page_size=200`),
         ]);
 
         setProductos(dProd.filter((x) => x.es_activo !== false));
@@ -134,6 +138,7 @@ export default function CreateNotaEnsambleModal({
         setTallas(dTal.filter((x) => x.es_activo !== false));
         setTerceros(dTer.filter((x) => x.es_activo !== false));
         setInsumos(dIns.filter((x) => x.es_activo !== false));
+        setOperadores(dOpe.filter((x) => x.es_activo !== false));
       } catch (e) {
         console.error(e);
         setError(e.message || "Error cargando catálogos.");
@@ -155,6 +160,8 @@ export default function CreateNotaEnsambleModal({
       setTerceroId("");
       setFechaElaboracion(todayISO());
       setObservaciones("");
+      setOperadorId("");
+      setCostoServicio("");
       setDetalleLines([{ id: Date.now(), talla_nombre: "", cantidad: "1" }]);
       setInsumoLines([{ id: Date.now() + 1, insumo_codigo: "", cantidad_req: "0" }]);
       return;
@@ -178,6 +185,9 @@ export default function CreateNotaEnsambleModal({
           setTerceroId(tId ? String(tId) : "");
           setFechaElaboracion(n?.fecha_elaboracion || todayISO());
           setObservaciones(n?.observaciones || "");
+          const opId = n?.operador?.id ?? n?.operador_id ?? "";
+          setOperadorId(opId ? String(opId) : "");
+          setCostoServicio(n?.costo_servicio ? String(n.costo_servicio) : "");
 
           const det = Array.isArray(n?.detalles) ? n.detalles : [];
           const sku = det?.[0]?.producto?.codigo_sku || det?.[0]?.producto_id || "";
@@ -262,6 +272,11 @@ export default function CreateNotaEnsambleModal({
     if (detallesValidos.length === 0)
       return setError("Debes agregar al menos una talla con cantidad > 0.");
 
+    // ✅ Nueva validación: Asegurar que todas las líneas con cantidad tengan talla
+    if (detallesValidos.some(d => !d.talla_nombre)) {
+      return setError("Todas las líneas de productos deben tener una talla seleccionada.");
+    }
+
     if (detallesValidos.some(d => Number(d.cantidad) % 1 !== 0)) {
       return setError("La cantidad de productos ensamblados debe ser un número entero (sin decimales).");
     }
@@ -272,6 +287,9 @@ export default function CreateNotaEnsambleModal({
         cantidad: String(l.cantidad_req ?? "0").trim(),
       }))
       .filter((i) => i.insumo_codigo && Number(i.cantidad || 0) > 0);
+
+    if (insumosValidos.length === 0)
+      return setError("Debes agregar al menos un insumo con cantidad > 0.");
 
     const payload = {
       bodega_id: Number(bodegaDestinoId),
@@ -284,6 +302,8 @@ export default function CreateNotaEnsambleModal({
         cantidad: d.cantidad,
       })),
       insumos_input: insumosValidos,
+      operador_id: operadorId ? Number(operadorId) : null,
+      costo_servicio: costoServicio ? Number(costoServicio) : 0,
     };
 
     if (!payload.tercero_id) delete payload.tercero_id;
@@ -293,6 +313,7 @@ export default function CreateNotaEnsambleModal({
       return nd;
     });
     if (!payload.insumos_input?.length) delete payload.insumos_input;
+    if (payload.operador_id === null) delete payload.operador_id;
 
     try {
       setSaving(true);
@@ -569,7 +590,59 @@ export default function CreateNotaEnsambleModal({
               </div>
             </section>
 
-            {/* Detalles */}
+            {/* Servicio Operador (Opcional) */}
+            <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                  Servicio de Operador (Opcional)
+                </h2>
+              </div>
+
+              <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                    Operador / Taller Externo
+                  </label>
+                  <select
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                    value={operadorId}
+                    onChange={(e) => setOperadorId(e.target.value)}
+                    disabled={loading || loadingNota}
+                  >
+                    <option value="">— Ninguno —</option>
+                    {operadores.map((op) => (
+                      <option key={op.id} value={op.id}>
+                        {op.codigo} — {op.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                    Valor del Servicio (Costo Total)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-7 pr-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium tabular-nums"
+                      value={costoServicio}
+                      onChange={(e) => setCostoServicio(e.target.value)}
+                      placeholder="0.00"
+                      disabled={loading || loadingNota}
+                    />
+                  </div>
+                  {operadorId && !costoServicio && (
+                    <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
+                      <span>⚠️</span> Si seleccionas un operador, debes asignar el costo del servicio.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
             <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -783,7 +856,7 @@ export default function CreateNotaEnsambleModal({
                   Informe de costos
                 </h2>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 ml-4">
-                  Basado en insumos manuales (por unidad) × total de productos terminados.
+                  Desglose de costos de insumos y servicios de operación.
                 </p>
               </div>
 
@@ -794,24 +867,34 @@ export default function CreateNotaEnsambleModal({
                 </div>
 
                 <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4 shadow-sm">
-                  <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Costo por unidad</div>
-                  <div className="text-xl font-bold text-blue-600 dark:text-blue-400 mt-1 tabular-nums">{money(costoInsumosUnitario)}</div>
+                  <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Costo Insumos</div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1 tabular-nums">{money(costoInsumosTotal)}</div>
                 </div>
 
-                <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4 shadow-sm">
-                  <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Costo total insumos</div>
-                  <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-1 tabular-nums">{money(costoInsumosTotal)}</div>
+                <div className="rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/50 p-4 shadow-sm md:col-span-1">
+                  <div className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">Costo Servicio</div>
+                  <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mt-1 tabular-nums">{money(costoServicio || 0)}</div>
                 </div>
 
-                <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 p-4 shadow-sm">
-                  <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Costo promedio</div>
-                  <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">{money(costoPromedioPorProducto)}</div>
+                <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 p-4 shadow-sm md:col-span-1">
+                  <div className="text-[10px] font-semibold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider">TOTAL Nota</div>
+                  <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300 mt-1 tabular-nums">
+                    {money(Number(costoInsumosTotal) + Number(costoServicio || 0))}
+                  </div>
                 </div>
               </div>
+
+              {costoServicio > 0 && totalCantidadProductos > 0 && (
+                <div className="px-6 pb-5 pt-0">
+                  <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 text-[11px] text-blue-700 dark:text-blue-300 transition-all animate-in slide-in-from-left-2 duration-300">
+                    💡 Costo promedio del servicio por producto: <b>{money(Number(costoServicio) / totalCantidadProductos)}</b>
+                  </div>
+                </div>
+              )}
             </section>
           </form>
         )}
       </div>
-    </div>
+    </div >
   );
 }

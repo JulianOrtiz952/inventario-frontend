@@ -389,7 +389,7 @@ export default function NotasEnsamblePage() {
                       <th className="px-4 py-3 text-left">Fecha</th>
                       <th className="px-4 py-3 text-left">Productos</th>
                       <th className="px-4 py-3 text-left">Bodega</th>
-                      <th className="px-4 py-3 text-left">Tercero</th>
+                      <th className="px-4 py-3 text-left">Operador / Taller</th>
                       <th className="px-4 py-3 text-right">Cant. total</th>
                       <th className="px-4 py-3 text-center">Acciones</th>
                     </tr>
@@ -402,13 +402,22 @@ export default function NotasEnsamblePage() {
                       return (
                         <tr
                           key={n.id}
-                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                          className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${n.operador_id ? "bg-blue-50/40 dark:bg-blue-900/10" : ""}`}
                         >
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-bold">#{n.id}</td>
                           <td className="px-4 py-3 text-slate-600 dark:text-slate-400 font-medium">{n.fecha_elaboracion || "—"}</td>
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">{getProductosResumen(n)}</td>
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{getBodegaLabel(n)}</td>
-                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{getTerceroLabel(n)}</td>
+                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                            {n.operador_nombre ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] font-bold uppercase truncate max-w-[120px]" title={n.operador_nombre}>
+                                <span className="w-1 h-1 rounded-full bg-blue-500"></span>
+                                {n.operador_nombre}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-600">—</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">{num(totalCant)}</td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex justify-center gap-2">

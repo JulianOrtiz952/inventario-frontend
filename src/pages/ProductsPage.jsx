@@ -113,7 +113,9 @@ export default function ProductsPage() {
       try {
         setLoading(true);
         setError("");
-        const tData = await fetchAllPages(`${API_BASE}/terceros/`);
+        const tDataRaw = await fetchAllPages(`${API_BASE}/terceros/`);
+        // ✅ Filtrar terceros inactivos
+        const tData = Array.isArray(tDataRaw) ? tDataRaw.filter(t => t.es_activo !== false) : [];
         setTerceros(tData);
 
         await loadProductos(1);

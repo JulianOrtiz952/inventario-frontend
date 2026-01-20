@@ -71,14 +71,14 @@ export default function ViewNotaEnsambleModal({ isOpen, nota, onClose }) {
                 {/* CONTENT */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-slate-50/30 dark:bg-slate-950/20">
                     {/* SECCIÓN 1: CABECERA */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 transition-colors">
                                 <Truck size={18} />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Bodega</p>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
                                     {nota.bodega?.nombre || "—"}
                                 </p>
                             </div>
@@ -88,10 +88,22 @@ export default function ViewNotaEnsambleModal({ isOpen, nota, onClose }) {
                             <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 transition-colors">
                                 <Info size={18} />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Tercero</p>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
                                     {nota.tercero?.nombre || "—"}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 transition-colors">
+                                <Truck size={18} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] uppercase font-bold text-indigo-400 dark:text-indigo-500">Operador</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                    {nota.operador?.nombre || nota.operador_nombre || "—"}
                                 </p>
                             </div>
                         </div>
@@ -100,7 +112,7 @@ export default function ViewNotaEnsambleModal({ isOpen, nota, onClose }) {
                             <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 transition-colors">
                                 <Package size={18} />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Total Productos</p>
                                 <p className="text-sm font-bold text-blue-700 dark:text-blue-400">
                                     {num(totalProductos)} UND
@@ -218,20 +230,32 @@ export default function ViewNotaEnsambleModal({ isOpen, nota, onClose }) {
                 </div>
 
                 {/* FOOTER - TOTALS */}
-                <div className="px-8 py-6 bg-slate-900 dark:bg-black text-white flex items-center justify-between transition-colors">
-                    <div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest mb-1">
-                            Estado de la Nota
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span className="text-sm font-semibold">Procesada Correctamente</span>
+                <div className="px-8 py-6 bg-slate-900 dark:bg-black text-white flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
+                    <div className="flex gap-6">
+                        <div>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest mb-1">
+                                Estado
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span className="text-sm font-semibold">Procesada</span>
+                            </div>
                         </div>
+                        {Number(nota.costo_servicio || 0) > 0 && (
+                            <div>
+                                <p className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest mb-1">
+                                    Costo Servicio
+                                </p>
+                                <p className="text-sm font-bold text-indigo-400 tabular-nums">
+                                    {formatCurrency(nota.costo_servicio)}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="text-right">
                         <p className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest mb-1">
-                            Costo Total Consumo
+                            Costo Total (Insumos + Servicio)
                         </p>
                         <p className="text-3xl font-black text-white tracking-tight">
                             {formatCurrency(totalCosto)}

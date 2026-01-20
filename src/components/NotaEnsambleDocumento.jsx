@@ -269,9 +269,10 @@ export default function NotaEnsambleDocumento({ nota, mode, onClose, onCreateAno
                 <div className="p-6 space-y-5">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="rounded-lg border border-slate-200 p-4">
-                            <div className="text-xs font-semibold text-slate-900 mb-3">Tercero</div>
+                            <div className="text-xs font-semibold text-slate-900 mb-3">Tercero / Operador</div>
                             <div className="space-y-2">
                                 <FieldRow label="Tercero" value={getTerceroLabel()} />
+                                <FieldRow label="Operador" value={nota?.operador?.nombre || nota?.operador_nombre || "—"} />
                             </div>
                         </div>
 
@@ -395,10 +396,26 @@ export default function NotaEnsambleDocumento({ nota, mode, onClose, onCreateAno
                                 </tbody>
                             </table>
                         </div>
-                        <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex justify-end gap-6 items-center">
-                            <div className="text-[11px] text-slate-500 uppercase font-bold">Total Consumo Insumos:</div>
-                            <div className="text-sm font-bold text-blue-700">
-                                {money(nota?.costo_total || (Array.isArray(nota?.insumos) ? nota.insumos : []).reduce((acc, i) => acc + (Number(i.cantidad || 0) * Number(i.insumo?.costo_unitario || 0)), 0))}
+                        <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-col items-end gap-1">
+                            <div className="flex justify-end gap-6 items-center">
+                                <div className="text-[11px] text-slate-500 uppercase font-bold">Insumos:</div>
+                                <div className="text-xs font-semibold text-slate-900">
+                                    {money(Number(nota?.costo_total || 0) - Number(nota?.costo_servicio || 0))}
+                                </div>
+                            </div>
+                            {Number(nota?.costo_servicio || 0) > 0 && (
+                                <div className="flex justify-end gap-6 items-center">
+                                    <div className="text-[11px] text-slate-500 uppercase font-bold">Servicio:</div>
+                                    <div className="text-xs font-semibold text-indigo-600">
+                                        {money(nota.costo_servicio)}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex justify-end gap-6 items-center mt-1 pt-1 border-t border-slate-200 w-48">
+                                <div className="text-[11px] text-slate-800 uppercase font-black tracking-wider">TOTAL NOTA:</div>
+                                <div className="text-sm font-black text-blue-700">
+                                    {money(nota?.costo_total || 0)}
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -169,7 +169,9 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
         const terData = await terRes.json();
         const impData = await impRes.json();
 
-        setTerceros(Array.isArray(terData) ? terData : []);
+        // ✅ Filtrar terceros inactivos
+        const activeTerceros = Array.isArray(terData) ? terData.filter(t => t.es_activo !== false) : [];
+        setTerceros(activeTerceros);
         setImpuestos(Array.isArray(impData) ? impData : []);
       } catch (e) {
         console.error(e);

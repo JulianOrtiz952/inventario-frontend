@@ -163,7 +163,8 @@ export default function CreateProductModal({ isOpen, onClose, onCreated }) {
           fetchAllPages(`${API_BASE}/terceros/?page_size=200`),
           fetchAllPages(`${API_BASE}/impuestos/?page_size=200`),
         ]);
-        setTerceros(terAll);
+        // ✅ Filtrar terceros inactivos
+        setTerceros(terAll.filter(t => t.es_activo !== false));
         setImpuestos(asRows(impAll));
       } catch (err) {
         console.error(err);

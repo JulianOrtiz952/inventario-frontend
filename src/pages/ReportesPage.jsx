@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { API_BASE } from "../config/api";
 import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api";
 import { formatCurrency } from "../utils/format";
@@ -9,7 +11,7 @@ import {
 import {
   TrendingUp, TrendingDown, Package, ShoppingCart, Truck, Layers,
   BarChart3, PieChart as PieChartIcon, LayoutDashboard, Calendar, Search, FilterX,
-  CreditCard, Boxes, Activity, ArrowUpRight, ArrowDownRight
+  CreditCard, Boxes, Activity, ArrowUpRight, ArrowDownRight, FileDown
 } from "lucide-react";
 
 const CHART_COLORS = [
@@ -152,7 +154,7 @@ function CustomTooltip({ active, payload, label, unit }) {
   return null;
 }
 
-function ChartRenderer({ chart }) {
+function ChartRenderer({ chart, isExporting }) {
   if (!chart) return null;
 
   const labels = Array.isArray(chart.labels) ? chart.labels : [];
@@ -181,6 +183,25 @@ function ChartRenderer({ chart }) {
   const gridColor = isDark ? '#1e293b' : '#f1f5f9';
   const textColor = isDark ? '#94a3b8' : '#64748b';
 
+  const commonProps = {
+    isAnimationActive: !isExporting
+  };
+
+  const formatCompact = (val) => {
+    if (val === 0) return '0';
+    if (!val) return '';
+    const num = Number(val);
+    if (num >= 1000000) {
+      const res = num / 1000000;
+      return res % 1 === 0 ? `${res}M` : `${res.toFixed(1)}M`;
+    }
+    if (num >= 1000) {
+      const res = num / 1000;
+      return res % 1 === 0 ? `${res}k` : `${res.toFixed(1)}k`;
+    }
+    return num.toString();
+  };
+
   const renderChart = () => {
     switch (chart.type) {
       case 'pie':
@@ -198,6 +219,7 @@ function ChartRenderer({ chart }) {
               outerRadius={100}
               paddingAngle={5}
               dataKey="value"
+              {...commonProps}
             >
               {pieData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} stroke="rgba(0,0,0,0.1)" />
@@ -210,10 +232,17 @@ function ChartRenderer({ chart }) {
 
       case 'line':
         return (
-          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <LineChart data={data} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
             <XAxis dataKey="name" stroke={textColor} fontSize={10} tickLine={false} axisLine={false} dy={10} />
-            <YAxis stroke={textColor} fontSize={10} tickLine={false} axisLine={false} />
+            <YAxis
+              stroke={textColor}
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              width={80}
+              tickFormatter={formatCompact}
+            />
             <Tooltip content={<CustomTooltip unit={unit} />} cursor={{ stroke: gridColor, strokeWidth: 2 }} />
             {series.map((s, idx) => (
               <Line
@@ -225,6 +254,7 @@ function ChartRenderer({ chart }) {
                 dot={{ r: 4, strokeWidth: 2, fill: isDark ? '#0f172a' : '#fff' }}
                 activeDot={{ r: 6, strokeWidth: 0 }}
                 animationDuration={1500}
+                {...commonProps}
               />
             ))}
           </LineChart>
@@ -232,7 +262,7 @@ function ChartRenderer({ chart }) {
 
       case 'area':
         return (
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={data} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
             <defs>
               {series.map((s, idx) => (
                 <linearGradient key={`grad-${idx}`} id={`color-${idx}`} x1="0" y1="0" x2="0" y2="1">
@@ -243,7 +273,14 @@ function ChartRenderer({ chart }) {
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
             <XAxis dataKey="name" stroke={textColor} fontSize={10} tickLine={false} axisLine={false} dy={10} />
-            <YAxis stroke={textColor} fontSize={10} tickLine={false} axisLine={false} />
+            <YAxis
+              stroke={textColor}
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              width={80}
+              tickFormatter={formatCompact}
+            />
             <Tooltip content={<CustomTooltip unit={unit} />} />
             {series.map((s, idx) => (
               <Area
@@ -255,6 +292,7 @@ function ChartRenderer({ chart }) {
                 fill={`url(#color-${idx})`}
                 strokeWidth={2}
                 animationDuration={1500}
+                {...commonProps}
               />
             ))}
           </AreaChart>
@@ -263,10 +301,17 @@ function ChartRenderer({ chart }) {
       case 'bar':
       default:
         return (
-          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <BarChart data={data} margin={{ top: 10, right: 30, left: 20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
             <XAxis dataKey="name" stroke={textColor} fontSize={10} tickLine={false} axisLine={false} dy={10} />
-            <YAxis stroke={textColor} fontSize={10} tickLine={false} axisLine={false} />
+            <YAxis
+              stroke={textColor}
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              width={80}
+              tickFormatter={formatCompact}
+            />
             <Tooltip content={<CustomTooltip unit={unit} />} cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }} />
             {series.map((s, idx) => (
               <Bar
@@ -276,6 +321,7 @@ function ChartRenderer({ chart }) {
                 radius={[4, 4, 0, 0]}
                 barSize={32}
                 animationDuration={1500}
+                {...commonProps}
               />
             ))}
           </BarChart>
@@ -359,6 +405,7 @@ export default function ReportesPage() {
       { id: "prod_top_vendidos", label: "Productos • Top vendidos", endpoint: "/reportes/productos/top-vendidos/" },
       { id: "prod_serie_ventas", label: "Productos • Serie ventas", endpoint: "/reportes/productos/serie-ventas/" },
       { id: "prod_top_producidos", label: "Producción • Top producidos", endpoint: "/reportes/produccion/top-producidos/" },
+      { id: "ope_resumen", label: "Operadores • Resumen", endpoint: "/reportes/operadores/resumen/" },
       { id: "bod_stock", label: "Bodegas • Stock actual", endpoint: "/reportes/bodegas/stock/" },
       { id: "notas_salidas", label: "Notas • Salidas resumen", endpoint: "/reportes/notas/salidas/resumen/" },
     ],
@@ -366,6 +413,7 @@ export default function ReportesPage() {
   );
 
   const [tab, setTab] = useState("resumen");
+  const [isExporting, setIsExporting] = useState(false);
   const active = tabs.find((t) => t.id === tab) || tabs[0];
 
   // catálogos filtros
@@ -379,6 +427,8 @@ export default function ReportesPage() {
   const [terceroId, setTerceroId] = useState("");
   const [top, setTop] = useState("10");
   const [groupBy, setGroupBy] = useState("dia");
+  const reportContentRef = useRef(null);
+  const fullReportHiddenRef = useRef(null);
 
   // data
   const [loading, setLoading] = useState(false);
@@ -438,10 +488,134 @@ export default function ReportesPage() {
     }
   };
 
+  const handleExportExcel = async () => {
+    try {
+      const url = `${API_BASE}/reportes/exportar-excel/${query}`;
+      window.open(url, "_blank");
+    } catch (e) {
+      console.error(e);
+      setError("No se pudo exportar a Excel.");
+    }
+  };
+
   useEffect(() => {
     fetchReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
+
+  const handleExportPdf = async (container, filename) => {
+    if (!container) return;
+    try {
+      setLoading(true);
+      setIsExporting(true);
+      document.body.classList.add('exporting-pdf');
+
+      // Esperar a que las gráficas se estabilicen
+      await new Promise(r => setTimeout(r, 1000));
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "a4",
+      });
+
+      const margin = 40;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const usableArea = pdfHeight - (margin * 2);
+      let currentY = margin;
+
+      // Buscamos todos los bloques designados
+      const blocks = container.querySelectorAll('.pdf-block');
+
+      for (let i = 0; i < blocks.length; i++) {
+        const block = blocks[i];
+
+        const canvas = await html2canvas(block, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+        });
+
+        const imgData = canvas.toDataURL("image/png");
+        const imgWidth = pdfWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Si el bloque no cabe en la página actual, saltamos
+        if (currentY + imgHeight > pdfHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        pdf.addImage(imgData, "PNG", margin, currentY, imgWidth, imgHeight);
+        currentY += imgHeight + 20; // Espacio entre bloques
+      }
+
+      pdf.save(filename);
+    } catch (e) {
+      console.error(e);
+      setError("No se pudo generar el PDF.");
+    } finally {
+      document.body.classList.remove('exporting-pdf');
+      setIsExporting(false);
+      setLoading(false);
+    }
+  };
+
+  const [fullReportData, setFullReportData] = useState(null);
+  const [generatingFull, setGeneratingFull] = useState(false);
+
+  const handleExportFullReport = async () => {
+    try {
+      setGeneratingFull(true);
+      const results = {};
+      for (const t of tabs) {
+        const url = `${API_BASE}${t.endpoint}${query}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          results[t.id] = await res.json();
+        }
+      }
+      setFullReportData(results);
+
+      // Esperar un poco a que el DOM oculto se renderice
+      setTimeout(async () => {
+        await handleExportPdf(fullReportHiddenRef.current, `informe_completo_cala_${new Date().toISOString().slice(0, 10)}.pdf`);
+        setFullReportData(null);
+        setGeneratingFull(false);
+      }, 1000);
+    } catch (e) {
+      console.error(e);
+      setError("Error generando informe completo.");
+      setGeneratingFull(false);
+    }
+  };
+
+  const ReportPdfHeader = ({ title }) => {
+    const range = fechaDesde && fechaHasta
+      ? `Periodo: ${fechaDesde} a ${fechaHasta}`
+      : fechaDesde || fechaHasta
+        ? `Día: ${fechaDesde || fechaHasta}`
+        : "Todo el tiempo";
+
+    return (
+      <div className="hidden print-only pdf-block flex flex-col items-center mb-8 border-b-2 border-slate-200 pb-6 w-full text-center">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs">
+            CALA
+          </div>
+          <div className="text-left">
+            <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight">Reporte de Negocio</h1>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{title}</p>
+          </div>
+        </div>
+        <div className="px-4 py-1.5 bg-slate-100 rounded-full text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
+          {range}
+        </div>
+      </div>
+    );
+  };
 
   const charts = Array.isArray(payload?.charts) ? payload.charts : [];
   const kpis = payload?.kpis || {};
@@ -449,6 +623,15 @@ export default function ReportesPage() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+      <style>
+        {`
+          .exporting-pdf .export-padding { padding: 48px !important; background-color: white !important; }
+          .exporting-pdf .no-shadow { box-shadow: none !important; border: 1px solid #f1f5f9 !important; }
+          @media print {
+            .no-print { display: none !important; }
+          }
+        `}
+      </style>
       <div className="flex-1 p-6 lg:p-10 overflow-auto scroll-smooth">
         <div className="max-w-7xl mx-auto space-y-8">
 
@@ -466,24 +649,64 @@ export default function ReportesPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => {
-                    setTab(t.id);
-                    setError("");
-                    setPayload(null);
-                  }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${tab === t.id
+            <div className="flex flex-col sm:flex-row items-center gap-3 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-2 px-1">
+                {tabs.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => {
+                      setTab(t.id);
+                      setError("");
+                      setPayload(null);
+                    }}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${tab === t.id
                       ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg scale-[1.05]"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-                    }`}
+                      }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block mx-1"></div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-lg shadow-emerald-200 dark:shadow-none transition-all active:scale-95"
+                  title="Exportar toda la información a Excel"
                 >
-                  {t.label}
+                  <FileDown size={16} />
+                  <span className="hidden lg:inline">Consolidado</span> Excel
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => handleExportPdf(reportContentRef.current, `reporte_${active.id}_${new Date().toISOString().slice(0, 10)}.pdf`)}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-lg shadow-red-200 dark:shadow-none transition-all active:scale-95"
+                  title="Exportar esta vista a PDF"
+                >
+                  <FileDown size={16} />
+                  PDF Vista
+                </button>
+                {tab === "resumen" && (
+                  <button
+                    type="button"
+                    onClick={handleExportFullReport}
+                    disabled={generatingFull || loading}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-95"
+                    title="Exportar todas las secciones a un solo PDF"
+                  >
+                    {generatingFull ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <FileDown size={16} />
+                    )}
+                    Informe Completo
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -563,8 +786,8 @@ export default function ReportesPage() {
                         onChange={(e) => setTop(e.target.value)}
                         disabled={!canUseTop}
                         className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${canUseTop
-                            ? "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            : "border-slate-100 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/50 text-slate-400 cursor-not-allowed"
+                          ? "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                          : "border-slate-100 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/50 text-slate-400 cursor-not-allowed"
                           }`}
                       />
                     </div>
@@ -576,8 +799,8 @@ export default function ReportesPage() {
                         onChange={(e) => setGroupBy(e.target.value)}
                         disabled={!canUseGroupBy}
                         className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${canUseGroupBy
-                            ? "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            : "border-slate-100 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/50 text-slate-400 cursor-not-allowed"
+                          ? "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                          : "border-slate-100 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/50 text-slate-400 cursor-not-allowed"
                           }`}
                       >
                         <option value="dia">Día</option>
@@ -632,7 +855,8 @@ export default function ReportesPage() {
             </div>
 
             {/* Contenido Principal */}
-            <div className="lg:col-span-3 space-y-8">
+            <div className="lg:col-span-3 space-y-8 export-padding transition-all" ref={reportContentRef}>
+              <ReportPdfHeader title={active.label} />
               {loading ? (
                 <div className="h-[600px] flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent dark:from-blue-900/10 pointer-events-none"></div>
@@ -647,32 +871,37 @@ export default function ReportesPage() {
               ) : payload ? (
                 <>
                   {/* KPIs Section */}
-                  <KpiGrid kpis={kpis} />
+                  <div className="pdf-block">
+                    <KpiGrid kpis={kpis} />
+                  </div>
 
                   {/* Charts Section */}
                   {charts.length > 0 && (
                     <div className="grid grid-cols-1 gap-8">
                       {charts.map((c, idx) => (
-                        <Card
-                          key={c.id || idx}
-                          title={c.title || "Análisis Visual"}
-                          subtitle={`${c.type.toUpperCase()} chart • Unidad: ${c.unit || 'N/A'}`}
-                          icon={c.type === 'pie' ? PieChartIcon : BarChart3}
-                        >
-                          <ChartRenderer chart={c} />
-                        </Card>
+                        <div key={c.id || idx} className="pdf-block">
+                          <Card
+                            title={c.title || "Análisis Visual"}
+                            subtitle={`${c.type.toUpperCase()} chart • Unidad: ${c.unit || 'N/A'}`}
+                            icon={c.type === 'pie' ? PieChartIcon : BarChart3}
+                          >
+                            <ChartRenderer chart={c} isExporting={isExporting} />
+                          </Card>
+                        </div>
                       ))}
                     </div>
                   )}
 
                   {/* Table Section */}
-                  <Card
-                    title="Detalle de Datos"
-                    subtitle="Vista tabular completa"
-                    icon={Search}
-                  >
-                    <RowsTable rows={rows} />
-                  </Card>
+                  <div className="pdf-block">
+                    <Card
+                      title="Detalle de Datos"
+                      subtitle="Vista tabular completa"
+                      icon={Search}
+                    >
+                      <RowsTable rows={rows} />
+                    </Card>
+                  </div>
                 </>
               ) : (
                 <div className="h-[600px] flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -688,6 +917,92 @@ export default function ReportesPage() {
             </div>
           </div>
         </div>
+      </div>
+      <FullReportHiddenView
+        data={fullReportData}
+        tabs={tabs}
+        innerRef={fullReportHiddenRef}
+        fechaDesde={fechaDesde}
+        fechaHasta={fechaHasta}
+        isExporting={isExporting}
+      />
+    </div>
+  );
+}
+
+/* 
+  Contenedor oculto para renderizar TODO el informe y capturarlo.
+  Solo aparece cuando fullReportData tiene algo.
+*/
+function FullReportHiddenView({ data, tabs, innerRef, fechaDesde, fechaHasta, isExporting }) {
+  if (!data) return null;
+
+  return (
+    <div className="absolute top-[-9999px] left-[-9999px] w-[1100px] bg-white p-20 overflow-visible" ref={innerRef}>
+      <style>
+        {`
+          .print-only { display: flex !important; }
+          .exporting-pdf .recharts-default-tooltip { display: none !important; }
+        `}
+      </style>
+
+      <div className="flex flex-col items-center mb-12 border-b-4 border-blue-600 pb-8 w-full text-center">
+        <div className="flex items-center gap-6 mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xl">
+            CALA
+          </div>
+          <div className="text-left">
+            <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Informe de Gestión Integral</h1>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.3em]">CALA · Inventario y Producción</p>
+          </div>
+        </div>
+        <div className="px-6 py-2 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-blue-200">
+          {fechaDesde && fechaHasta ? `${fechaDesde} AL ${fechaHasta}` : "CONSOLIDADO HISTÓRICO"}
+        </div>
+      </div>
+
+      <div className="space-y-12">
+        {tabs.map((t) => {
+          const payload = data[t.id];
+          if (!payload) return null;
+
+          const charts = Array.isArray(payload?.charts) ? payload.charts : [];
+          const kpis = payload?.kpis || {};
+          const rows = payload?.rows || [];
+
+          return (
+            <div key={t.id} className="space-y-6">
+              <div className="flex items-center gap-4 border-l-4 border-blue-600 pl-4 py-1 mb-6 pdf-block">
+                <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">{t.label}</h2>
+              </div>
+
+              <div className="pdf-block">
+                <KpiGrid kpis={kpis} />
+              </div>
+
+              {charts.length > 0 && (
+                <div className="grid grid-cols-1 gap-6">
+                  {charts.map((c, idx) => (
+                    <div key={c.id || idx} className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm pdf-block">
+                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-2">{c.title}</h3>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-6">{c.type} • {c.unit}</p>
+                      <ChartRenderer chart={c} isExporting={isExporting} />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm pdf-block">
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Detalle tabular</h3>
+                <RowsTable rows={rows} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-20 text-center text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] italic pt-12 border-t border-slate-100 pdf-block">
+        Este documento es un reporte estratégico generado por el sistema CALA el {new Date().toLocaleString().toUpperCase()}.
       </div>
     </div>
   );

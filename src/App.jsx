@@ -18,6 +18,7 @@ import SalidasProductoPage from "./pages/SalidasProductoPage";
 import InsumosHistorialPage from "./pages/InsumosHistorialPage";
 import ExcelImportPage from "./pages/ExcelImportPage";
 import ReportesPage from "./pages/ReportesPage";
+import OperadoresPage from "./pages/OperadoresPage";
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
                   <Route path="/insumos-historial" element={<InsumosHistorialPage />} />
                   <Route path="/importar-excel" element={<ExcelImportPage />} />
                   <Route path="/reportes" element={<ReportesPage />} />
+                  <Route path="/operadores" element={<OperadoresPage />} />
                   <Route
                     path="/simulacion"
                     element={<ProductionSimulationPage />}

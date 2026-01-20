@@ -11,7 +11,8 @@ export function formatCurrency(value) {
     const decimalPart = parts[1];
 
     // Aplicar formato personalizado:
-    // User requested: "'" for thousands, "." for decimals, exactly 2 decimal places.
+    // User requested: "'" for millions, "," for thousands, "." for decimals, exactly 2 decimal places.
+    // Example: 1'234,567.89
 
     // Reverse string
     const reversed = integerPart.split("").reverse();
@@ -19,8 +20,13 @@ export function formatCurrency(value) {
     let formatted = "";
     for (let i = 0; i < reversed.length; i++) {
         if (i > 0 && i % 3 === 0) {
-            // Usar ' para miles y millones
-            formatted += "'";
+            if (i === 6 || i === 12 || i === 18) {
+                // Millones, Billones, etc. use "'"
+                formatted += "'";
+            } else {
+                // Miles use ","
+                formatted += ",";
+            }
         }
         formatted += reversed[i];
     }

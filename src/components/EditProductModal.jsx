@@ -261,7 +261,12 @@ export default function EditProductModal({ isOpen, onClose, sku, onUpdated }) {
         const pData = await prodFull.json();
 
         setOriginal(pData);
-        setTercerosOptions(terAll);
+        // ✅ Filtrar terceros inactivos, pero mantener el actual
+        const currentTerId = pData.tercero?.id || pData.tercero_id;
+        const activeTerceros = Array.isArray(terAll)
+          ? terAll.filter(t => t.es_activo !== false || t.id === currentTerId)
+          : [];
+        setTercerosOptions(activeTerceros);
         setImpuestos(asRows(impAll));
 
         setForm({
