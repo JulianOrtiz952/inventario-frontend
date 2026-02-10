@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useInventory } from "../context/InventoryContext";
 import { API_BASE } from "../config/api";
 import { RotateCcw, Trash2, Pencil } from "lucide-react";
 import ConfirmActionModal from "../components/ConfirmActionModal";
@@ -9,6 +10,7 @@ const PAGE_SIZE = 30;
 
 
 export default function TercerosPage() {
+  const { refreshCatalogs } = useInventory();
   const [terceros, setTerceros] = useState([]);
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -101,7 +103,9 @@ export default function TercerosPage() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((p) => ({ ...p, [name]: value }));
+    // Forzamos mayúsculas para código y nombre
+    const upperValue = (name === "codigo" || name === "nombre") ? value.toUpperCase() : value;
+    setForm((p) => ({ ...p, [name]: upperValue }));
   }
 
   async function handleSubmit(e) {
@@ -132,11 +136,22 @@ export default function TercerosPage() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         console.error("Error guardando tercero:", data);
+
+        if (data && typeof data === 'object') {
+          // Extraer el primer error de campo si existe
+          const firstKey = Object.keys(data)[0];
+          const firstMsg = Array.isArray(data[firstKey]) ? data[firstKey][0] : data[firstKey];
+          if (firstMsg && firstKey !== 'detail') {
+            throw new Error(firstMsg);
+          }
+        }
+
         throw new Error(data?.detail || "No se pudo guardar el tercero.");
       }
 
       // ✅ Para que el nuevo se vea sí o sí, volvemos a la página 1
       await loadTerceros(1);
+      refreshCatalogs(); // ✅ Actualizar catálogos globales
       closeModal();
     } catch (e2) {
       console.error(e2);
@@ -186,6 +201,7 @@ export default function TercerosPage() {
 
       closeActionModal();
       await loadTerceros(page);
+      refreshCatalogs(); // ✅ Actualizar catálogos globales
     } catch (err) {
       setActionError(err.message || `Error al ${action.toLowerCase()} tercero.`);
     } finally {

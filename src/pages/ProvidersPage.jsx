@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useInventory } from "../context/InventoryContext";
 import { API_BASE } from "../config/api";
 import {
   Search, Plus, ChevronLeft, ChevronRight,
@@ -12,6 +13,7 @@ const PAGE_SIZE = 30;
 
 
 export default function ProvidersPage() {
+  const { refreshCatalogs } = useInventory();
   const [proveedores, setProveedores] = useState([]);
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -130,6 +132,7 @@ export default function ProvidersPage() {
       setShowConfirm(false);
 
       await loadProveedores(page);
+      refreshCatalogs(); // ✅ Actualizar catálogos globales
     } catch (err) {
       console.error(err);
       setSaveError(err.message || "Error al guardar proveedor.");
@@ -206,6 +209,7 @@ export default function ProvidersPage() {
 
       closeActionModal();
       await loadProveedores(page);
+      refreshCatalogs(); // ✅ Actualizar catálogos globales
     } catch (err) {
       setActionError(err.message || `Error al ${action.toLowerCase()} proveedor.`);
     } finally {

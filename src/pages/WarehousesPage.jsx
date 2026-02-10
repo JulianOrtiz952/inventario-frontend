@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useInventory } from "../context/InventoryContext";
 import { API_BASE } from "../config/api";
 import { RotateCcw, Trash2, Pencil } from "lucide-react";
 import ConfirmActionModal from "../components/ConfirmActionModal";
@@ -21,6 +22,7 @@ async function safeJson(res) {
 }
 
 export default function WarehousesPage() {
+  const { refreshCatalogs } = useInventory();
   // ✅ Paginación Bodegas principal
   const [page, setPage] = useState(1);
   const [count, setCount] = useState(0);
@@ -190,7 +192,9 @@ export default function WarehousesPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+    // Forzamos mayúsculas para código y nombre
+    const upperValue = (name === "codigo" || name === "nombre") ? value.toUpperCase() : value;
+    setForm((f) => ({ ...f, [name]: upperValue }));
   };
 
   const handleSubmit = async (e) => {
@@ -236,6 +240,7 @@ export default function WarehousesPage() {
         setBodegas((prev) => [saved, ...prev]);
       }
 
+      refreshCatalogs(); // ✅ Actualizar catálogos globales
       setIsModalOpen(false);
     } catch (err) {
       setSaveError(err.message || "Error al guardar la bodega.");
@@ -282,6 +287,7 @@ export default function WarehousesPage() {
 
       closeActionModal();
       await loadBodegas(page);
+      refreshCatalogs(); // ✅ Actualizar catálogos globales
     } catch (err) {
       setActionError(err.message || `Error al ${action.toLowerCase()} bodega.`);
     } finally {
