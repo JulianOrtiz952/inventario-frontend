@@ -44,17 +44,23 @@ export default function CurrencyInput({
         const integerPart = parts[0];
         const decimalPart = parts[1];
 
-        // Reutilizamos la lógica de formateo de miles pero básica
+        // Reutilizamos la lógica de formateo de miles/millones
         const reversed = integerPart.split("").reverse();
         let intFormatted = "";
         for (let i = 0; i < reversed.length; i++) {
-            if (i > 0 && i % 3 === 0) intFormatted += "'";
+            if (i > 0 && i % 3 === 0) {
+                if (i >= 6 && i % 6 === 0) {
+                    intFormatted += "'";
+                } else {
+                    intFormatted += ",";
+                }
+            }
             intFormatted += reversed[i];
         }
         formatted = intFormatted.split("").reverse().join("");
 
         if (decimalPart !== undefined) {
-            formatted += "." + decimalPart.slice(0, 2);
+            formatted += "." + decimalPart.slice(0, 1);
         } else if (inputValue.endsWith(".")) {
             formatted += ".";
         }

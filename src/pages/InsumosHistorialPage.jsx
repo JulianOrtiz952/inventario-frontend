@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import CreateInsumoMovimientoModal from "../components/CreateInsumoMovimientoModal";
 import { asRows, fetchAllPages, buildQueryParams } from "../utils/api";
+import { formatCurrency, formatDateTime } from "../utils/format";
 
 const PAGE_SIZE = 30;
 
@@ -247,7 +248,7 @@ export default function InsumosHistorialPage() {
         </div>
 
         <button
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700"
+          className="hidden items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700"
           onClick={openMoveModal}
         >
           <span className="text-lg leading-none">＋</span>
@@ -392,18 +393,18 @@ export default function InsumosHistorialPage() {
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
                 <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left">Fecha</th>
-                  <th className="px-4 py-3 text-left">Insumo</th>
-                  <th className="px-4 py-3 text-left">Tipo</th>
-                  <th className="px-4 py-3 text-left">Bodega</th>
-                  <th className="px-4 py-3 text-left">Tercero</th>
-                  <th className="px-4 py-3 text-right">Cantidad</th>
-                  <th className="px-4 py-3 text-left">U.M.</th>
-                  <th className="px-4 py-3 text-right">Costo</th>
-                  <th className="px-4 py-3 text-right">Total</th>
-                  <th className="px-4 py-3 text-right">Saldo</th>
-                  <th className="px-4 py-3 text-left">Factura</th>
-                  <th className="px-4 py-3 text-left">Observación</th>
+                  <th className="px-4 py-3 text-center">Fecha</th>
+                  <th className="px-4 py-3 text-center">Insumo</th>
+                  <th className="px-4 py-3 text-center">Tipo</th>
+                  <th className="px-4 py-3 text-center">Bodega</th>
+                  <th className="px-4 py-3 text-center">Tercero</th>
+                  <th className="px-4 py-3 text-center">Cantidad</th>
+                  <th className="px-4 py-3 text-center">U.M.</th>
+                  <th className="px-4 py-3 text-center">Costo</th>
+                  <th className="px-4 py-3 text-center">Total</th>
+                  <th className="px-4 py-3 text-center">Saldo</th>
+                  <th className="px-4 py-3 text-center">Factura</th>
+                  <th className="px-4 py-3 text-center">Observación</th>
                   <th className="px-4 py-3 text-center">Nota</th>
                 </tr>
               </thead>
@@ -419,39 +420,47 @@ export default function InsumosHistorialPage() {
 
                 {filteredLocalRows.map((r) => (
                   <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">{r.fecha}</td>
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-center whitespace-nowrap">
+                      {formatDateTime(r.fecha)}
+                    </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center">
                       <div className="text-sm text-slate-800 dark:text-slate-200 font-medium">{r.insumo_codigo}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{r.insumo_nombre}</div>
                     </td>
 
-                    <td className="px-4 py-3 text-xs">
+                    <td className="px-4 py-3 text-xs text-center">
                       <span className={`inline-flex px-2 py-1 rounded-md border text-[10px] font-semibold tracking-wide ${getTipoColor(r.tipo)}`}>
                         {r.tipo}
                       </span>
                     </td>
 
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.bodega_nombre || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.tercero_nombre || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.bodega_nombre || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.tercero_nombre || "—"}</td>
 
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-800 dark:text-slate-200">{r.cantidad}</td>
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.unidad_medida || "—"}</td>
-
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700 dark:text-slate-300">
-                      {r.costo_unitario ? `$${r.costo_unitario}` : "—"}
+                    <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-800 dark:text-slate-200">
+                      {formatCurrency(r.cantidad)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
+                        {r.unidad_medida || "UN"}
+                      </span>
                     </td>
 
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700 dark:text-slate-300">
-                      {r.total ? `$${r.total}` : "—"}
+                    <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
+                      {r.costo_unitario ? `$${formatCurrency(r.costo_unitario)}` : "—"}
                     </td>
 
-                    <td className="px-4 py-3 text-sm text-right tabular-nums text-slate-700 dark:text-slate-300">
-                      {r.saldo_resultante ?? "—"}
+                    <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
+                      {r.total ? `$${formatCurrency(r.total)}` : "—"}
                     </td>
 
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.factura || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">{r.observacion || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
+                      {r.saldo_resultante !== null && r.saldo_resultante !== undefined ? formatCurrency(r.saldo_resultante) : "—"}
+                    </td>
+
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.factura || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.observacion || "—"}</td>
 
                     <td className="px-4 py-3 text-center text-xs text-slate-700 dark:text-slate-300">
                       {r.nota_ensamble ? `#${r.nota_ensamble}` : "—"}

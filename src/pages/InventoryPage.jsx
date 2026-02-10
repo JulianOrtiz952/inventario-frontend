@@ -1082,18 +1082,7 @@ export default function InventoryPage() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 md:items-center ml-auto">
-          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 shadow-sm">
-            <span className="text-slate-400 text-sm">🔍</span>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar insumo..."
-              className="bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 w-44 lg:w-60"
-            />
-          </div>
-
-
+          {/* Espacio reservado o botones adicionales si fueran necesarios */}
         </div>
       </div>
       <div className="flex items-center justify-between gap-3 mb-3">
@@ -1131,14 +1120,15 @@ export default function InventoryPage() {
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left">Código</th>
-                  <th className="px-4 py-3 text-left">Nombre</th>
-                  <th className="px-4 py-3 text-left">Unidad</th>
-                  <th className="px-4 py-3 text-left">Proveedor</th>
-                  <th className="px-4 py-3 text-left">Bodega / Tercero</th>
-                  <th className="px-4 py-3 text-left">Estado</th>
-                  <th className="px-4 py-3 text-right">Stock</th>
-                  <th className="px-4 py-3 text-right">Costo U.</th>
+                  <th className="px-4 py-3 text-center">Código</th>
+                  <th className="px-4 py-3 text-center">Referencia</th>
+                  <th className="px-4 py-3 text-center">Nombre</th>
+                  <th className="px-4 py-3 text-center">Unidad</th>
+                  <th className="px-4 py-3 text-center">Proveedor</th>
+                  <th className="px-4 py-3 text-center">Bodega / Tercero</th>
+                  <th className="px-4 py-3 text-center">Estado</th>
+                  <th className="px-4 py-3 text-center">Stock</th>
+                  <th className="px-4 py-3 text-center">Costo U.</th>
                   <th className="px-4 py-3 text-center">Acciones</th>
                 </tr>
               </thead>
@@ -1146,7 +1136,7 @@ export default function InventoryPage() {
               <tbody>
                 {insumos.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-6 py-6 text-center text-sm text-slate-500">
+                    <td colSpan={10} className="px-6 py-6 text-center text-sm text-slate-500">
                       No se encontraron insumos.
                     </td>
                   </tr>
@@ -1166,31 +1156,31 @@ export default function InventoryPage() {
                         : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
                         }`}
                     >
-                      <td className="px-4 py-3 font-medium text-xs">
+                      <td className="px-4 py-3 font-medium text-xs text-center">
                         <span className={isInactive ? "text-slate-500 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-800 dark:text-slate-200"}>
                           {pk}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-center">
+                        {i.referencia || <span className="text-slate-300 dark:text-slate-700">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center">
                         <p className={`font-medium ${isInactive ? "text-slate-600 dark:text-slate-400" : "text-slate-800 dark:text-slate-200"}`}>{i.nombre}</p>
-                        {i.referencia && i.referencia !== pk && (
-                          <p className="text-[10px] text-slate-400">Ref: {i.referencia}</p>
-                        )}
                         {isInactive && <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-medium">Inactivo</span>}
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-center">
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
                           {i.unidad_medida || "UN"}
                         </span>
                       </td>
 
-                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
+                      <td className="px-4 py-3 text-center text-xs text-slate-600 dark:text-slate-400">
                         {i.proveedor?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}
                       </td>
 
-                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
-                        <div className="flex flex-col">
+                      <td className="px-4 py-3 text-center text-xs text-slate-600 dark:text-slate-400">
+                        <div className="flex flex-col items-center">
                           <span>{i.bodega?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}</span>
                           <span className="text-[10px] text-slate-400 dark:text-slate-500">
                             {i.tercero?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}
@@ -1198,7 +1188,7 @@ export default function InventoryPage() {
                         </div>
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-center">
                         {isInactive ? (
                           <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
@@ -1212,14 +1202,11 @@ export default function InventoryPage() {
                         )}
                       </td>
 
-                      <td className={`px-4 py-3 text-right font-medium tabular-nums ${isInactive ? "text-slate-500 dark:text-slate-500" : "text-slate-900 dark:text-slate-100"}`}>
+                      <td className={`px-4 py-3 text-center font-medium tabular-nums ${isInactive ? "text-slate-500 dark:text-slate-500" : "text-slate-900 dark:text-slate-100"}`}>
                         {formatCurrency(stock)}
-                        <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500 font-normal">
-                          {i.unidad_medida || "u"}
-                        </span>
                       </td>
 
-                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400 text-xs tabular-nums">
+                      <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400 text-xs tabular-nums">
                         {i.costo_unitario
                           ? `$${formatCurrency(i.costo_unitario)}`
                           : "—"}

@@ -220,28 +220,30 @@ export default function CreateInsumoModal({
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Factura (opcional)</label>
-                <input
-                  type="text"
-                  name="factura"
-                  value={form.factura || ""}
-                  onChange={onChange}
-                  placeholder="Ej: FAC-98451"
-                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-slate-200"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Factura (opcional)</label>
+                  <input
+                    type="text"
+                    name="factura"
+                    value={form.factura || ""}
+                    onChange={onChange}
+                    placeholder="Ej: FAC-98451"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-slate-200"
+                  />
+                </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Referencia</label>
-                <input
-                  type="text"
-                  name="referencia"
-                  value={form.referencia || ""}
-                  onChange={onChange}
-                  placeholder="Ej: REF-TELA-01"
-                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-slate-200"
-                />
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Referencia</label>
+                  <input
+                    type="text"
+                    name="referencia"
+                    value={form.referencia || ""}
+                    onChange={onChange}
+                    placeholder="Ej: REF-TELA-01"
+                    className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:text-slate-200"
+                  />
+                </div>
               </div>
             </div>
 
