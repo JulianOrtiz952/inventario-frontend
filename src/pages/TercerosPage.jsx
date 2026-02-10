@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useInventory } from "../context/InventoryContext";
 import { API_BASE } from "../config/api";
-import { RotateCcw, Trash2, Pencil } from "lucide-react";
+import { RotateCcw, Trash2, Pencil, Search, Plus } from "lucide-react";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import { asRows, buildQueryParams } from "../utils/api";
 
 const PAGE_SIZE = 30;
-
-
 
 export default function TercerosPage() {
   const { refreshCatalogs } = useInventory();
@@ -79,9 +77,6 @@ export default function TercerosPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // ELIMINADO client-side filtering
-  // const filtered = ...
-
   function openCreate() {
     setEditing(null);
     setForm({ codigo: "", nombre: "" });
@@ -103,7 +98,6 @@ export default function TercerosPage() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    // Forzamos mayúsculas para código y nombre
     const upperValue = (name === "codigo" || name === "nombre") ? value.toUpperCase() : value;
     setForm((p) => ({ ...p, [name]: upperValue }));
   }
@@ -135,33 +129,25 @@ export default function TercerosPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        console.error("Error guardando tercero:", data);
-
         if (data && typeof data === 'object') {
-          // Extraer el primer error de campo si existe
           const firstKey = Object.keys(data)[0];
           const firstMsg = Array.isArray(data[firstKey]) ? data[firstKey][0] : data[firstKey];
           if (firstMsg && firstKey !== 'detail') {
             throw new Error(firstMsg);
           }
         }
-
         throw new Error(data?.detail || "No se pudo guardar el tercero.");
       }
 
-      // ✅ Para que el nuevo se vea sí o sí, volvemos a la página 1
       await loadTerceros(1);
-      refreshCatalogs(); // ✅ Actualizar catálogos globales
+      refreshCatalogs();
       closeModal();
     } catch (e2) {
-      console.error(e2);
       setError(e2.message || "Error guardando tercero.");
     } finally {
       setSaving(false);
     }
   }
-
-  // ELIMINADO handleDelete original
 
   const openActionModal = (tercero) => {
     setItemToAction(tercero);
@@ -186,10 +172,8 @@ export default function TercerosPage() {
       setActionLoading(true);
       let res;
       if (isActive) {
-        // Desactivar (Soft Delete)
         res = await fetch(`${API_BASE}/terceros/${item.id}/`, { method: "DELETE" });
       } else {
-        // Reactivar (Patch)
         res = await fetch(`${API_BASE}/terceros/${item.id}/`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -201,7 +185,7 @@ export default function TercerosPage() {
 
       closeActionModal();
       await loadTerceros(page);
-      refreshCatalogs(); // ✅ Actualizar catálogos globales
+      refreshCatalogs();
     } catch (err) {
       setActionError(err.message || `Error al ${action.toLowerCase()} tercero.`);
     } finally {
@@ -220,55 +204,49 @@ export default function TercerosPage() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Terceros</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Clientes / terceros asociados (código + nombre).
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 italic tracking-tight">
+            Terceros <span className="text-blue-600 dark:text-blue-400 not-italic">Asociados</span>
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Clientes y talleres externos vinculados al sistema.
           </p>
         </div>
 
         <button
           onClick={openCreate}
-          className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
         >
-          + Nuevo tercero
+          <Plus size={18} />
+          Nuevo Tercero
         </button>
       </div>
 
-      {/* Search + reload */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 flex items-center bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm">
-          <span className="mr-2 text-slate-400 text-sm">🔍</span>
+      {/* Search Bar */}
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="relative group">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+            <Search size={18} />
+          </span>
           <input
-            className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 pl-11 pr-4 py-3 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
             placeholder="Buscar por código o nombre..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
-        <button
-          onClick={() => loadTerceros(page)}
-          className="px-3 py-2 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-          disabled={loading}
-        >
-          {loading ? "..." : "Recargar"}
-        </button>
       </div>
 
-      {/* Paginación */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>{" "}
-          <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">
-            (mostrando {PAGE_SIZE} por página)
-          </span>
-          <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">
-            *La búsqueda filtra solo la página actual.
-          </span>
+      {/* Pagination Bar */}
+      <div className="flex items-center justify-between gap-3 mb-4 px-1">
+        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b>
+          <span className="mx-1">•</span>
+          Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+          <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -276,50 +254,44 @@ export default function TercerosPage() {
             type="button"
             disabled={!prevUrl || loading}
             onClick={goPrev}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            ← Anterior
+            ←
           </button>
           <button
             type="button"
             disabled={!nextUrl || loading}
             onClick={goNext}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            Siguiente →
+            →
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+        <div className="mb-4 rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
           {error}
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            Listado ({terceros.length})
-          </h2>
-        </div>
-
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
-              <tr className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                <th className="px-4 py-3 text-left">ID</th>
-                <th className="px-4 py-3 text-left">Código</th>
-                <th className="px-4 py-3 text-left">Nombre</th>
-                <th className="px-4 py-3 text-left">Estado</th>
-                <th className="px-4 py-3 text-center">Acciones</th>
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+              <tr>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">ID</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Código</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nombre</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Estado</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400" colSpan={5}>
+                  <td className="px-6 py-4 text-slate-500 dark:text-slate-400" colSpan={5}>
                     Cargando...
                   </td>
                 </tr>
@@ -327,7 +299,7 @@ export default function TercerosPage() {
 
               {!loading && terceros.length === 0 && (
                 <tr>
-                  <td className="px-4 py-3 text-slate-500" colSpan={5}>
+                  <td className="px-6 py-4 text-center text-slate-500 dark:text-slate-400" colSpan={5}>
                     No hay terceros{search ? " que coincidan" : ""}.
                   </td>
                 </tr>
@@ -341,27 +313,27 @@ export default function TercerosPage() {
                       key={t.id}
                       className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${!isActive ? "bg-slate-50/70 dark:bg-slate-800/20" : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"}`}
                     >
-                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{t.id}</td>
-                      <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200 font-mono">
+                      <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{t.id}</td>
+                      <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200 font-mono">
                         {t.codigo}
                       </td>
-                      <td className={`px-4 py-3 font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-700 dark:text-slate-200"}`}>
+                      <td className={`px-6 py-4 font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-700 dark:text-slate-200"}`}>
                         {t.nombre}
                       </td>
-                      <td className="px-4 py-3 text-xs">
+                      <td className="px-6 py-4 text-xs">
                         {isActive ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 font-medium">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             Activo
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 font-medium">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 font-medium">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                             Inactivo
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
@@ -410,8 +382,6 @@ export default function TercerosPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="px-6 py-4 space-y-3">
-              {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
-
               <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Código</label>
                 <input
@@ -419,7 +389,7 @@ export default function TercerosPage() {
                   name="codigo"
                   value={form.codigo}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   required
                 />
               </div>
@@ -431,7 +401,7 @@ export default function TercerosPage() {
                   name="nombre"
                   value={form.nombre}
                   onChange={handleChange}
-                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   required
                 />
               </div>
@@ -448,7 +418,7 @@ export default function TercerosPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70"
+                  className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70 transition-all active:scale-95"
                 >
                   {saving ? "Guardando..." : "Guardar"}
                 </button>

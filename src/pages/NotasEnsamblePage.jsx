@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import CreateNotaEnsambleModal from "../components/CreateNotaEnsambleModal";
 import { API_BASE } from "../config/api";
-import { asRows, safeJson, fetchAllPages, buildQueryParams } from "../utils/api";
-import { Trash2 } from "lucide-react";
+import { asRows, buildQueryParams } from "../utils/api";
+import { Trash2, Search, Filter, Calendar, RefreshCcw, Plus, Eye, Pencil, FileText } from "lucide-react";
 import ViewNotaEnsambleModal from "../components/ViewNotaEnsambleModal";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import { formatCurrency } from "../utils/format";
+import { useInventory } from "../context/InventoryContext";
 
 const PAGE_SIZE = 30;
-
 const num = (v) => formatCurrency(v);
-const money = (v) => `$${formatCurrency(v)}`;
-
-
-import { useInventory } from "../context/InventoryContext"; // ✅ Contexto
 
 export default function NotasEnsamblePage() {
   const [notas, setNotas] = useState([]);
@@ -22,7 +18,6 @@ export default function NotasEnsamblePage() {
   const [nextUrl, setNextUrl] = useState(null);
   const [prevUrl, setPrevUrl] = useState(null);
 
-  // ✅ Usar Contexto
   const { bodegas, terceros } = useInventory();
 
   const [loading, setLoading] = useState(false);
@@ -36,20 +31,13 @@ export default function NotasEnsamblePage() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [editNotaId, setEditNotaId] = useState(null);
 
-  // filtros (backend)
+  // filtros
   const [q, setQ] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [bodegaId, setBodegaId] = useState("");
   const [terceroId, setTerceroId] = useState("");
 
-  // catálogos para filtros
-  // NOTA: removemos la carga manual de bodegas/terceros
-  // const [bodegas, setBodegas] = useState([]);
-  // const [terceros, setTerceros] = useState([]);
-
-  // detalle seleccionado
-  const [selectedNotaId, setSelectedNotaId] = useState(null);
   const [selectedNota, setSelectedNota] = useState(null);
 
   // deletion modal
@@ -58,46 +46,6 @@ export default function NotasEnsamblePage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  // ------------------ helpers ------------------
-  const getBodegaLabel = (nota) => {
-    return nota?.bodega?.nombre || nota?.bodega_id || "—";
-  };
-
-  const getTerceroLabel = (nota) => {
-    return nota?.tercero?.nombre || nota?.tercero_id || "—";
-  };
-
-  const getProductosResumen = (nota) => {
-    if (nota?.productos_resumen) return nota.productos_resumen;
-    const det = Array.isArray(nota?.detalles) ? nota.detalles : [];
-    if (det.length === 0) return "—";
-
-    const uniq = [];
-    const seen = new Set();
-    for (const d of det) {
-      const sku = d?.producto?.codigo_sku || d?.producto_id || "";
-      const name = d?.producto?.nombre || "";
-      const key = `${sku}::${name}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniq.push({ sku, name });
-      }
-    }
-
-    if (uniq.length === 0) return "—";
-    if (uniq.length === 1) return uniq[0].name || uniq[0].sku;
-    return `${uniq[0].name || uniq[0].sku} (+${uniq.length - 1})`;
-  };
-
-  const getTotalCantidad = (nota) => {
-    if (nota?.total_cantidad !== undefined && nota?.total_cantidad !== null) {
-      return Number(nota.total_cantidad);
-    }
-    const det = Array.isArray(nota?.detalles) ? nota.detalles : [];
-    return det.reduce((acc, d) => acc + Number(d?.cantidad || 0), 0);
-  };
-
-  // ------------------ loaders ------------------
   const loadNotas = async (targetPage = 1) => {
     setError("");
     setSuccess("");
@@ -126,16 +74,10 @@ export default function NotasEnsamblePage() {
       console.error(e);
       setError(e.message || "Error cargando notas.");
       setNotas([]);
-      setCount(0);
-      setNextUrl(null);
-      setPrevUrl(null);
     } finally {
       setLoading(false);
     }
   };
-
-  // const loadCatalogs = async () => { ... } // REMOVIDO
-  // useEffect(() => { loadCatalogs(); }, []); // REMOVIDO
 
   useEffect(() => {
     loadNotas(1);
@@ -145,7 +87,6 @@ export default function NotasEnsamblePage() {
   const loadDetalle = async (id) => {
     setError("");
     setSuccess("");
-    setSelectedNotaId(id);
     setSelectedNota(null);
 
     try {
@@ -166,7 +107,6 @@ export default function NotasEnsamblePage() {
   const handleOpenEdit = async (id) => {
     setEditNotaId(id);
     setIsEditOpen(true);
-    if (selectedNotaId === id) await loadDetalle(id);
   };
 
   const confirmDelete = async () => {
@@ -174,29 +114,13 @@ export default function NotasEnsamblePage() {
     setDeleteLoading(true);
 
     try {
-      const id = deletingId;
-      const r = await fetch(`${API_BASE}/notas-ensamble/${id}/`, { method: "DELETE" });
+      const r = await fetch(`${API_BASE}/notas-ensamble/${deletingId}/`, { method: "DELETE" });
+      if (!r.ok) throw new Error("No se pudo eliminar la nota.");
 
-      if (!r.ok) {
-        const data = await r.json().catch(() => null);
-        throw new Error(data?.detail || "No se pudo eliminar la nota.");
-      }
-
-      setSuccess("Nota eliminada. Stock revertido y limpio (según lógica del backend).");
+      setSuccess("Nota eliminada con éxito.");
       setIsDeleteOpen(false);
       setDeletingId(null);
-
-      if (selectedNotaId === id) {
-        setSelectedNotaId(null);
-        setSelectedNota(null);
-      }
-
-      const newCount = Math.max(0, count - 1);
-      const maxPage = Math.max(1, Math.ceil(newCount / PAGE_SIZE));
-      const target = Math.min(page, maxPage);
-
-      await loadNotas(target);
-      setCount(newCount);
+      await loadNotas(page);
     } catch (e) {
       console.error(e);
       setDeleteError(e.message || "Error eliminando nota.");
@@ -208,303 +132,183 @@ export default function NotasEnsamblePage() {
   const handleDeleteClick = (id) => {
     setDeletingId(id);
     setIsDeleteOpen(true);
-    setDeleteError("");
   };
 
-  // ✅ El filtrado ahora es 100% backend
-  const notasFiltradas = notas;
-
-  // ------------------ paginación UI ------------------
-  const goPrev = async () => {
-    if (!prevUrl || loading) return;
-    await loadNotas(Math.max(1, page - 1));
+  const getProductosResumen = (nota) => {
+    if (nota?.productos_resumen) return nota.productos_resumen;
+    const det = Array.isArray(nota?.detalles) ? nota.detalles : [];
+    if (det.length === 0) return "—";
+    const first = det[0]?.producto?.nombre || det[0]?.producto_id || "Producto";
+    return det.length > 1 ? `${first} (+${det.length - 1})` : first;
   };
 
-  const goNext = async () => {
-    if (!nextUrl || loading) return;
-    await loadNotas(page + 1);
+  const getTotalCantidad = (nota) => {
+    if (nota?.total_cantidad !== undefined) return Number(nota.total_cantidad);
+    return (nota?.detalles || []).reduce((acc, d) => acc + Number(d?.cantidad || 0), 0);
   };
+
+  const goPrev = async () => { if (prevUrl && !loading) await loadNotas(Math.max(1, page - 1)); };
+  const goNext = async () => { if (nextUrl && !loading) await loadNotas(page + 1); };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 p-6 lg:p-8 bg-slate-50 dark:bg-slate-950 overflow-auto">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Notas de Ensamble</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Crear actualiza stock y descuenta insumos. Editar revierte y reaplica (según backend). Eliminar revierte.
-              </p>
-            </div>
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 italic tracking-tight">
+            Notas <span className="text-blue-600 dark:text-blue-400 not-italic">de Ensamble</span>
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Registro y control de procesos de ensamble de productos terminados.
+          </p>
+        </div>
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => loadNotas(page)}
-                className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                disabled={loading}
-              >
-                {loading ? "Actualizando…" : "Actualizar"}
-              </button>
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
+        >
+          <Plus size={18} />
+          Nueva Nota
+        </button>
+      </div>
 
-              <button
-                type="button"
-                onClick={() => setIsCreateOpen(true)}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-all active:scale-95 shadow-sm shadow-blue-500/20"
-              >
-                + Nueva nota
-              </button>
-            </div>
-          </div>
+      {(error || success) && (
+        <div className="mb-6 space-y-2">
+          {error && <div className="rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-5 py-3 text-sm text-red-700 dark:text-red-400 flex items-center gap-2"><Trash2 size={16} />{error}</div>}
+          {success && <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-900/50 px-5 py-3 text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2"><RefreshCcw size={16} />{success}</div>}
+        </div>
+      )}
 
-          {(error || success) && (
-            <div className="space-y-2">
-              {error && (
-                <div className="rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-sm text-red-700 dark:text-red-400 whitespace-pre-line flex items-center gap-2">
-                  <span className="shrink-0">⚠️</span>
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-900/50 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                  <span className="shrink-0">✅</span>
-                  {success}
-                </div>
-              )}
-            </div>
-          )}
-
-          <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Filtros</h2>
-            </div>
-            <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="md:col-span-1">
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Buscador Global
-                </label>
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Producto, Obs, ID..."
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Bodega</label>
-                <select
-                  value={bodegaId}
-                  onChange={(e) => setBodegaId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
-                >
-                  <option value="">Todas</option>
-                  {bodegas.map(b => (
-                    <option key={b.id} value={b.id}>{b.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tercero</label>
-                <select
-                  value={terceroId}
-                  onChange={(e) => setTerceroId(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
-                >
-                  <option value="">Todos</option>
-                  {terceros.map(t => (
-                    <option key={t.id} value={t.id}>{t.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Desde</label>
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Hasta</label>
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* ✅ Barra de paginación */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
-              <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={!prevUrl || loading}
-                onClick={goPrev}
-                className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-              >
-                ← Anterior
-              </button>
-              <button
-                type="button"
-                disabled={!nextUrl || loading}
-                onClick={goNext}
-                className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-              >
-                Siguiente →
-              </button>
+      {/* Filtros Avanzados */}
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-8 overflow-hidden">
+        <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+          <Filter size={16} className="text-slate-400" />
+          <h2 className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">Filtros de Búsqueda</h2>
+        </div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Buscador</label>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ej: ID, Producto..." className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
             </div>
           </div>
-
-          <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Listado de Notas ({notasFiltradas.length})
-              </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">Haz clic en "Ver" para ver el detalle completo e insumos consumidos.</p>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bodega</label>
+            <select value={bodegaId} onChange={(e) => setBodegaId(e.target.value)} className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+              <option value="">Todas</option>
+              {bodegas.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tercero / Operador</label>
+            <select value={terceroId} onChange={(e) => setTerceroId(e.target.value)} className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+              <option value="">Todos</option>
+              {terceros.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Desde</label>
+            <div className="relative">
+              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
             </div>
-
-            <div className="overflow-x-auto">
-              {notasFiltradas.length === 0 ? (
-                <div className="p-10 text-center text-sm text-slate-500 dark:text-slate-400">
-                  {loading ? "Cargando…" : "No se encontraron notas de ensamble."}
-                </div>
-              ) : (
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
-                    <tr className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                      <th className="px-4 py-3 text-left">ID</th>
-                      <th className="px-4 py-3 text-left">Fecha</th>
-                      <th className="px-4 py-3 text-left">Productos</th>
-                      <th className="px-4 py-3 text-left">Bodega</th>
-                      <th className="px-4 py-3 text-left">Operador / Taller</th>
-                      <th className="px-4 py-3 text-right">Cant. total</th>
-                      <th className="px-4 py-3 text-center">Acciones</th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {notasFiltradas.map((n) => {
-                      const totalCant = getTotalCantidad(n);
-
-                      return (
-                        <tr
-                          key={n.id}
-                          className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${n.operador_id ? "bg-blue-50/40 dark:bg-blue-900/10" : ""}`}
-                        >
-                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-bold">#{n.id}</td>
-                          <td className="px-4 py-3 text-slate-600 dark:text-slate-400 font-medium">{n.fecha_elaboracion || "—"}</td>
-                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">{getProductosResumen(n)}</td>
-                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{getBodegaLabel(n)}</td>
-                          <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                            {n.operador_nombre ? (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] font-bold uppercase truncate max-w-[120px]" title={n.operador_nombre}>
-                                <span className="w-1 h-1 rounded-full bg-blue-500"></span>
-                                {n.operador_nombre}
-                              </span>
-                            ) : (
-                              <span className="text-slate-400 dark:text-slate-600">—</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">{num(totalCant)}</td>
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex justify-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => loadDetalle(n.id)}
-                                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm flex items-center gap-1.5 transition-all"
-                              >
-                                Ver
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleOpenEdit(n.id)}
-                                className="px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-900/20 text-xs font-semibold text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 shadow-sm transition-all"
-                              >
-                                Editar
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteClick(n.id)}
-                                className="p-1.5 rounded-lg border border-red-100 dark:border-red-900/30 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all font-medium"
-                                title="Eliminar"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hasta</label>
+            <div className="relative">
+              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
+
+      {/* Pagination Bar */}
+      <div className="flex items-center justify-between gap-3 mb-4 px-1">
+        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b>
+          <span className="mx-1">•</span>
+          Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+        </div>
+        <div className="flex items-center gap-2">
+          <button type="button" disabled={!prevUrl || loading} onClick={goPrev} className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm">←</button>
+          <button type="button" disabled={!nextUrl || loading} onClick={goNext} className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm">→</button>
         </div>
       </div>
 
-      {/* CREATE */}
-      <CreateNotaEnsambleModal
-        isOpen={isCreateOpen}
-        mode="create"
-        onClose={() => setIsCreateOpen(false)}
-        onSaved={async () => {
-          await loadNotas(page);
-        }}
-      />
+      {/* Main Table */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden text-center">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+              <tr>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">ID / Fecha</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Productos</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Bodega</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Operador</th>
+                <th className="px-6 py-4 text-right text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total u.</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {loading ? (
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-xs text-slate-400 italic">Actualizando registros...</td></tr>
+              ) : notas.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-10 text-center text-xs text-slate-400 italic">No se encontraron notas de ensamble.</td></tr>
+              ) : (
+                notas.map((n) => (
+                  <tr key={n.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="px-6 py-4 text-left">
+                      <div className="text-xs font-bold text-slate-900 dark:text-slate-100">#{n.id}</div>
+                      <div className="text-[10px] text-slate-500 font-medium">{n.fecha_elaboracion || "—"}</div>
+                    </td>
+                    <td className="px-6 py-4 text-left">
+                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{getProductosResumen(n)}</div>
+                      {n.observaciones && <div className="text-[10px] text-slate-400 italic truncate max-w-[200px]">{n.observaciones}</div>}
+                    </td>
+                    <td className="px-6 py-4 text-left">
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{n.bodega?.nombre || "—"}</span>
+                    </td>
+                    <td className="px-6 py-4 text-left">
+                      {n.tercero?.nombre ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] font-bold uppercase tracking-tight">
+                          <span className="w-1 h-1 rounded-full bg-blue-500"></span>
+                          {n.tercero.nombre}
+                        </span>
+                      ) : <span className="text-slate-400">—</span>}
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-sm text-slate-900 dark:text-white">{num(getTotalCantidad(n))}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-center gap-2">
+                        <button onClick={() => loadDetalle(n.id)} className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Ver Detalle"><Eye size={14} /></button>
+                        <button onClick={() => handleOpenEdit(n.id)} className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" title="Editar"><Pencil size={14} /></button>
+                        <button onClick={() => handleDeleteClick(n.id)} className="p-1.5 rounded-lg border border-red-100 dark:border-red-900/30 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all" title="Eliminar"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      {/* EDIT */}
-      <CreateNotaEnsambleModal
-        isOpen={isEditOpen}
-        mode="edit"
-        notaId={editNotaId}
-        onClose={() => {
-          setIsEditOpen(false);
-          setEditNotaId(null);
-        }}
-        onSaved={async (nota) => {
-          await loadNotas(page);
-          if (selectedNotaId === nota?.id) await loadDetalle(nota.id);
-        }}
-      />
+      {/* Modals */}
+      <CreateNotaEnsambleModal isOpen={isCreateOpen} mode="create" onClose={() => setIsCreateOpen(false)} onSaved={() => loadNotas(page)} />
+      <CreateNotaEnsambleModal isOpen={isEditOpen} mode="edit" notaId={editNotaId} onClose={() => { setIsEditOpen(false); setEditNotaId(null); }} onSaved={() => loadNotas(page)} />
+      <ViewNotaEnsambleModal isOpen={isViewOpen} nota={selectedNota} onClose={() => { setIsViewOpen(false); setSelectedNota(null); }} />
 
-      {/* VIEW MODAL */}
-      <ViewNotaEnsambleModal
-        isOpen={isViewOpen}
-        nota={selectedNota}
-        onClose={() => {
-          setIsViewOpen(false);
-          setSelectedNotaId(null);
-          setSelectedNota(null);
-        }}
-      />
-
-      {/* CONFIRM DELETE */}
       <ConfirmActionModal
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={confirmDelete}
         loading={deleteLoading}
         error={deleteError}
-        title="Eliminar Nota de Ensamble"
-        message="¿Estás seguro que deseas eliminar esta nota?"
-        description="Esta acción revertirá el stock de los productos e insumos asociados automáticamente."
-        confirmText="Sí, eliminar"
+        title="Anular Nota de Ensamble"
+        message="¿Realmente deseas anular esta nota?"
+        description="El sistema revertirá el stock de productos e insumos automáticamente. Esta acción no se puede deshacer."
+        confirmText="Anular Nota"
         isDestructive={true}
       />
     </div>

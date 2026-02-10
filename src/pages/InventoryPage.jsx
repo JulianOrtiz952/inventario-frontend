@@ -982,40 +982,33 @@ export default function InventoryPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100 mb-6">Inventario de Insumos</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 italic tracking-tight">
+            Inventario <span className="text-blue-600 dark:text-blue-400 not-italic">de Insumos</span>
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Gestión global de materias primas y suministros.
+          </p>
+        </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400 text-sm font-semibold shadow-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-700 transition-all font-sans"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-blue-600 dark:text-blue-400 text-sm font-semibold shadow-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95"
             onClick={() => openMovementModal("entrada")}
           >
             <ArrowDownCircle size={18} />
-            Registrar Entrada
+            Entrada
           </button>
           <button
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-rose-600 dark:text-rose-400 text-sm font-semibold shadow-sm hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-300 dark:hover:border-rose-700 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-rose-600 dark:text-rose-400 text-sm font-semibold shadow-sm hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all active:scale-95"
             onClick={() => openMovementModal("salida")}
           >
             <ArrowUpCircle size={18} />
-            Registrar Salida
+            Salida
           </button>
-        </div>
-
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="flex items-center w-full md:w-72 bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm shadow-sm">
-            <span className="mr-2 text-slate-400 text-sm">🔍</span>
-            <input
-              type="text"
-              className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
-              placeholder="Buscar insumos (en esta página)..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
           <button
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
             onClick={openCreateModal}
           >
             <Plus size={18} />
@@ -1024,71 +1017,71 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center gap-3">
-        <select
-          value={bodegaFiltro}
-          onChange={(e) => setBodegaFiltro(e.target.value)}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="todos">Todas las bodegas</option>
-          {bodegasOptions.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.nombre}
-            </option>
-          ))}
-        </select>
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1 relative group">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+              <Search size={18} />
+            </span>
+            <input
+              className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 pl-11 pr-4 py-3 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+              placeholder="Buscar por código, nombre o referencia..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        <select
-          value={proveedorFiltro}
-          onChange={(e) => setProveedorFiltro(e.target.value)}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="todos">Todos los proveedores</option>
-          {proveedoresOptions.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre}
-            </option>
-          ))}
-        </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={bodegaFiltro}
+              onChange={(e) => setBodegaFiltro(e.target.value)}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+            >
+              <option value="todos">Todas las bodegas</option>
+              {bodegasOptions.map((b) => (
+                <option key={b.id} value={b.id}>{b.nombre}</option>
+              ))}
+            </select>
 
-        <select
-          value={terceroFiltro}
-          onChange={(e) => setTerceroFiltro(e.target.value)}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="todos">Todos los terceros</option>
-          {tercerosOptions.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nombre}
-            </option>
-          ))}
-        </select>
+            <select
+              value={proveedorFiltro}
+              onChange={(e) => setProveedorFiltro(e.target.value)}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+            >
+              <option value="todos">Todos los proveedores</option>
+              {proveedoresOptions.map((p) => (
+                <option key={p.id} value={p.id}>{p.nombre}</option>
+              ))}
+            </select>
 
-        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1">
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Precio</span>
-          <CurrencyInput
-            placeholder="Min"
-            value={precioMin}
-            onChange={(e) => setPrecioMin(e.target.value)}
-            className="w-20 bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 border-r border-slate-100 dark:border-slate-800 pr-1 text-right"
-          />
-          <CurrencyInput
-            placeholder="Max"
-            value={precioMax}
-            onChange={(e) => setPrecioMax(e.target.value)}
-            className="w-20 bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 pl-1 text-right"
-          />
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-3 md:items-center ml-auto">
-          {/* Espacio reservado o botones adicionales si fueran necesarios */}
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 shadow-sm">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold mr-1">$$</span>
+              <CurrencyInput
+                placeholder="Min"
+                value={precioMin}
+                onChange={(e) => setPrecioMin(e.target.value)}
+                className="w-16 bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 text-right"
+              />
+              <span className="text-slate-300 mx-1">|</span>
+              <CurrencyInput
+                placeholder="Max"
+                value={precioMax}
+                onChange={(e) => setPrecioMax(e.target.value)}
+                className="w-16 bg-transparent outline-none text-xs text-slate-700 dark:text-slate-300 placeholder:text-slate-400 text-right"
+              />
+            </div>
+          </div>
         </div>
       </div>
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="text-xs text-slate-500">
-          Total: <b>{insumosCount}</b> • Página <b>{insumosPage}</b>
-          <span className="ml-2 text-[11px] text-slate-400">(mostrando {PAGE_SIZE} por página)</span>
+      {/* Pagination Bar */}
+      <div className="flex items-center justify-between gap-3 mb-4 px-1">
+        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          Total: <b className="text-slate-900 dark:text-slate-100">{insumosCount}</b>
+          <span className="mx-1">•</span>
+          Página <b className="text-slate-900 dark:text-slate-100">{insumosPage}</b>
+          <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -1096,161 +1089,156 @@ export default function InventoryPage() {
             type="button"
             disabled={!insumosPrev || loading}
             onClick={goPrevPage}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 dark:text-slate-300 font-medium transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            ← Anterior
+            ←
           </button>
           <button
             type="button"
             disabled={!insumosNext || loading}
             onClick={goNextPage}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 dark:text-slate-300 font-medium transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            Siguiente →
+            →
           </button>
         </div>
       </div>
 
-      <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-        {loading && <div className="p-6 text-sm text-slate-600">Cargando datos...</div>}
-        {error && !loading && <div className="p-6 text-sm text-red-600">{error}</div>}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+              <tr>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Código</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Referencia</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nombre</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Unidad</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Proveedor</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Bodega / Tercero</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Estado</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Stock</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Costo U.</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Acciones</th>
+              </tr>
+            </thead>
 
-        {!loading && !error && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  <th className="px-4 py-3 text-center">Código</th>
-                  <th className="px-4 py-3 text-center">Referencia</th>
-                  <th className="px-4 py-3 text-center">Nombre</th>
-                  <th className="px-4 py-3 text-center">Unidad</th>
-                  <th className="px-4 py-3 text-center">Proveedor</th>
-                  <th className="px-4 py-3 text-center">Bodega / Tercero</th>
-                  <th className="px-4 py-3 text-center">Estado</th>
-                  <th className="px-4 py-3 text-center">Stock</th>
-                  <th className="px-4 py-3 text-center">Costo U.</th>
-                  <th className="px-4 py-3 text-center">Acciones</th>
+            <tbody>
+              {insumos.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="px-6 py-6 text-center text-sm text-slate-500">
+                    No se encontraron insumos.
+                  </td>
                 </tr>
-              </thead>
+              )}
 
-              <tbody>
-                {insumos.length === 0 && (
-                  <tr>
-                    <td colSpan={10} className="px-6 py-6 text-center text-sm text-slate-500">
-                      No se encontraron insumos.
+              {insumos.map((i) => {
+                const pk = getInsumoPk(i);
+                const estado = getEstadoInfo(i);
+                const stock = getStockActual(i);
+                const isInactive = i.es_activo === false; // Handle explicitly if existing
+
+                return (
+                  <tr
+                    key={pk}
+                    className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${isInactive
+                      ? "bg-slate-100/60 dark:bg-slate-800/60 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
+                      }`}
+                  >
+                    <td className="px-4 py-3 font-medium text-xs text-center">
+                      <span className={isInactive ? "text-slate-500 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-800 dark:text-slate-200"}>
+                        {pk}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-center">
+                      {i.referencia || <span className="text-slate-300 dark:text-slate-700">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <p className={`font-medium ${isInactive ? "text-slate-600 dark:text-slate-400" : "text-slate-800 dark:text-slate-200"}`}>{i.nombre}</p>
+                      {isInactive && <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-medium">Inactivo</span>}
+                    </td>
+
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
+                        {i.unidad_medida || "UN"}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3 text-center text-xs text-slate-600 dark:text-slate-400">
+                      {i.proveedor?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}
+                    </td>
+
+                    <td className="px-4 py-3 text-center text-xs text-slate-600 dark:text-slate-400">
+                      <div className="flex flex-col items-center">
+                        <span>{i.bodega?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                          {i.tercero?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3 text-center">
+                      {isInactive ? (
+                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                          Inactivo
+                        </div>
+                      ) : (
+                        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${estado.colorClass} border-transparent bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
+                          {estado.label}
+                        </div>
+                      )}
+                    </td>
+
+                    <td className={`px-4 py-3 text-center font-medium tabular-nums ${isInactive ? "text-slate-500 dark:text-slate-500" : "text-slate-900 dark:text-slate-100"}`}>
+                      {formatCurrency(stock)}
+                    </td>
+
+                    <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400 text-xs tabular-nums">
+                      {i.costo_unitario
+                        ? `$${formatCurrency(i.costo_unitario)}`
+                        : "—"}
+                    </td>
+
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleView(i)}
+                          className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                          title="Ver detalle"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(i)}
+                          className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openDeleteModal(i)}
+                          className={`p-1.5 rounded transition-colors ${isInactive
+                            ? "text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                            : "text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+                            }`}
+                          title={isInactive ? "Reactivar" : "Desactivar"}
+                        >
+                          {isInactive ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
-
-                {insumos.map((i) => {
-                  const pk = getInsumoPk(i);
-                  const estado = getEstadoInfo(i);
-                  const stock = getStockActual(i);
-                  const isInactive = i.es_activo === false; // Handle explicitly if existing
-
-                  return (
-                    <tr
-                      key={pk}
-                      className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${isInactive
-                        ? "bg-slate-100/60 dark:bg-slate-800/60 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
-                        }`}
-                    >
-                      <td className="px-4 py-3 font-medium text-xs text-center">
-                        <span className={isInactive ? "text-slate-500 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-800 dark:text-slate-200"}>
-                          {pk}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-center">
-                        {i.referencia || <span className="text-slate-300 dark:text-slate-700">—</span>}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <p className={`font-medium ${isInactive ? "text-slate-600 dark:text-slate-400" : "text-slate-800 dark:text-slate-200"}`}>{i.nombre}</p>
-                        {isInactive && <span className="inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-medium">Inactivo</span>}
-                      </td>
-
-                      <td className="px-4 py-3 text-center">
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
-                          {i.unidad_medida || "UN"}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3 text-center text-xs text-slate-600 dark:text-slate-400">
-                        {i.proveedor?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}
-                      </td>
-
-                      <td className="px-4 py-3 text-center text-xs text-slate-600 dark:text-slate-400">
-                        <div className="flex flex-col items-center">
-                          <span>{i.bodega?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}</span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                            {i.tercero?.nombre || <span className="text-slate-300 dark:text-slate-700">—</span>}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-3 text-center">
-                        {isInactive ? (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                            Inactivo
-                          </div>
-                        ) : (
-                          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium border ${estado.colorClass} border-transparent bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-100 dark:ring-slate-800`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${estado.dotClass}`} />
-                            {estado.label}
-                          </div>
-                        )}
-                      </td>
-
-                      <td className={`px-4 py-3 text-center font-medium tabular-nums ${isInactive ? "text-slate-500 dark:text-slate-500" : "text-slate-900 dark:text-slate-100"}`}>
-                        {formatCurrency(stock)}
-                      </td>
-
-                      <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400 text-xs tabular-nums">
-                        {i.costo_unitario
-                          ? `$${formatCurrency(i.costo_unitario)}`
-                          : "—"}
-                      </td>
-
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleView(i)}
-                            className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                            title="Ver detalle"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEdit(i)}
-                            className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors"
-                            title="Editar"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openDeleteModal(i)}
-                            className={`p-1.5 rounded transition-colors ${isInactive
-                              ? "text-emerald-500 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
-                              : "text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
-                              }`}
-                            title={isInactive ? "Reactivar" : "Desactivar"}
-                          >
-                            {isInactive ? <RotateCcw size={16} /> : <Trash2 size={16} />}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* MODALES */}
       <CreateInsumoModal
@@ -1306,7 +1294,6 @@ export default function InventoryPage() {
         onFormChange={handleMovementFormChange}
         tercerosOptions={tercerosOptions}
         bodegasOptions={bodegasOptions}
-
         stockData={movementStockData}
         onSubmit={handleMovementSubmit}
       />

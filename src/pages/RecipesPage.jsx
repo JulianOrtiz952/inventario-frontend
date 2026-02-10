@@ -1,8 +1,8 @@
-// src/pages/NewRecipePage.jsx
+// src/pages/RecipesPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
 import { asRows, fetchAllPages } from "../utils/api";
-
+import { Plus, Save, Play, History, Calculator, Package, Database, Info } from "lucide-react";
 
 export default function NewRecipePage() {
   const [productos, setProductos] = useState([]);
@@ -11,6 +11,7 @@ export default function NewRecipePage() {
   const [historial, setHistorial] = useState([]);
   const [bodegas, setBodegas] = useState([]);
   const [selectedBodegaId, setSelectedBodegaId] = useState("");
+
   const insumosDeBodega = useMemo(() => {
     const bId = Number(selectedBodegaId);
     if (!bId) return [];
@@ -78,7 +79,6 @@ export default function NewRecipePage() {
     setSelectedProduct(prod || null);
 
     if (prod) {
-      // Solo sugerimos código de receta cuando aún está vacío
       setRecipeCode((prev) => prev || prod.codigo_interno || prod.codigo || "");
     }
   }, [selectedProductId, productos]);
@@ -92,20 +92,16 @@ export default function NewRecipePage() {
     );
     if (!receta) return;
 
-    // Si la receta base tiene bodega, la fijamos
     if (receta.bodega?.id) {
       setSelectedBodegaId(String(receta.bodega.id));
     }
 
-    // 1. Producto asociado directo desde la receta
     if (receta.producto?.id) {
       setSelectedProductId(String(receta.producto.id));
     }
 
-    // 2. Código de receta
     setRecipeCode((prev) => prev || receta.codigo || "");
 
-    // 3. Insumos
     const nuevosItems =
       (receta.items || []).map((it) => ({
         id: Date.now() + Math.random(),
@@ -224,7 +220,6 @@ export default function NewRecipePage() {
       return;
     }
 
-    // Validar enteros para unidad
     for (const item of insumosValidos) {
       const insumo = insumos.find(i => i.id === Number(item.insumoId));
       if (insumo) {
@@ -243,11 +238,6 @@ export default function NewRecipePage() {
       return;
     }
 
-    if (!selectedProductId) {
-      setError("Debes seleccionar un producto.");
-      return;
-    }
-
     if (!selectedBodegaId) {
       setError("Debes seleccionar una bodega.");
       return;
@@ -262,7 +252,6 @@ export default function NewRecipePage() {
       : false;
 
     try {
-      // ---------- CASO 1: usar receta existente sin modificar ----------
       if (selectedRecipe && itemsIguales) {
         setProducing(true);
 
@@ -278,55 +267,34 @@ export default function NewRecipePage() {
         );
 
         if (!resProd.ok) {
-          let msg =
-            "Hubo un error al pasar la receta seleccionada a producción.";
+          let msg = "Hubo un error al pasar la receta seleccionada a producción.";
           try {
             const data = await resProd.json();
-            console.error("Error al producir:", data);
             if (typeof data === "string") msg = data;
             else if (data.detail) msg = data.detail;
             else if (data.error) msg = data.error;
-          } catch (e) {
-            console.error("No se pudo parsear el error de producción:", e);
-          }
+          } catch (e) { }
           throw new Error(msg);
         }
 
-        setSuccess(
-          `Se utilizó la receta ${selectedRecipe.codigo} y se produjo correctamente.`
-        );
+        setSuccess(`Se utilizó la receta ${selectedRecipe.codigo} y se produjo correctamente.`);
         return;
       }
 
-      // ---------- CASO 2: crear NUEVA receta (porque no hay base o se modificó) ----------
       setSaving(true);
-
       const userCode = (recipeCode || "").trim();
-
       let codigoReceta;
 
       if (selectedRecipe) {
-        // Venimos de una receta base, pero con cambios en insumos:
-        // - Si el usuario escribió un código diferente al original → se respeta.
-        // - Si dejó el mismo código o vacío → generamos uno nuevo automáticamente.
         if (userCode && userCode !== selectedRecipe.codigo) {
           codigoReceta = userCode;
         } else {
-          const baseCode =
-            selectedRecipe.codigo ||
-            producto.codigo_interno ||
-            producto.codigo ||
-            `REC-${producto.id}`;
+          const baseCode = selectedRecipe.codigo || producto.codigo_interno || producto.codigo || `REC-${producto.id}`;
           const ts = Date.now();
           codigoReceta = `${baseCode}-R${ts}`;
         }
       } else {
-        // No hay receta base, es una receta nueva desde cero
-        const baseCode =
-          userCode ||
-          producto.codigo_interno ||
-          producto.codigo ||
-          `REC-${producto.id}`;
+        const baseCode = userCode || producto.codigo_interno || producto.codigo || `REC-${producto.id}`;
         if (userCode) {
           codigoReceta = baseCode;
         } else {
@@ -336,13 +304,11 @@ export default function NewRecipePage() {
       }
 
       const nombreReceta = producto.nombre || "Receta sin nombre";
-
       const payload = {
         codigo: codigoReceta,
         nombre: nombreReceta,
         producto_id: Number(selectedProductId),
-        bodega_id: Number(selectedBodegaId),   // 👈 AQUÍ ESTABA FALTANDO
-        // Atributos asociados no se envían: ya están en producto
+        bodega_id: Number(selectedBodegaId),
         items: insumosValidos.map((item) => {
           const insumoData = insumos.find(
             (i) => i.id === Number(item.insumoId)
@@ -357,9 +323,7 @@ export default function NewRecipePage() {
 
       const res = await fetch(`${API_BASE}/recetas/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -367,11 +331,8 @@ export default function NewRecipePage() {
         let msg = "Error al crear la receta.";
         try {
           const data = await res.json();
-          console.error("Error creando receta:", data);
           if (data.detail) msg = data.detail;
           else if (data.codigo) msg = `codigo: ${data.codigo.join(" ")}`;
-          else if (data.nombre) msg = `nombre: ${data.nombre.join(" ")}`;
-          else if (data.items) msg = `items: ${data.items.join(" ")}`;
         } catch (_) { }
         throw new Error(msg);
       }
@@ -379,43 +340,29 @@ export default function NewRecipePage() {
       const recetaCreada = await res.json();
       const recetaId = recetaCreada.id;
 
-      // Producir con la receta recién creada
       setProducing(true);
-
       const resProd = await fetch(
         `${API_BASE}/recetas/${recetaId}/producir/`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ cantidad: Number(produceQuantity), bodega_id: Number(selectedBodegaId), }),
         }
       );
 
       if (!resProd.ok) {
-        let msg =
-          "La receta se creó, pero hubo un error al pasarla a producción.";
+        let msg = "La receta se creó, pero hubo un error al pasarla a producción.";
         try {
           const data = await resProd.json();
-          console.error("Error al producir:", data);
           if (typeof data === "string") msg = data;
           else if (data.detail) msg = data.detail;
-          else if (data.error) msg = data.error;
-        } catch (e) {
-          console.error("No se pudo parsear el error de producción:", e);
-        }
+        } catch (e) { }
         throw new Error(msg);
       }
 
-      setSuccess(
-        `Receta ${codigoReceta} creada y producto producido correctamente.`
-      );
-
-      // Reset suave de insumos y cantidad
+      setSuccess(`Receta ${codigoReceta} creada y producto producido correctamente.`);
       setLineItems([{ id: Date.now(), insumoId: "", cantidad: 0 }]);
       setProduceQuantity(1);
-      // Dejamos recipeCode (por si quiere seguir usando ese patrón)
     } catch (err) {
       console.error(err);
       setError(err.message || "Error al guardar la receta.");
@@ -429,126 +376,107 @@ export default function NewRecipePage() {
   const cantidadProd = Number(produceQuantity) || 0;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 p-6 lg:p-8 bg-slate-50 overflow-auto">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">
-              Nueva Receta / Producción
-            </h1>
-            <p className="text-sm text-slate-500">
-              Crea o reutiliza recetas para tus productos. Si usas una receta
-              existente sin modificar insumos, se producirá con el mismo
-              código. Si cambias insumos, se generará una nueva receta.
-            </p>
-          </div>
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 italic tracking-tight">
+            Gestión <span className="text-blue-600 dark:text-blue-400 not-italic">de Recetas y Producción</span>
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Crea recetas maestras y ejecuta órdenes de producción instantáneas.
+          </p>
+        </div>
 
-          {(error || success) && (
-            <div className="space-y-2">
-              {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-2 text-sm text-emerald-700">
-                  {success}
-                </div>
-              )}
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Cant. Producción</span>
+            <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+              <input
+                type="number"
+                min={1}
+                value={produceQuantity}
+                disabled={disabledButtons}
+                onChange={(e) => setProduceQuantity(e.target.value ? Number(e.target.value) : "")}
+                className="w-16 bg-transparent outline-none text-sm font-bold text-slate-900 dark:text-slate-100 text-center"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {(error || success) && (
+        <div className="mb-6 space-y-2">
+          {error && (
+            <div className="rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-5 py-4 text-sm text-red-700 dark:text-red-400 flex items-center gap-3">
+              <span className="shrink-0">⚠️</span>
+              {error}
             </div>
           )}
+          {success && (
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-900/50 px-5 py-4 text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-3">
+              <span className="shrink-0">✅</span>
+              {success}
+            </div>
+          )}
+        </div>
+      )}
 
-          {/* Información básica */}
-          <section className="bg-white rounded-xl border border-slate-200 shadow-sm">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="space-y-1">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Información Básica
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Selecciona el producto, una receta base (opcional) y la
-                  cantidad a producir.
-                </p>
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Configuración de Receta */}
+          <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+            <div className="px-6 py-5 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <Package size={18} />
               </div>
-
-              {/* Cantidad a producir alineada a la derecha */}
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-[11px] font-medium text-slate-600">
-                  Cantidad a producir
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  value={produceQuantity}
-                  disabled={disabledButtons}
-                  onChange={(e) =>
-                    setProduceQuantity(
-                      e.target.value ? Number(e.target.value) : ""
-                    )
-                  }
-                  className="w-24 px-3 py-1.5 text-xs border rounded-md border-slate-300 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100 text-right"
-                />
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest">Información de la Orden</h2>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Define el producto y la bodega de destino.</p>
               </div>
             </div>
 
-            <div className="px-5 py-4 space-y-4">
-              <div className="grid md:grid-cols-[2fr,1fr] gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-slate-700 mb-1">
-                    Producto (buscar por código o nombre)
-                  </label>
+            <div className="p-6 space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Producto Objetivo</label>
                   <select
                     value={selectedProductId}
                     onChange={(e) => setSelectedProductId(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                   >
                     <option value="">Seleccionar producto…</option>
                     {productos.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.codigo_interno} — {p.nombre}
+                        {p.codigo_interno || p.codigo} — {p.nombre}
                       </option>
                     ))}
                   </select>
-                  {selectedProduct && (
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      Producto seleccionado:{" "}
-                      <span className="font-medium">
-                        {selectedProduct.codigo_interno} —{" "}
-                        {selectedProduct.nombre}
-                      </span>
-                    </p>
-                  )}
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-slate-700 mb-1">
-                    Código interno de la receta
-                  </label>
-                  <input
-                    type="text"
-                    value={recipeCode}
-                    disabled={disabledButtons}
-                    onChange={(e) => setRecipeCode(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100"
-                    placeholder="Si lo dejas vacío, se genera automáticamente"
-                  />
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Bodega de Producción</label>
+                  <select
+                    value={selectedBodegaId}
+                    onChange={(e) => setSelectedBodegaId(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+                  >
+                    <option value="">Seleccionar bodega…</option>
+                    {bodegas.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.codigo} — {b.nombre}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* Selector de receta base */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-slate-700 mb-1">
-                    Usar receta base (opcional)
-                  </label>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Receta Base (Opcional)</label>
                   <select
                     value={selectedRecipeId || ""}
-                    onChange={(e) =>
-                      setSelectedRecipeId(
-                        e.target.value ? Number(e.target.value) : null
-                      )
-                    }
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => setSelectedRecipeId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                   >
                     <option value="">Sin receta base…</option>
                     {recetas.map((r) => (
@@ -557,241 +485,243 @@ export default function NewRecipePage() {
                       </option>
                     ))}
                   </select>
-                  <p className="text-[11px] text-slate-500">
-                    Al seleccionar una receta, se traen sus insumos. Si no los
-                    modificas, se producirá con el mismo código.
-                  </p>
                 </div>
-                {/* 👇 NUEVO BLOQUE: BODEGA */}
-                <div className="grid md:grid-cols-2 gap-4 mt-2">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-slate-700 mb-1">
-                      Bodega
-                    </label>
-                    <select
-                      value={selectedBodegaId}
-                      onChange={(e) => setSelectedBodegaId(e.target.value)}
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Seleccionar bodega…</option>
-                      {bodegas.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.codigo} — {b.nombre}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-[11px] text-slate-500">
-                      La receta y la producción quedarán asociadas a esta bodega.
-                    </p>
-                  </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Código de Receta</label>
+                  <input
+                    type="text"
+                    value={recipeCode}
+                    disabled={disabledButtons}
+                    onChange={(e) => setRecipeCode(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm uppercase font-mono"
+                    placeholder="Auto-generado si queda vacío"
+                  />
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Insumos requeridos + resumen */}
-          <section className="grid lg:grid-cols-[3fr,1.2fr] gap-4 items-start">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Insumos Requeridos
-                </h2>
-                <button
-                  type="button"
-                  onClick={handleAddLineItem}
-                  className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-                  disabled={disabledButtons}
-                >
-                  <span>＋</span>
-                  Agregar Insumo
-                </button>
-              </div>
-
-              <div className="px-5 py-4 space-y-3">
-                <div className="grid grid-cols-[2fr,1fr,auto] gap-3 text-[11px] font-semibold text-slate-500 pb-1 border-b border-slate-100">
-                  <span>Insumo</span>
-                  <span>Cantidad</span>
+          {/* Listado de Insumos */}
+          <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+            <div className="px-6 py-5 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <Database size={18} />
                 </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest">Insumos Requeridos</h2>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">Detalla los materiales necesarios para la producción.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddLineItem}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
+                disabled={disabledButtons}
+              >
+                <Plus size={14} />
+                Añadir Material
+              </button>
+            </div>
 
-                {lineItems.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-[2fr,1fr,auto] gap-3 items-center"
-                  >
-                    <select
-                      value={item.insumoId}
-                      disabled={!selectedBodegaId || disabledButtons}
-                      onChange={(e) =>
-                        handleLineItemChange(item.id, "insumoId", e.target.value)
-                      }
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-100"
-                    >
-                      <option value="">
-                        {selectedBodegaId
-                          ? "Selecciona un insumo..."
-                          : "Selecciona primero una bodega"}
-                      </option>
-                      {insumosDeBodega.map((ins) => (
-                        <option key={ins.id} value={ins.id}>
-                          {ins.nombre} ({ins.codigo})
-                        </option>
-                      ))}
-                    </select>
+            <div className="p-6">
+              {!selectedBodegaId && (
+                <div className="flex flex-col items-center justify-center py-10 text-center space-y-3 bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                  <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                    <Info size={24} />
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-[200px]">
+                    Selecciona una <b className="text-slate-700 dark:text-slate-300">bodega</b> para visualizar los insumos disponibles.
+                  </p>
+                </div>
+              )}
 
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={item.cantidad}
-                      onChange={(e) =>
-                        handleLineItemChange(
-                          item.id,
-                          "cantidad",
-                          e.target.value
-                        )
-                      }
-                      className="rounded-md border border-slate-300 px-3 py-2 text-xs text-right focus:ring-blue-500 focus:border-blue-500"
-                      disabled={disabledButtons}
-                    />
+              {selectedBodegaId && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-[3fr,1.5fr,auto] gap-4 px-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Insumo / Material</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Cantidad</span>
+                    <span className="w-8"></span>
+                  </div>
 
-                    <div className="flex justify-center">
-                      {index > 0 && (
+                  {lineItems.map((item, index) => (
+                    <div key={item.id} className="grid grid-cols-[3fr,1.5fr,auto] gap-4 items-center group">
+                      <select
+                        value={item.insumoId}
+                        disabled={disabledButtons}
+                        onChange={(e) => handleLineItemChange(item.id, "insumoId", e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+                      >
+                        <option value="">Selecciona un insumo...</option>
+                        {insumosDeBodega.map((ins) => (
+                          <option key={ins.id} value={ins.id}>
+                            {ins.nombre} ({ins.codigo})
+                          </option>
+                        ))}
+                      </select>
+
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={item.cantidad}
+                        onChange={(e) => handleLineItemChange(item.id, "cantidad", e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white text-right outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-bold"
+                        disabled={disabledButtons}
+                      />
+
+                      {index > 0 ? (
                         <button
                           type="button"
                           onClick={() => handleRemoveLineItem(item.id)}
-                          className="text-xs text-red-500 hover:text-red-700"
+                          className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-100 dark:hover:bg-red-900/40"
                           disabled={disabledButtons}
                         >
-                          🗑
+                          <Trash2 size={16} />
                         </button>
+                      ) : (
+                        <div className="w-10"></div>
                       )}
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="px-5 py-3 border-b border-slate-100">
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Resumen de Costos
-                </h2>
-              </div>
-              <div className="px-5 py-4 space-y-3 text-sm">
-                <div className="flex justify-between text-xs text-slate-600">
-                  <span>Subtotal materiales (por 1 unidad):</span>
-                  <span>
-                    $
-                    {subtotalMateriales.toLocaleString("es-CO", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-xs text-slate-600">
-                  <span>Cantidad a producir:</span>
-                  <span>{cantidadProd}</span>
-                </div>
-
-                <div className="flex justify-between text-xs text-slate-700 font-semibold border-t border-slate-100 pt-2">
-                  <span>Costo total materiales (x cantidad):</span>
-                  <span>
-                    $
-                    {totalMateriales.toLocaleString("es-CO", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-xs text-slate-600">
-                  <span>Unidades totales de insumos:</span>
-                  <span>{totalUnidadesInsumos}</span>
-                </div>
-
-                <div className="flex justify-between text-xs text-slate-600">
-                  <span>Número de tipos de insumos:</span>
-                  <span>{lineItems.filter((i) => i.insumoId).length}</span>
-                </div>
-
-                <div className="pt-4 border-t border-slate-100 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleSaveRecipe}
-                    disabled={disabledButtons}
-                    className="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
-                  >
-                    {saving || producing
-                      ? "Guardando / produciendo…"
-                      : "Guardar / producir"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-          {/* Historial de productos creados */}
-          <section className="bg-white rounded-xl shadow-sm border border-slate-200 mb-10">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-indigo-500 text-lg">🕒</span>
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Historial de productos creados
-                </h2>
-              </div>
-            </div>
-
-            {historial.length === 0 ? (
-              <div className="px-6 py-6 text-xs text-slate-500">
-                Aún no se han registrado producciones.
-              </div>
-            ) : (
-              <div className="px-4 py-4 overflow-x-auto">
-                <table className="min-w-full text-xs">
-                  <thead className="bg-slate-50 border border-slate-100">
-                    <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                      <th className="px-3 py-2 text-left">Fecha</th>
-                      <th className="px-3 py-2 text-left">Bodega</th>  {/* 👈 nuevo */}
-                      <th className="px-3 py-2 text-left">Receta</th>
-                      <th className="px-3 py-2 text-right">Cantidad</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historial.map((h) => (
-                      <tr
-                        key={h.id}
-                        className="border-b border-slate-100 hover:bg-slate-50/80"
-                      >
-                        <td className="px-3 py-2 text-xs text-slate-600">
-                          {new Date(h.creado_en).toLocaleString()}
-                        </td>
-                        {/* 👇 NUEVO: Bodega */}
-                        <td className="px-3 py-2 text-xs text-slate-700">
-                          {h.bodega_codigo
-                            ? `${h.bodega_codigo} — ${h.bodega_nombre}`
-                            : h.bodega_nombre || "Sin bodega"}
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex flex-col">
-                            <span className="text-xs font-medium text-slate-800">
-                              {h.receta_codigo
-                                ? `${h.receta_codigo} — ${h.receta_nombre}`
-                                : h.receta_nombre}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 text-right text-xs text-slate-700">
-                          {h.cantidad.toLocaleString()} u
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </section>
         </div>
+
+        <div className="space-y-8">
+          {/* Dashboard de Costos */}
+          <section className="bg-slate-900 dark:bg-blue-600 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10">
+              <Calculator size={120} />
+            </div>
+
+            <div className="relative z-10 space-y-8">
+              <div>
+                <h3 className="text-xs font-bold text-blue-300 dark:text-blue-100 uppercase tracking-widest mb-1">Resumen Financiero</h3>
+                <h2 className="text-2xl font-bold italic tracking-tighter">Liquidación <span className="text-blue-200">Estimada</span></h2>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-end justify-between border-b border-blue-800 dark:border-blue-400 pb-4">
+                  <div>
+                    <span className="text-[10px] font-bold text-blue-400 dark:text-blue-200 uppercase tracking-widest block mb-1">Costo Unitario</span>
+                  </div>
+                  <span className="text-xl font-bold font-mono">
+                    $ {subtotalMateriales.toLocaleString("es-CO", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                  </span>
+                </div>
+
+                <div className="flex items-end justify-between border-b border-blue-800 dark:border-blue-400 pb-4">
+                  <div>
+                    <span className="text-[10px] font-bold text-blue-400 dark:text-blue-200 uppercase tracking-widest block mb-1">Unidades</span>
+                  </div>
+                  <span className="text-xl font-bold font-mono">
+                    {cantidadProd} u
+                  </span>
+                </div>
+
+                <div className="pt-2">
+                  <span className="text-[10px] font-bold text-emerald-400 dark:text-emerald-300 uppercase tracking-widest block mb-1">Costo Total de Orden</span>
+                  <div className="text-4xl font-bold font-mono tracking-tighter text-emerald-400">
+                    $ {totalMateriales.toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveRecipe}
+                disabled={disabledButtons}
+                className="w-full py-4 rounded-2xl bg-white text-blue-900 font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-blue-50 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {saving || producing ? (
+                  <>Procesando...</>
+                ) : (
+                  <>
+                    <Play size={18} fill="currentColor" />
+                    Iniciar Producción
+                  </>
+                )}
+              </button>
+            </div>
+          </section>
+
+          {/* Estadísticas Rápidas */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Total Insumos</span>
+              <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{totalUnidadesInsumos}</div>
+              <p className="text-[9px] text-slate-500 mt-1">Materiales proyectados</p>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Tipos de Material</span>
+              <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{lineItems.filter((i) => i.insumoId).length}</div>
+              <p className="text-[9px] text-slate-500 mt-1">En lista de receta</p>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Historial (Vista Simplificada estilo Operadores) */}
+      <section className="mt-12 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+              <History size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 italic tracking-tight uppercase">Historial Reciente <span className="text-blue-600 not-italic">de Producción</span></h2>
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          {historial.length === 0 ? (
+            <div className="px-8 py-10 text-center text-sm text-slate-500 italic">
+              No hay registros de producción recientes.
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+              <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+                <tr>
+                  <th className="px-8 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Fecha y Hora</th>
+                  <th className="px-8 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Bodega</th>
+                  <th className="px-8 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Receta Utilizada</th>
+                  <th className="px-8 py-4 text-right text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Cantidad Producida</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                {historial.slice(0, 10).map((h) => (
+                  <tr key={h.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                    <td className="px-8 py-4 text-xs text-slate-600 dark:text-slate-400 font-medium">
+                      {new Date(h.creado_en).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
+                    </td>
+                    <td className="px-8 py-4">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wide">
+                        {h.bodega_codigo || "BOD"}
+                      </span>
+                    </td>
+                    <td className="px-8 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                          {h.receta_nombre || "Receta Maestra"}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">{h.receta_codigo}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-4 text-right">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white">{h.cantidad.toLocaleString()} u</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config/api";
-import { RotateCcw, Trash2, Pencil } from "lucide-react";
+import { RotateCcw, Trash2, Pencil, Search, Plus } from "lucide-react";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import { asRows, buildQueryParams } from "../utils/api";
 
 const PAGE_SIZE = 30;
-
-
 
 export default function TallasPage() {
   const [tallas, setTallas] = useState([]);
@@ -77,9 +75,6 @@ export default function TallasPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // ELIMINADO filtered usage
-  // const filtered = ...
-
   function openCreate() {
     setEditing(null);
     setForm({ nombre: "" });
@@ -144,8 +139,6 @@ export default function TallasPage() {
     }
   }
 
-  // ELIMINADO handleDelete original
-
   const openActionModal = (talla) => {
     setItemToAction(talla);
     setActionError("");
@@ -169,10 +162,8 @@ export default function TallasPage() {
       setActionLoading(true);
       let res;
       if (isActive) {
-        // Desactivar (Soft Delete)
         res = await fetch(`${API_BASE}/tallas/${item.nombre}/`, { method: "DELETE" });
       } else {
-        // Reactivar (Patch)
         res = await fetch(`${API_BASE}/tallas/${item.nombre}/`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -182,9 +173,6 @@ export default function TallasPage() {
 
       if (!res.ok && res.status !== 204) throw new Error(`No se pudo ${action.toLowerCase()} la talla.`);
 
-      // Fix pagination logic if deleting last item on page? 
-      // Actually soft delete just hides or shows as inactive. The list still shows them if we filter or show all.
-      // But Provider/Bodega Logic shows all sorted by active. So we reload.
       closeActionModal();
       await loadTallas(page);
     } catch (err) {
@@ -205,51 +193,49 @@ export default function TallasPage() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Tallas</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Catálogo de tallas.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 italic tracking-tight">
+            Gestión <span className="text-blue-600 dark:text-blue-400 not-italic">de Tallas</span>
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Administra las tallas disponibles para los productos terminados.
+          </p>
         </div>
 
         <button
           onClick={openCreate}
-          className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
         >
-          + Nueva talla
+          <Plus size={18} />
+          Nueva Talla
         </button>
       </div>
 
-      {/* Search + recargar */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 flex items-center bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm">
-          <span className="mr-2 text-slate-400 text-sm">🔍</span>
+      {/* Search Bar */}
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="relative group">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+            <Search size={18} />
+          </span>
           <input
-            className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-            placeholder="Buscar talla (en esta página)..."
+            className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 pl-11 pr-4 py-3 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+            placeholder="Buscar talla..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
-        <button
-          onClick={() => loadTallas(page)}
-          className="px-3 py-2 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-          disabled={loading}
-        >
-          {loading ? "..." : "Recargar"}
-        </button>
       </div>
 
-      {/* Paginación */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+      {/* Pagination Bar */}
+      <div className="flex items-center justify-between gap-3 mb-4 px-1">
+        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b>
+          <span className="mx-1">•</span>
+          Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
           <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
-          <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">
-            *La búsqueda filtra solo la página actual.
-          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -257,109 +243,104 @@ export default function TallasPage() {
             type="button"
             disabled={!prevUrl || loading}
             onClick={goPrev}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            ← Anterior
+            ←
           </button>
           <button
             type="button"
             disabled={!nextUrl || loading}
             onClick={goNext}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            Siguiente →
+            →
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+        <div className="mb-4 rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400 whitespace-pre-line">
           {error}
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Listado</h2>
-        </div>
-
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
-              <tr className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                <th className="px-4 py-3 text-left">Nombre</th>
-                <th className="px-4 py-3 text-left">Estado</th>
-                <th className="px-4 py-3 text-center">Acciones</th>
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+              <tr>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nombre</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Estado</th>
+                <th className="px-6 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400" colSpan={4}>
-                    Cargando...
+                  <td className="px-6 py-8 text-center text-sm text-slate-400" colSpan={3}>
+                    Cargando tallas...
                   </td>
                 </tr>
               )}
 
               {!loading && tallas.length === 0 && (
                 <tr>
-                  <td className="px-4 py-3 text-slate-500" colSpan={4}>
-                    No hay tallas{search ? " que coincidan" : ""}.
+                  <td className="px-6 py-8 text-center text-sm text-slate-400" colSpan={3}>
+                    No se encontraron tallas.
                   </td>
                 </tr>
               )}
 
-              {!loading &&
-                tallas.map((t) => {
-                  const isActive = t.es_activo !== false;
-                  return (
-                    <tr
-                      key={t.nombre}
-                      className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${!isActive ? "bg-slate-50/70 dark:bg-slate-800/20" : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"}`}
-                    >
-                      <td className={`px-4 py-3 font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-800 dark:text-slate-200"}`}>
-                        {t.nombre}
-                      </td>
-                      <td className="px-4 py-3 text-xs">
-                        {isActive ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            Activo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                            Inactivo
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEdit(t)}
-                            className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors bg-white dark:bg-slate-900"
-                            title="Editar"
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openActionModal(t)}
-                            className={`p-1.5 rounded-md border transition-colors bg-white dark:bg-slate-900 ${isActive
-                              ? "border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                              : "border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                              }`}
-                            title={isActive ? "Desactivar" : "Reactivar"}
-                          >
-                            {isActive ? <Trash2 size={14} /> : <RotateCcw size={14} />}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
+              {!loading && tallas.map((t) => {
+                const isActive = t.es_activo !== false;
+                return (
+                  <tr
+                    key={t.nombre}
+                    className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${!isActive ? "bg-slate-50/70 dark:bg-slate-800/20" : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"}`}
+                  >
+                    <td className={`px-6 py-4 text-sm font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-800 dark:text-slate-200 font-mono"}`}>
+                      {t.nombre}
+                    </td>
+                    <td className="px-6 py-4 text-xs">
+                      {isActive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          Activo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                          Inactivo
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(t)}
+                          className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors bg-white dark:bg-slate-900"
+                          title="Editar"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openActionModal(t)}
+                          className={`p-1.5 rounded-md border transition-colors bg-white dark:bg-slate-900 ${isActive
+                            ? "border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            : "border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                            }`}
+                          title={isActive ? "Desactivar" : "Reactivar"}
+                        >
+                          {isActive ? <Trash2 size={14} /> : <RotateCcw size={14} />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -371,7 +352,7 @@ export default function TallasPage() {
           <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-md border border-slate-200 dark:border-slate-800">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {editing ? "Editar talla" : "Nueva talla"}
+                {editing ? "Editar Talla" : "Nueva Talla"}
               </h2>
               <button
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
@@ -383,18 +364,17 @@ export default function TallasPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="px-6 py-4 space-y-3">
-              {error && <div className="text-xs text-red-600 dark:text-red-400">{error}</div>}
-
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nombre</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Nombre de la Talla</label>
                 <input
                   type="text"
                   name="nombre"
                   value={form.nombre}
                   onChange={handleChange}
-                  placeholder="Ej: S, M, L, XL"
-                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej: S, M, L, XL, 38, 40"
+                  className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono uppercase"
                   required
+                  autoFocus
                 />
               </div>
 
@@ -410,9 +390,9 @@ export default function TallasPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70"
+                  className="px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 disabled:opacity-70 transition-all active:scale-95"
                 >
-                  {saving ? "Guardando..." : "Guardar"}
+                  {saving ? "Guardando..." : "Guardar Talla"}
                 </button>
               </div>
             </form>
@@ -435,8 +415,8 @@ export default function TallasPage() {
         }
         description={
           itemToAction?.es_activo !== false
-            ? "La talla dejará de estar disponible para nuevos productos."
-            : "La talla volverá a estar activa."
+            ? "La talla dejará de estar disponible para nuevos productos o registros."
+            : "La talla volverá a estar activa en el sistema."
         }
         confirmText={itemToAction?.es_activo !== false ? "Desactivar" : "Reactivar"}
         isDestructive={itemToAction?.es_activo !== false}

@@ -10,8 +10,6 @@ import { asRows, buildQueryParams } from "../utils/api";
 
 const PAGE_SIZE = 30;
 
-
-
 export default function ProvidersPage() {
   const { refreshCatalogs } = useInventory();
   const [proveedores, setProveedores] = useState([]);
@@ -72,6 +70,7 @@ export default function ProvidersPage() {
       }
     };
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = useMemo(() => {
@@ -132,7 +131,7 @@ export default function ProvidersPage() {
       setShowConfirm(false);
 
       await loadProveedores(page);
-      refreshCatalogs(); // ✅ Actualizar catálogos globales
+      refreshCatalogs();
     } catch (err) {
       console.error(err);
       setSaveError(err.message || "Error al guardar proveedor.");
@@ -170,7 +169,6 @@ export default function ProvidersPage() {
     setPendingSave(null);
   };
 
-  // Toggle Action Logic
   const openActionModal = (prov) => {
     setProviderToAction(prov);
     setActionError("");
@@ -194,10 +192,8 @@ export default function ProvidersPage() {
       setActionLoading(true);
       let res;
       if (isActive) {
-        // Desactivar (Soft Delete)
         res = await fetch(`${API_BASE}/proveedores/${prov.id}/`, { method: "DELETE" });
       } else {
-        // Reactivar (Patch)
         res = await fetch(`${API_BASE}/proveedores/${prov.id}/`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -209,7 +205,7 @@ export default function ProvidersPage() {
 
       closeActionModal();
       await loadProveedores(page);
-      refreshCatalogs(); // ✅ Actualizar catálogos globales
+      refreshCatalogs();
     } catch (err) {
       setActionError(err.message || `Error al ${action.toLowerCase()} proveedor.`);
     } finally {
@@ -245,54 +241,66 @@ export default function ProvidersPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100 mb-6">Proveedores</h1>
-
-      {/* Barra superior */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-3">
-        <div className="flex-1 relative">
-          <span className="absolute left-3 top-2.5 text-slate-400">
-            <Search size={16} />
-          </span>
-          <input
-            type="text"
-            placeholder="Buscar por nombre..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full md:max-w-xs rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 italic tracking-tight">
+            Proveedores <span className="text-blue-600 dark:text-blue-400 not-italic">y Aliados</span>
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Gestión de proveedores para la compra de insumos.
+          </p>
         </div>
+
         <button
-          type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-xs font-medium shadow-sm hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
         >
-          <Plus size={16} />
-          Nuevo proveedor
+          <Plus size={18} />
+          Nuevo Proveedor
         </button>
       </div>
 
-      {/* Barra paginación */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+      {/* Search Bar */}
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="relative group">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+            <Search size={18} />
+          </span>
+          <input
+            className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 pl-11 pr-4 py-3 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+            placeholder="Buscar por nombre..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Pagination Bar */}
+      <div className="flex items-center justify-between gap-3 mb-4 px-1">
+        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b>
+          <span className="mx-1">•</span>
+          Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
           <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
         </div>
+
         <div className="flex items-center gap-2">
           <button
             type="button"
             disabled={!prevUrl || loading}
             onClick={goPrev}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            <ChevronLeft size={14} /> Anterior
+            ←
           </button>
           <button
             type="button"
             disabled={!nextUrl || loading}
             onClick={goNext}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            Siguiente <ChevronRight size={14} />
+            →
           </button>
         </div>
       </div>
@@ -303,81 +311,82 @@ export default function ProvidersPage() {
         </div>
       )}
 
-      {/* Tabla */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th className="px-4 py-3 text-left">ID</th>
-              <th className="px-4 py-3 text-left">Nombre</th>
-              <th className="px-4 py-3 text-left">Estado</th>
-              <th className="px-4 py-3 text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-                  Cargando proveedores...
-                </td>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">ID</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nombre</th>
+                <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Estado</th>
+                <th className="px-6 py-4 text-right text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Acciones</th>
               </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
-                  No hay proveedores registrados (en esta página).
-                </td>
-              </tr>
-            ) : (
-              filtered.map((p) => {
-                const isActive = p.es_activo !== false;
-                return (
-                  <tr key={p.id} className={`border-t border-slate-100 dark:border-slate-800 transition-colors ${!isActive ? "bg-slate-50/70 dark:bg-slate-800/20" : "hover:bg-slate-50/60 dark:hover:bg-slate-800/40"}`}>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 font-mono">{p.id}</td>
-                    <td className={`px-4 py-3 text-sm font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-700 dark:text-slate-200"}`}>
-                      {p.nombre}
-                    </td>
-                    <td className="px-4 py-3 text-xs">
-                      {isActive ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                          Activo
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600"></span>
-                          Inactivo
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(p)}
-                          className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors bg-white dark:bg-slate-900"
-                          title="Editar"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openActionModal(p)}
-                          className={`p-1.5 rounded-md border transition-colors bg-white dark:bg-slate-900 ${isActive
-                            ? "border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            : "border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                            }`}
-                          title={isActive ? "Desactivar" : "Reactivar"}
-                        >
-                          {isActive ? <Trash2 size={14} /> : <RotateCcw size={14} />}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Cargando proveedores...
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+                    No hay proveedores registrados (en esta página).
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((p) => {
+                  const isActive = p.es_activo !== false;
+                  return (
+                    <tr key={p.id} className={`border-t border-slate-100 dark:border-slate-800 transition-colors ${!isActive ? "bg-slate-50/70 dark:bg-slate-800/20" : "hover:bg-slate-50/60 dark:hover:bg-slate-800/40"}`}>
+                      <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 font-mono">{p.id}</td>
+                      <td className={`px-6 py-4 text-sm font-medium ${!isActive ? "text-slate-400 dark:text-slate-600 line-through decoration-slate-300 dark:decoration-slate-700" : "text-slate-700 dark:text-slate-200"}`}>
+                        {p.nombre}
+                      </td>
+                      <td className="px-6 py-4 text-xs">
+                        {isActive ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            Activo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600"></span>
+                            Inactivo
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(p)}
+                            className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors bg-white dark:bg-slate-900"
+                            title="Editar"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openActionModal(p)}
+                            className={`p-1.5 rounded-md border transition-colors bg-white dark:bg-slate-900 ${isActive
+                              ? "border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              : "border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                              }`}
+                            title={isActive ? "Desactivar" : "Reactivar"}
+                          >
+                            {isActive ? <Trash2 size={14} /> : <RotateCcw size={14} />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal Confirmación Acción Estilizado */}
@@ -406,7 +415,6 @@ export default function ProvidersPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30 dark:bg-black/60 backdrop-blur-sm transition-opacity">
           <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden transform transition-all scale-100 border border-white/10 dark:border-slate-800">
-            {/* Si mostrando confirmación */}
             {showConfirm ? (
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">

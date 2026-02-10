@@ -3,6 +3,7 @@ import { API_BASE } from "../config/api";
 import CreateInsumoMovimientoModal from "../components/CreateInsumoMovimientoModal";
 import { asRows, fetchAllPages, buildQueryParams } from "../utils/api";
 import { formatCurrency, formatDateTime } from "../utils/format";
+import { Search, Plus } from "lucide-react";
 
 const PAGE_SIZE = 30;
 
@@ -238,98 +239,94 @@ export default function InsumosHistorialPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Historial de Insumos (Kardex)</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 italic tracking-tight">
+            Historial <span className="text-blue-600 dark:text-blue-400 not-italic">de Insumos</span>
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Movimientos globales: creación, entradas, salidas, consumos por ensamble y ajustes.
+            Kardex global: entradas, salidas y ajustes de materias primas.
           </p>
         </div>
 
         <button
-          className="hidden items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700"
+          className="hidden items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
           onClick={openMoveModal}
         >
-          <span className="text-lg leading-none">＋</span>
-          Registrar movimiento
+          <Plus size={18} />
+          Registrar Movimiento
         </button>
       </div>
 
-      {/* filtros */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-4 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Insumo</label>
+      {/* Filters Section */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Insumo</label>
             <select
               value={fInsumo}
               onChange={(e) => setFInsumo(e.target.value)}
-              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             >
-              <option value="">Todos</option>
+              <option value="">Todos los insumos</option>
               {insumoOptions.map((i) => (
-                <option key={i.codigo} value={i.codigo}>
-                  {i.label}
-                </option>
+                <option key={i.codigo} value={i.codigo}>{i.label}</option>
               ))}
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tipo</label>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Tipo de Mov.</label>
             <select
               value={fTipo}
               onChange={(e) => setFTipo(e.target.value)}
-              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             >
               {TIPOS.map((t) => (
-                <option key={t.value || "all"} value={t.value}>
-                  {t.label}
-                </option>
+                <option key={t.value || "all"} value={t.value}>{t.label}</option>
               ))}
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Bodega</label>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Bodega</label>
             <select
               value={fBodega}
               onChange={(e) => setFBodega(e.target.value)}
-              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             >
-              <option value="">Todas</option>
+              <option value="">Todas las bodegas</option>
               {bodegaOptions.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.label}
-                </option>
+                <option key={b.id} value={b.id}>{b.label}</option>
               ))}
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tercero</label>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Tercero</label>
             <select
               value={fTercero}
               onChange={(e) => setFTercero(e.target.value)}
-              className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             >
-              <option value="">Todos</option>
+              <option value="">Todos los terceros</option>
               {terceroOptions.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
+                <option key={t.id} value={t.id}>{t.label}</option>
               ))}
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Buscar (en esta página)</label>
-            <div className="flex items-center bg-white dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
-              <span className="mr-2 text-slate-400 text-sm">🔍</span>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Buscador Local</label>
+            <div className="relative group">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                <Search size={16} />
+              </span>
               <input
                 type="text"
-                className="w-full bg-transparent outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                placeholder="insumo, tipo, tercero, bodega..."
+                className="w-full bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 pl-10 pr-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                placeholder="Filtrar..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -337,30 +334,33 @@ export default function InsumosHistorialPage() {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-3">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             onClick={clearFilters}
             disabled={loading}
-            className="px-3 py-2 rounded-md text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-70 transition-colors"
+            className="px-5 py-2 rounded-xl text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
           >
-            Limpiar
+            Limpiar Filtros
           </button>
           <button
             type="button"
             onClick={applyFilters}
             disabled={loading}
-            className="px-4 py-2 rounded-md bg-slate-900 text-white text-xs font-medium shadow-sm hover:bg-slate-800 disabled:opacity-70"
+            className="px-6 py-2 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-sm font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-70 transition-all active:scale-95"
           >
-            Aplicar filtros
+            Aplicar Filtros
           </button>
         </div>
       </div>
 
-      {/* header paginación */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b> • Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
+      {/* Pagination Bar */}
+      <div className="flex items-center justify-between gap-3 mb-4 px-1">
+        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          Total: <b className="text-slate-900 dark:text-slate-100">{count}</b>
+          <span className="mx-1">•</span>
+          Página <b className="text-slate-900 dark:text-slate-100">{page}</b>
           <span className="ml-2 text-[11px] text-slate-400 dark:text-slate-500">(mostrando {PAGE_SIZE} por página)</span>
         </div>
 
@@ -369,109 +369,104 @@ export default function InsumosHistorialPage() {
             type="button"
             disabled={!prevUrl || loading}
             onClick={goPrev}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            ← Anterior
+            ←
           </button>
           <button
             type="button"
             disabled={!nextUrl || loading}
             onClick={goNext}
-            className="px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50 hover:bg-white dark:hover:bg-slate-900 hover:border-blue-500 transition-all shadow-sm"
           >
-            Siguiente →
+            →
           </button>
         </div>
       </div>
 
-      <section className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-        {loading && <div className="p-6 text-sm text-slate-600 dark:text-slate-400">Cargando kardex...</div>}
-        {error && !loading && <div className="p-6 text-sm text-red-600">{error}</div>}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
+              <tr>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Fecha</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Insumo</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tipo</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Bodega</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tercero</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Cantidad</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">U.M.</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Costo</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Saldo</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Factura</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Obs.</th>
+                <th className="px-4 py-4 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Nota</th>
+              </tr>
+            </thead>
 
-        {!loading && !error && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
-                <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  <th className="px-4 py-3 text-center">Fecha</th>
-                  <th className="px-4 py-3 text-center">Insumo</th>
-                  <th className="px-4 py-3 text-center">Tipo</th>
-                  <th className="px-4 py-3 text-center">Bodega</th>
-                  <th className="px-4 py-3 text-center">Tercero</th>
-                  <th className="px-4 py-3 text-center">Cantidad</th>
-                  <th className="px-4 py-3 text-center">U.M.</th>
-                  <th className="px-4 py-3 text-center">Costo</th>
-                  <th className="px-4 py-3 text-center">Total</th>
-                  <th className="px-4 py-3 text-center">Saldo</th>
-                  <th className="px-4 py-3 text-center">Factura</th>
-                  <th className="px-4 py-3 text-center">Observación</th>
-                  <th className="px-4 py-3 text-center">Nota</th>
+            <tbody>
+              {filteredLocalRows.length === 0 && (
+                <tr>
+                  <td colSpan={13} className="px-6 py-6 text-center text-sm text-slate-500">
+                    No hay movimientos para mostrar.
+                  </td>
                 </tr>
-              </thead>
+              )}
 
-              <tbody>
-                {filteredLocalRows.length === 0 && (
-                  <tr>
-                    <td colSpan={13} className="px-6 py-6 text-center text-sm text-slate-500">
-                      No hay movimientos para mostrar.
-                    </td>
-                  </tr>
-                )}
+              {filteredLocalRows.map((r) => (
+                <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-center whitespace-nowrap">
+                    {formatDateTime(r.fecha)}
+                  </td>
 
-                {filteredLocalRows.map((r) => (
-                  <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400 text-center whitespace-nowrap">
-                      {formatDateTime(r.fecha)}
-                    </td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="text-sm text-slate-800 dark:text-slate-200 font-medium">{r.insumo_codigo}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{r.insumo_nombre}</div>
+                  </td>
 
-                    <td className="px-4 py-3 text-center">
-                      <div className="text-sm text-slate-800 dark:text-slate-200 font-medium">{r.insumo_codigo}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">{r.insumo_nombre}</div>
-                    </td>
+                  <td className="px-4 py-3 text-xs text-center">
+                    <span className={`inline-flex px-2 py-1 rounded-md border text-[10px] font-semibold tracking-wide ${getTipoColor(r.tipo)}`}>
+                      {r.tipo}
+                    </span>
+                  </td>
 
-                    <td className="px-4 py-3 text-xs text-center">
-                      <span className={`inline-flex px-2 py-1 rounded-md border text-[10px] font-semibold tracking-wide ${getTipoColor(r.tipo)}`}>
-                        {r.tipo}
-                      </span>
-                    </td>
+                  <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.bodega_nombre || "—"}</td>
+                  <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.tercero_nombre || "—"}</td>
 
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.bodega_nombre || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.tercero_nombre || "—"}</td>
+                  <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-800 dark:text-slate-200">
+                    {formatCurrency(r.cantidad)}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
+                      {r.unidad_medida || "UN"}
+                    </span>
+                  </td>
 
-                    <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-800 dark:text-slate-200">
-                      {formatCurrency(r.cantidad)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 uppercase">
-                        {r.unidad_medida || "UN"}
-                      </span>
-                    </td>
+                  <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
+                    {r.costo_unitario ? `$${formatCurrency(r.costo_unitario)}` : "—"}
+                  </td>
 
-                    <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
-                      {r.costo_unitario ? `$${formatCurrency(r.costo_unitario)}` : "—"}
-                    </td>
+                  <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
+                    {r.total ? `$${formatCurrency(r.total)}` : "—"}
+                  </td>
 
-                    <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
-                      {r.total ? `$${formatCurrency(r.total)}` : "—"}
-                    </td>
+                  <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
+                    {r.saldo_resultante !== null && r.saldo_resultante !== undefined ? formatCurrency(r.saldo_resultante) : "—"}
+                  </td>
 
-                    <td className="px-4 py-3 text-sm text-center tabular-nums text-slate-700 dark:text-slate-300">
-                      {r.saldo_resultante !== null && r.saldo_resultante !== undefined ? formatCurrency(r.saldo_resultante) : "—"}
-                    </td>
+                  <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.factura || "—"}</td>
+                  <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.observacion || "—"}</td>
 
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.factura || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 text-center">{r.observacion || "—"}</td>
-
-                    <td className="px-4 py-3 text-center text-xs text-slate-700 dark:text-slate-300">
-                      {r.nota_ensamble ? `#${r.nota_ensamble}` : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                  <td className="px-4 py-3 text-center text-xs text-slate-700 dark:text-slate-300">
+                    {r.nota_ensamble ? `#${r.nota_ensamble}` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <CreateInsumoMovimientoModal
         isOpen={isMoveOpen}
